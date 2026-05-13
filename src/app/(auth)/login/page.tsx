@@ -13,13 +13,6 @@ export const metadata: Metadata = {
 export default function LoginPage() {
   return (
     <AuthCard>
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-[28px] font-semibold text-[#111318] leading-tight tracking-tight">
-          Bun venit
-        </h1>
-      </div>
-
       {/* Google */}
       <GoogleButton />
 

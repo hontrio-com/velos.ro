@@ -11,9 +11,9 @@ export default function AuthLayout({
         <Image
           src="/logo441x245.png"
           alt="Velos"
-          width={220}
-          height={122}
-          className="h-14 w-auto object-contain"
+          width={260}
+          height={144}
+          className="h-16 w-auto object-contain"
           priority
         />
       </div>

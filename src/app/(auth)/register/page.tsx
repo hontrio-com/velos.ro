@@ -12,28 +12,6 @@ export const metadata: Metadata = {
 export default function RegisterPage() {
   return (
     <AuthCard>
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-[28px] font-semibold text-[#111318] leading-tight tracking-tight">
-          Creează-ți contul
-        </h1>
-        <div className="flex items-center gap-2 mt-1.5">
-          <p className="text-sm text-[#6B7280]">14 zile gratuit, fără card</p>
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#F0FDF4] border border-[#BBF7D0] text-[11px] font-medium text-[#16A34A]">
-            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-              <path
-                d="M10 3L4.5 8.5 2 6"
-                stroke="#16A34A"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            Trial gratuit
-          </span>
-        </div>
-      </div>
-
       {/* Google */}
       <GoogleButton />
 
