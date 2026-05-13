@@ -12,7 +12,9 @@ import {
   Menu,
   Search,
   Building2,
+  MessageSquare,
 } from "lucide-react";
+import { CumparaSmsModal } from "@/components/sms/cumpara-sms-modal";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -36,6 +38,7 @@ export function Header({ userEmail, userName, onMenuToggle }: HeaderProps) {
   const router = useRouter();
   const supabase = createClient();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [smsModalOpen, setSmsModalOpen] = useState(false);
 
   const initials = userName
     ? userName
@@ -99,8 +102,18 @@ export function Header({ userEmail, userName, onMenuToggle }: HeaderProps) {
           </button>
         </div>
 
-        {/* Right: bell + user */}
+        {/* Right: buy SMS + bell + user */}
         <div className="flex items-center gap-1.5">
+          {/* Cumpără SMS-uri */}
+          <button
+            type="button"
+            onClick={() => setSmsModalOpen(true)}
+            className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-lg bg-[#EFF6FF] hover:bg-[#DBEAFE] text-[#1877F2] text-[13px] font-medium transition-colors"
+          >
+            <MessageSquare className="h-3.5 w-3.5" />
+            <span>Cumpără SMS-uri</span>
+          </button>
+
           {/* Bell */}
           <button
             type="button"
@@ -154,6 +167,7 @@ export function Header({ userEmail, userName, onMenuToggle }: HeaderProps) {
       </header>
 
       <SearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
+      <CumparaSmsModal open={smsModalOpen} onClose={() => setSmsModalOpen(false)} />
     </>
   );
 }

@@ -25,7 +25,13 @@
       "Bash(node -e \"console.log\\(require\\(''./node_modules/tesseract.js/package.json''\\).version\\)\")",
       "Bash(cd:*)",
       "Bash(python3:*)",
-      "Bash(ls src/app/\\\\\\(dashboard\\\\\\)/)"
+      "Bash(ls src/app/\\\\\\(dashboard\\\\\\)/)",
+      "Bash(node scripts/generate-icons.mjs)",
+      "mcp__supabase__get_project_url",
+      "Bash(cat src/app/\\\\\\(auth\\\\\\)/register/page.tsx])",
+      "Bash(node -e \":*)",
+      "Bash(grep -E \"\\\\.ts$|^d\")",
+      "mcp__supabase__get_advisors"
     ]
   },
   "enableAllProjectMcpServers": true,

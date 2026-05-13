@@ -39,13 +39,19 @@ export async function sendSms(params: SendSmsParams): Promise<SmsResult> {
 
   const supabase = createServiceClient();
 
-  // ── Verificare quota ───────────────────────────────────────────
-  const { data: quotaRows } = await supabase
-    .rpc("get_sms_quota", { p_profile_id: profileId });
+  // ── Verificare quota + credite ─────────────────────────────────
+  const [{ data: quotaRows }, { data: profileData }] = await Promise.all([
+    supabase.rpc("get_sms_quota", { p_profile_id: profileId }),
+    supabase.from("profiles").select("sms_credit").eq("id", profileId).single(),
+  ]);
 
   const quota = quotaRows?.[0];
-  if (!quota || quota.ramase <= 0) {
-    const msg = `Quota SMS epuizată (${quota?.trimise ?? 0}/${quota?.limita ?? 0} SMS/lună)`;
+  const credit = (profileData as any)?.sms_credit ?? 0;
+  const lunareDisponibile = quota?.ramase ?? 0;
+  const useCredit = lunareDisponibile <= 0 && credit > 0;
+
+  if (lunareDisponibile <= 0 && credit <= 0) {
+    const msg = `Quota SMS epuizată (${quota?.trimise ?? 0}/${quota?.limita ?? 0} SMS/lună, ${credit} credite)`;
     if (statieId) {
       await supabase.from("mesaje").insert({
         statie_id: statieId,
@@ -86,8 +92,15 @@ export async function sendSms(params: SendSmsParams): Promise<SmsResult> {
     const data = await response.json();
     const smso_id = data.id ?? data.messageId ?? String(data);
 
-    // ── Increment quota ────────────────────────────────────────────
-    await supabase.rpc("increment_sms_quota", { p_profile_id: profileId, p_count: 1 });
+    // ── Deduct quota sau credit ────────────────────────────────────
+    if (useCredit) {
+      await supabase
+        .from("profiles")
+        .update({ sms_credit: Math.max(0, credit - 1) } as never)
+        .eq("id", profileId);
+    } else {
+      await supabase.rpc("increment_sms_quota", { p_profile_id: profileId, p_count: 1 });
+    }
 
     // ── Log în mesaje ──────────────────────────────────────────────
     if (statieId) {

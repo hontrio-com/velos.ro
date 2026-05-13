@@ -17,6 +17,7 @@ export type Database = {
           phone: string | null;
           avatar_url: string | null;
           plan: "trial" | "basic" | "pro" | "enterprise";
+          sms_credit: number;
           created_at: string;
           updated_at: string;
         };
@@ -27,6 +28,7 @@ export type Database = {
           phone?: string | null;
           avatar_url?: string | null;
           plan?: "trial" | "basic" | "pro" | "enterprise";
+          sms_credit?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -37,6 +39,7 @@ export type Database = {
           phone?: string | null;
           avatar_url?: string | null;
           plan?: "trial" | "basic" | "pro" | "enterprise";
+          sms_credit?: number;
           updated_at?: string;
         };
         Relationships: [];
