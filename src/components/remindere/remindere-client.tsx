@@ -143,7 +143,7 @@ export function RemindereClient({ statieId }: RemindereClientProps) {
 
       {/* Tabs */}
       <Tabs defaultValue="pending">
-        <TabsList className="bg-[#F7F8FA] border border-[#F3F4F6] h-9 p-0.5">
+        <TabsList className="bg-white border border-[#E5E7EB] h-9 p-0.5">
           {[
             { value: "pending", label: "În așteptare", icon: Clock, count: pendingCount },
             { value: "toate", label: "Toate", icon: Bell, count: allRemindere.length },

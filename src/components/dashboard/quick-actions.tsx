@@ -48,7 +48,7 @@ export function QuickActions({ statieId }: { statieId: string }) {
                 transition={{ duration: 0.18, delay: NAV_ACTIONS.length * 0.05 }}
                 className="flex items-center gap-3"
               >
-                <span className="bg-white text-[#111318] text-xs font-medium px-2.5 py-1.5 rounded-lg shadow border border-[#F3F4F6] whitespace-nowrap">
+                <span className="bg-white text-[#111318] text-xs font-medium px-2.5 py-1.5 rounded-lg shadow border border-[#E5E7EB] whitespace-nowrap">
                   Scanează vehicul
                 </span>
                 <motion.button
@@ -74,7 +74,7 @@ export function QuickActions({ statieId }: { statieId: string }) {
                     transition={{ duration: 0.18, delay: (NAV_ACTIONS.length - 1 - i) * 0.05 }}
                     className="flex items-center gap-3"
                   >
-                    <span className="bg-white text-[#111318] text-xs font-medium px-2.5 py-1.5 rounded-lg shadow border border-[#F3F4F6] whitespace-nowrap">
+                    <span className="bg-white text-[#111318] text-xs font-medium px-2.5 py-1.5 rounded-lg shadow border border-[#E5E7EB] whitespace-nowrap">
                       {action.label}
                     </span>
                     <motion.button

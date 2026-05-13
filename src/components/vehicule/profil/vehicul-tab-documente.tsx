@@ -438,7 +438,7 @@ export function VehiculTabDocumente({ vehiculId, statieId }: Props) {
           {[...Array(3)].map((_, i) => <div key={i} className="h-16 bg-[#F9FAFB] rounded-xl animate-pulse" />)}
         </div>
       ) : totalDocs === 0 && !form.open ? (
-        <div className="bg-white border border-[#F3F4F6] rounded-xl py-16 flex flex-col items-center text-center gap-3">
+        <div className="bg-white border border-[#E5E7EB] rounded-xl py-16 flex flex-col items-center text-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#EFF6FF]">
             <FileText className="h-6 w-6 text-[#1877F2]" />
           </div>
@@ -455,7 +455,7 @@ export function VehiculTabDocumente({ vehiculId, statieId }: Props) {
             const isCollapsed = collapsed[catKey];
 
             return (
-              <div key={catKey} className="bg-white border border-[#F3F4F6] rounded-xl overflow-hidden">
+              <div key={catKey} className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden">
                 <button
                   type="button"
                   onClick={() => setCollapsed((p) => ({ ...p, [catKey]: !p[catKey] }))}
@@ -464,13 +464,13 @@ export function VehiculTabDocumente({ vehiculId, statieId }: Props) {
                   <div className="flex items-center gap-2.5">
                     <div className="h-2 w-2 rounded-full" style={{ backgroundColor: cat.color }} />
                     <span className="text-sm font-semibold text-[#111318]">{cat.label}</span>
-                    <span className="text-xs text-[#9CA3AF] bg-[#F3F4F6] px-1.5 py-0.5 rounded-full">{docs.length}</span>
+                    <span className="text-xs text-[#9CA3AF] bg-[#F7F8FA] px-1.5 py-0.5 rounded-full">{docs.length}</span>
                   </div>
                   {isCollapsed ? <ChevronDown className="h-4 w-4 text-[#9CA3AF]" /> : <ChevronUp className="h-4 w-4 text-[#9CA3AF]" />}
                 </button>
 
                 {!isCollapsed && (
-                  <div className="divide-y divide-[#F9FAFB] border-t border-[#F3F4F6]">
+                  <div className="divide-y divide-[#F9FAFB] border-t border-[#E5E7EB]">
                     {docs.map((doc) => (
                       <div key={doc.id} className="flex items-start gap-3 px-4 py-3 hover:bg-[#F9FAFB] transition-colors">
                         {/* Icon */}
@@ -482,7 +482,7 @@ export function VehiculTabDocumente({ vehiculId, statieId }: Props) {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="text-sm font-medium text-[#111318]">{doc.titlu}</p>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#F3F4F6] text-[#6B7280]">{doc.tip_document}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#F7F8FA] text-[#6B7280]">{doc.tip_document}</span>
                             {getExpiryBadge(doc.data_expirare)}
                           </div>
                           <div className="flex items-center gap-3 mt-0.5 text-[11px] text-[#9CA3AF]">

@@ -90,7 +90,7 @@ function KpiCard({
       <Link href={href} className="block h-full group">
         <div
           className={cn(
-            "bg-white border border-[#F3F4F6] rounded-xl p-5 h-full cursor-pointer",
+            "bg-white border border-[#E5E7EB] rounded-xl p-5 h-full cursor-pointer",
             "hover:border-[#E5E7EB] transition-all duration-150",
             "hover:-translate-y-px hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
           )}

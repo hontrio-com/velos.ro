@@ -65,9 +65,9 @@ export function AngajatDrawer({ open, angajat, onClose, onSuccess }: AngajatDraw
   return (
     <>
       <div className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[1px]" onClick={onClose} />
-      <div className="fixed right-0 top-0 z-50 h-full w-full max-w-[400px] border-l border-[#F3F4F6] bg-white shadow-2xl flex flex-col">
+      <div className="fixed right-0 top-0 z-50 h-full w-full max-w-[400px] border-l border-[#E5E7EB] bg-white shadow-2xl flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#F3F4F6] shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#E5E7EB] shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#EFF6FF]">
               {isEdit ? <Pencil className="h-4 w-4 text-[#1877F2]" /> : <UserPlus className="h-4 w-4 text-[#1877F2]" />}
@@ -80,7 +80,7 @@ export function AngajatDrawer({ open, angajat, onClose, onSuccess }: AngajatDraw
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-1.5 hover:bg-[#F3F4F6] transition-colors"
+            className="rounded-md p-1.5 hover:bg-[#F7F8FA] transition-colors"
           >
             <X className="h-4 w-4 text-[#6B7280]" />
           </button>
@@ -140,7 +140,7 @@ export function AngajatDrawer({ open, angajat, onClose, onSuccess }: AngajatDraw
           </div>
 
           {/* Activ toggle */}
-          <div className="flex items-center justify-between py-3 px-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
+          <div className="flex items-center justify-between py-3 px-4 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB]">
             <div>
               <p className="text-sm font-medium text-[#111318]">Angajat activ</p>
               <p className="text-xs text-[#9CA3AF] mt-0.5">Poate fi atribuit la programări</p>
@@ -156,7 +156,7 @@ export function AngajatDrawer({ open, angajat, onClose, onSuccess }: AngajatDraw
         </form>
 
         {/* Footer */}
-        <div className="border-t border-[#F3F4F6] p-4 flex gap-3 shrink-0">
+        <div className="border-t border-[#E5E7EB] p-4 flex gap-3 shrink-0">
           <Button variant="outline" className="flex-1" onClick={onClose} disabled={saving}>
             Anulează
           </Button>

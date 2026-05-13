@@ -91,7 +91,7 @@ export function ClientProfilTabs({
 
   return (
     <Tabs defaultValue={defaultTab} onValueChange={handleTabChange}>
-      <TabsList className="h-auto p-0 bg-transparent border-b border-[#F3F4F6] rounded-none w-full justify-start gap-0 mb-6">
+      <TabsList className="h-auto p-0 bg-transparent border-b border-[#E5E7EB] rounded-none w-full justify-start gap-0 mb-6">
         {[
           { value: "detalii", label: "Detalii" },
           { value: "vehicule", label: "Vehicule", count: vehicule.length },
@@ -106,7 +106,7 @@ export function ClientProfilTabs({
           >
             {label}
             {count !== undefined && count > 0 && (
-              <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full text-[10px] font-semibold bg-[#F3F4F6] text-[#6B7280] data-[state=active]:bg-[#EFF6FF] data-[state=active]:text-[#1877F2]">
+              <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full text-[10px] font-semibold bg-[#F7F8FA] text-[#6B7280] data-[state=active]:bg-[#EFF6FF] data-[state=active]:text-[#1877F2]">
                 {count}
               </span>
             )}

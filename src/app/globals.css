@@ -50,7 +50,7 @@
 
 :root {
   /* Facebook-like blue theme — light mode only */
-  --background: oklch(0.983 0.002 247);
+  --background: oklch(1 0 0);
   --foreground: oklch(0.16 0.005 247);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.16 0.005 247);

@@ -93,7 +93,7 @@ export function TabItp({ statieId, from, to }: TabItpProps) {
           { label: "Respinse", value: data.kpi.respinse, trend: null },
           { label: "Rată admitere", value: `${data.kpi.rata_admitere}%`, trend: null },
         ].map(({ label, value, trend }) => (
-          <div key={label} className="bg-white border border-[#F3F4F6] rounded-xl p-4">
+          <div key={label} className="bg-white border border-[#E5E7EB] rounded-xl p-4">
             <p className="text-xs text-[#6B7280] mb-1">{label}</p>
             <p className="text-xl font-bold text-[#111318] leading-tight">{value}</p>
             {trend !== null && <div className="mt-1.5"><TrendPill value={trend} /></div>}
@@ -102,7 +102,7 @@ export function TabItp({ statieId, from, to }: TabItpProps) {
       </div>
 
       {/* Rezultate pie */}
-      <div className="bg-white border border-[#F3F4F6] rounded-xl p-4">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl p-4">
         <h3 className="text-sm font-semibold text-[#111318] mb-3">Distribuție rezultate ITP</h3>
         {data.rezultate.some((r) => r.count > 0) ? (
           <div className="flex items-center gap-6">
@@ -126,7 +126,7 @@ export function TabItp({ statieId, from, to }: TabItpProps) {
                     if (!active || !payload?.length) return null;
                     const e = payload[0];
                     return (
-                      <div className="bg-white border border-[#F3F4F6] rounded-lg px-3 py-2 text-xs shadow-lg">
+                      <div className="bg-white border border-[#E5E7EB] rounded-lg px-3 py-2 text-xs shadow-lg">
                         <p className="font-semibold" style={{ color: e.payload.color }}>{e.name}</p>
                         <p className="font-bold">{e.value}</p>
                       </div>
@@ -149,7 +149,7 @@ export function TabItp({ statieId, from, to }: TabItpProps) {
                       </span>
                     </span>
                   </div>
-                  <div className="h-1.5 bg-[#F3F4F6] rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-[#F7F8FA] rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-500"
                       style={{ width: `${data.kpi.total > 0 ? (r.count / data.kpi.total) * 100 : 0}%`, background: r.color }}
@@ -170,15 +170,15 @@ export function TabItp({ statieId, from, to }: TabItpProps) {
       </div>
 
       {/* Table */}
-      <div className="bg-white border border-[#F3F4F6] rounded-xl">
-        <div className="px-4 py-3 border-b border-[#F3F4F6] flex items-center justify-between">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl">
+        <div className="px-4 py-3 border-b border-[#E5E7EB] flex items-center justify-between">
           <h3 className="text-sm font-semibold text-[#111318]">Lista inspecții</h3>
           <span className="text-xs text-[#9CA3AF]">{data.lista.length} inspecții</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-[#F3F4F6] bg-[#F9FAFB]">
+              <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
                 {([
                   { key: "data_inspectie" as SortKey, label: "Data" },
                   { key: "vehicul" as SortKey, label: "Vehicul" },
@@ -198,14 +198,14 @@ export function TabItp({ statieId, from, to }: TabItpProps) {
             </thead>
             <tbody>
               {paginated.map((r) => (
-                <tr key={r.id} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
+                <tr key={r.id} className="border-b border-[#E5E7EB] hover:bg-[#F9FAFB]">
                   <td className="px-4 py-2.5 text-[#374151]">
                     {format(parseISO(r.data_inspectie), "d MMM yyyy", { locale: ro })}
                   </td>
                   <td className="px-4 py-2.5 text-[#374151] font-medium">{r.vehicul}</td>
                   <td className="px-4 py-2.5 text-[#374151]">{r.client}</td>
                   <td className="px-4 py-2.5">
-                    <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-semibold", BADGE_COLORS[r.rezultat] ?? "bg-[#F3F4F6] text-[#6B7280]")}>
+                    <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-semibold", BADGE_COLORS[r.rezultat] ?? "bg-[#F7F8FA] text-[#6B7280]")}>
                       {r.rezultat.charAt(0).toUpperCase() + r.rezultat.slice(1)}
                     </span>
                   </td>
@@ -219,7 +219,7 @@ export function TabItp({ statieId, from, to }: TabItpProps) {
           </table>
         </div>
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-2.5 border-t border-[#F3F4F6]">
+          <div className="flex items-center justify-between px-4 py-2.5 border-t border-[#E5E7EB]">
             <span className="text-xs text-[#9CA3AF]">Pagina {page + 1} din {totalPages}</span>
             <div className="flex gap-2">
               <button

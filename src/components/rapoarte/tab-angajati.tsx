@@ -24,7 +24,7 @@ export function TabAngajati({ statieId, from, to }: TabAngajatiProps) {
 
   if (data.angajati.length === 0) {
     return (
-      <div className="bg-white border border-[#F3F4F6] rounded-xl py-16 flex flex-col items-center text-center gap-3">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl py-16 flex flex-col items-center text-center gap-3">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#EFF6FF]">
           <Users className="h-6 w-6 text-[#1877F2]" />
         </div>
@@ -48,7 +48,7 @@ export function TabAngajati({ statieId, from, to }: TabAngajatiProps) {
           { label: "Programări atribuite", value: totalProgramari, icon: CalendarDays, color: "#1877F2", bg: "#EFF6FF" },
           { label: "Venit generat", value: `${totalVenit.toLocaleString("ro-RO")} RON`, icon: TrendingUp, color: "#7C3AED", bg: "#F5F3FF" },
         ].map(({ label, value, icon: Icon, color, bg }) => (
-          <div key={label} className="bg-white border border-[#F3F4F6] rounded-xl p-4 flex items-center gap-3">
+          <div key={label} className="bg-white border border-[#E5E7EB] rounded-xl p-4 flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg shrink-0" style={{ background: bg }}>
               <Icon className="h-4 w-4" style={{ color }} />
             </div>
@@ -71,7 +71,7 @@ export function TabAngajati({ statieId, from, to }: TabAngajatiProps) {
 
           return (
             <div key={a.id} className={cn(
-              "bg-white border border-[#F3F4F6] rounded-xl p-4 space-y-3",
+              "bg-white border border-[#E5E7EB] rounded-xl p-4 space-y-3",
               !a.activ && "opacity-60"
             )}>
               {/* Header */}
@@ -89,7 +89,7 @@ export function TabAngajati({ statieId, from, to }: TabAngajatiProps) {
                 </div>
                 <span className={cn(
                   "px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0",
-                  a.activ ? "bg-[#DCFCE7] text-[#15803D]" : "bg-[#F3F4F6] text-[#9CA3AF]"
+                  a.activ ? "bg-[#DCFCE7] text-[#15803D]" : "bg-[#F7F8FA] text-[#9CA3AF]"
                 )}>
                   {a.activ ? "Activ" : "Inactiv"}
                 </span>
@@ -101,7 +101,7 @@ export function TabAngajati({ statieId, from, to }: TabAngajatiProps) {
                   <p className="text-base font-bold text-[#111318]">{a.programari_total}</p>
                   <p className="text-[10px] text-[#9CA3AF]">programări</p>
                 </div>
-                <div className="text-center border-x border-[#F3F4F6]">
+                <div className="text-center border-x border-[#E5E7EB]">
                   <p className="text-base font-bold text-[#111318]">{a.programari_finalizate}</p>
                   <p className="text-[10px] text-[#9CA3AF]">finalizate</p>
                 </div>
@@ -128,14 +128,14 @@ export function TabAngajati({ statieId, from, to }: TabAngajatiProps) {
       </div>
 
       {/* Table */}
-      <div className="bg-white border border-[#F3F4F6] rounded-xl">
-        <div className="px-4 py-3 border-b border-[#F3F4F6]">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl">
+        <div className="px-4 py-3 border-b border-[#E5E7EB]">
           <h3 className="text-sm font-semibold text-[#111318]">Statistici per angajat — intervalul selectat</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-[#F3F4F6] bg-[#F9FAFB]">
+              <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
                 <th className="text-left px-4 py-2.5 text-[#6B7280] font-medium">Angajat</th>
                 <th className="text-left px-4 py-2.5 text-[#6B7280] font-medium">Funcție</th>
                 <th className="text-right px-4 py-2.5 text-[#6B7280] font-medium">Programări</th>
@@ -146,7 +146,7 @@ export function TabAngajati({ statieId, from, to }: TabAngajatiProps) {
             </thead>
             <tbody>
               {data.angajati.map((a) => (
-                <tr key={a.id} className="border-b border-[#F3F4F6] last:border-0 hover:bg-[#F9FAFB]">
+                <tr key={a.id} className="border-b border-[#E5E7EB] last:border-0 hover:bg-[#F9FAFB]">
                   <td className="px-4 py-2.5 font-medium text-[#111318]">{a.nume}</td>
                   <td className="px-4 py-2.5 text-[#6B7280]">{a.functie ?? "—"}</td>
                   <td className="px-4 py-2.5 text-right text-[#374151]">{a.programari_total}</td>
@@ -157,7 +157,7 @@ export function TabAngajati({ statieId, from, to }: TabAngajatiProps) {
                   <td className="px-4 py-2.5 text-center">
                     <span className={cn(
                       "px-2 py-0.5 rounded-full text-[10px] font-semibold",
-                      a.activ ? "bg-[#DCFCE7] text-[#15803D]" : "bg-[#F3F4F6] text-[#9CA3AF]"
+                      a.activ ? "bg-[#DCFCE7] text-[#15803D]" : "bg-[#F7F8FA] text-[#9CA3AF]"
                     )}>
                       {a.activ ? "Activ" : "Inactiv"}
                     </span>

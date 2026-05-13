@@ -83,7 +83,7 @@ export default async function ClientiPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h1 className="text-xl font-semibold text-[#111318] tracking-tight">Clienți</h1>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#F3F4F6] text-[#6B7280]">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#F7F8FA] text-[#6B7280]">
               {totalClienti} clienți
             </span>
           </div>
@@ -98,7 +98,7 @@ export default async function ClientiPage() {
             { value: activiLuna, label: "Activi luna curentă" },
             { value: `${pctSms}%`, label: "Cu SMS activ" },
           ].map(({ value, label }) => (
-            <div key={label} className="bg-white border border-[#F3F4F6] rounded-xl p-4">
+            <div key={label} className="bg-white border border-[#E5E7EB] rounded-xl p-4">
               <p className="text-2xl font-semibold text-[#111318] leading-none">{value}</p>
               <p className="text-xs text-[#6B7280] mt-1">{label}</p>
             </div>

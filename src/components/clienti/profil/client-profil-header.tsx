@@ -65,7 +65,7 @@ export function ClientProfilHeader({ client, stats, statieId }: ClientProfilHead
       </div>
 
       {/* Header card */}
-      <div className="bg-white border border-[#F3F4F6] rounded-xl p-5 mb-6">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl p-5 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           {/* Left: avatar + info */}
           <div className="flex items-start gap-4">
@@ -111,7 +111,7 @@ export function ClientProfilHeader({ client, stats, statieId }: ClientProfilHead
                     SMS activ
                   </span>
                 ) : (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#F3F4F6] text-[#9CA3AF]">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#F7F8FA] text-[#9CA3AF]">
                     SMS oprit
                   </span>
                 )}
@@ -125,7 +125,7 @@ export function ClientProfilHeader({ client, stats, statieId }: ClientProfilHead
           {/* Right: stats + actions */}
           <div className="flex flex-col sm:items-end gap-3">
             {/* Stats row */}
-            <div className="flex items-stretch divide-x divide-[#F3F4F6] border border-[#F3F4F6] rounded-xl overflow-hidden">
+            <div className="flex items-stretch divide-x divide-[#F3F4F6] border border-[#E5E7EB] rounded-xl overflow-hidden">
               {[
                 { value: stats.nrVehicule, label: "Vehicule" },
                 { value: stats.nrProgramari, label: "Vizite totale" },

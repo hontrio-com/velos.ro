@@ -62,7 +62,7 @@ function CustomTooltip({
           <span className="font-medium text-[#111318]">{finalizate}</span>
         </div>
         {(venit as number) > 0 && (
-          <div className="flex items-center justify-between gap-4 pt-1 border-t border-[#F3F4F6]">
+          <div className="flex items-center justify-between gap-4 pt-1 border-t border-[#E5E7EB]">
             <span className="text-[#6B7280]">Venit</span>
             <span className="font-medium text-[#111318]">
               {(venit as number).toLocaleString("ro-RO")} RON
@@ -76,7 +76,7 @@ function CustomTooltip({
 
 export function GraficLunar({ data, lunaLabel }: GraficLunarProps) {
   return (
-    <Card className="border-[#F3F4F6] shadow-none">
+    <Card className="border-[#E5E7EB] shadow-none">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2 text-[#111318]">

@@ -53,7 +53,7 @@ export function SmsQuotaWidget() {
   const isEpuizata = quota.ramase === 0;
 
   return (
-    <div className="px-3 py-2.5 mx-2 rounded-lg bg-[#F7F8FA] border border-[#F3F4F6]">
+    <div className="px-3 py-2.5 mx-2 rounded-lg bg-white border border-[#E5E7EB]">
       <div className="flex items-center justify-between mb-1.5">
         <div className="flex items-center gap-1.5">
           <MessageSquare className="h-3 w-3 text-[#6B7280]" />

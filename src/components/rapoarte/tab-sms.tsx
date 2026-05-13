@@ -14,7 +14,7 @@ import type { ZiSms } from "@/lib/actions/rapoarte";
 function ChartTip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white border border-[#F3F4F6] rounded-lg shadow-lg px-3 py-2 text-xs">
+    <div className="bg-white border border-[#E5E7EB] rounded-lg shadow-lg px-3 py-2 text-xs">
       <p className="font-semibold text-[#111318] mb-1.5">{label}</p>
       {payload.map((e: { name: string; value: number; color: string }) => (
         <div key={e.name} className="flex justify-between gap-3">
@@ -68,12 +68,12 @@ function QuotaCard({ luna, trimise, limita }: { luna: string; trimise: number; l
   let monthLabel = luna;
   try { monthLabel = format(parseISO(luna + "-01"), "MMM yyyy", { locale: ro }); } catch { /* noop */ }
   return (
-    <div className="bg-white border border-[#F3F4F6] rounded-xl p-3">
+    <div className="bg-white border border-[#E5E7EB] rounded-xl p-3">
       <p className="text-xs font-medium text-[#111318] mb-1 capitalize">{monthLabel}</p>
       <p className="text-sm font-bold text-[#111318]">
         {trimise}<span className="text-xs font-normal text-[#9CA3AF]"> / {limita === 9999 ? "∞" : limita}</span>
       </p>
-      <div className="mt-2 h-1.5 bg-[#F3F4F6] rounded-full overflow-hidden">
+      <div className="mt-2 h-1.5 bg-[#F7F8FA] rounded-full overflow-hidden">
         <div className="h-full rounded-full" style={{ width: `${Math.min(pct, 100)}%`, background: color }} />
       </div>
       <p className="text-[10px] text-[#9CA3AF] mt-1">{Math.round(pct)}% utilizat</p>
@@ -149,7 +149,7 @@ export function TabSms({ statieId, profileId, from, to }: TabSmsProps) {
           { label: "Erori", value: data.kpi.erori },
           { label: "Rată livrare", value: `${data.kpi.rata_livrare}%` },
         ].map(({ label, value }) => (
-          <div key={label} className="bg-white border border-[#F3F4F6] rounded-xl p-4">
+          <div key={label} className="bg-white border border-[#E5E7EB] rounded-xl p-4">
             <p className="text-xs text-[#6B7280] mb-1">{label}</p>
             <p className="text-xl font-bold text-[#111318] leading-tight">{value}</p>
           </div>
@@ -157,7 +157,7 @@ export function TabSms({ statieId, profileId, from, to }: TabSmsProps) {
       </div>
 
       {/* Area chart */}
-      <div className="bg-white border border-[#F3F4F6] rounded-xl p-4">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl p-4">
         <h3 className="text-sm font-semibold text-[#111318] mb-3">SMS pe zile</h3>
         {chartData.some((d) => d.livrate + d.erori > 0) ? (
           <>
@@ -192,7 +192,7 @@ export function TabSms({ statieId, profileId, from, to }: TabSmsProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Tip breakdown */}
         {data.tipDist.length > 0 && (
-          <div className="bg-white border border-[#F3F4F6] rounded-xl p-4">
+          <div className="bg-white border border-[#E5E7EB] rounded-xl p-4">
             <h3 className="text-sm font-semibold text-[#111318] mb-3">Distribuție pe tip reminder</h3>
             <div className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -212,13 +212,13 @@ export function TabSms({ statieId, profileId, from, to }: TabSmsProps) {
         )}
 
         {/* Quota history */}
-        <div className="bg-white border border-[#F3F4F6] rounded-xl p-4">
+        <div className="bg-white border border-[#E5E7EB] rounded-xl p-4">
           <div className="flex items-center gap-2 mb-3">
             <MessageSquare className="h-4 w-4 text-[#6B7280]" />
             <h3 className="text-sm font-semibold text-[#111318]">Quota SMS lunară</h3>
           </div>
           {data.quota && (
-            <div className="mb-3 p-3 bg-[#F7F8FA] rounded-lg">
+            <div className="mb-3 p-3 bg-white rounded-lg">
               <p className="text-xs text-[#6B7280] mb-1">Luna curentă</p>
               <p className="text-lg font-bold text-[#111318]">
                 {data.quota.trimise}
@@ -242,7 +242,7 @@ export function TabSms({ statieId, profileId, from, to }: TabSmsProps) {
             <div className="mt-3 space-y-1.5">
               {data.tipDist.map((t) => (
                 <div key={t.tip} className="flex items-center gap-2">
-                  <div className="flex-1 h-1.5 bg-[#F3F4F6] rounded-full overflow-hidden">
+                  <div className="flex-1 h-1.5 bg-[#F7F8FA] rounded-full overflow-hidden">
                     <div className="h-full bg-[#1877F2] rounded-full" style={{ width: `${(t.count / maxTip) * 100}%` }} />
                   </div>
                   <span className="text-[10px] text-[#6B7280] w-20 truncate">{t.label}</span>
@@ -255,15 +255,15 @@ export function TabSms({ statieId, profileId, from, to }: TabSmsProps) {
       </div>
 
       {/* SMS log table */}
-      <div className="bg-white border border-[#F3F4F6] rounded-xl">
-        <div className="px-4 py-3 border-b border-[#F3F4F6] flex items-center justify-between">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl">
+        <div className="px-4 py-3 border-b border-[#E5E7EB] flex items-center justify-between">
           <h3 className="text-sm font-semibold text-[#111318]">Log SMS</h3>
           <span className="text-xs text-[#9CA3AF]">{data.lista.length} mesaje</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-[#F3F4F6] bg-[#F9FAFB]">
+              <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
                 <th className="text-left px-4 py-2.5 text-[#6B7280] font-medium cursor-pointer hover:text-[#111318] select-none" onClick={() => toggleSort("created_at")}>
                   <span className="inline-flex items-center gap-1">Data<SortIcon k="created_at" /></span>
                 </th>
@@ -279,7 +279,7 @@ export function TabSms({ statieId, profileId, from, to }: TabSmsProps) {
             </thead>
             <tbody>
               {paginated.map((m) => (
-                <tr key={m.id} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
+                <tr key={m.id} className="border-b border-[#E5E7EB] hover:bg-[#F9FAFB]">
                   <td className="px-4 py-2.5 text-[#374151] whitespace-nowrap">
                     {format(parseISO(m.created_at), "d MMM, HH:mm", { locale: ro })}
                   </td>
@@ -287,7 +287,7 @@ export function TabSms({ statieId, profileId, from, to }: TabSmsProps) {
                   <td className="px-4 py-2.5 text-[#374151] font-mono">{m.telefon}</td>
                   <td className="px-4 py-2.5 text-[#6B7280] max-w-[200px] truncate">{m.mesaj.slice(0, 60)}{m.mesaj.length > 60 && "…"}</td>
                   <td className="px-4 py-2.5">
-                    <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-semibold", STATUS_BADGE[m.status] ?? "bg-[#F3F4F6] text-[#6B7280]")}>
+                    <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-semibold", STATUS_BADGE[m.status] ?? "bg-[#F7F8FA] text-[#6B7280]")}>
                       {m.status}
                     </span>
                   </td>
@@ -300,7 +300,7 @@ export function TabSms({ statieId, profileId, from, to }: TabSmsProps) {
           </table>
         </div>
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-2.5 border-t border-[#F3F4F6]">
+          <div className="flex items-center justify-between px-4 py-2.5 border-t border-[#E5E7EB]">
             <span className="text-xs text-[#9CA3AF]">Pagina {page + 1} din {totalPages}</span>
             <div className="flex gap-2">
               <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0} className="px-2 py-1 text-xs rounded border border-[#E5E7EB] disabled:opacity-40 hover:bg-[#F9FAFB]">←</button>

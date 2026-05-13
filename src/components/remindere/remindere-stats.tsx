@@ -76,7 +76,7 @@ export function RemindereStats({ statieId }: RemindereStatsProps) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
       {kpis.map(({ label, value, icon: Icon, color, bg }) => (
-        <div key={label} className="bg-white border border-[#F3F4F6] rounded-xl p-4 flex items-center gap-3">
+        <div key={label} className="bg-white border border-[#E5E7EB] rounded-xl p-4 flex items-center gap-3">
           <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg shrink-0", bg)}>
             <Icon className={cn("h-4 w-4", color)} />
           </div>
@@ -88,9 +88,9 @@ export function RemindereStats({ statieId }: RemindereStatsProps) {
       ))}
 
       {/* Quota SMS card */}
-      <div className="bg-white border border-[#F3F4F6] rounded-xl p-4">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl p-4">
         <div className="flex items-center gap-2 mb-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F3F4F6] shrink-0">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F7F8FA] shrink-0">
             <MessageSquare className="h-4 w-4 text-[#6B7280]" />
           </div>
           <div className="min-w-0">

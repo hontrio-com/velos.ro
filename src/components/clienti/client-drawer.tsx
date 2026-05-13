@@ -91,7 +91,7 @@ export function ClientDrawer({ open, onClose, onSuccess, initial }: ClientDrawer
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
       <SheetContent side="right" className="w-full sm:max-w-[460px] p-0 flex flex-col">
-        <SheetHeader className="px-5 py-4 border-b border-[#F3F4F6] shrink-0">
+        <SheetHeader className="px-5 py-4 border-b border-[#E5E7EB] shrink-0">
           <SheetTitle className="text-[#111318]">
             {isEdit ? "Editează client" : "Client nou"}
           </SheetTitle>
@@ -164,7 +164,7 @@ export function ClientDrawer({ open, onClose, onSuccess, initial }: ClientDrawer
 
             {/* Date suplimentare (accordion) */}
             <Accordion multiple={false}>
-              <AccordionItem value="extra" className="border-[#F3F4F6]">
+              <AccordionItem value="extra" className="border-[#E5E7EB]">
                 <AccordionTrigger className="text-sm text-[#6B7280] py-2 hover:no-underline hover:text-[#374151]">
                   Date suplimentare
                 </AccordionTrigger>
@@ -197,7 +197,7 @@ export function ClientDrawer({ open, onClose, onSuccess, initial }: ClientDrawer
               <p className="text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF]">
                 Preferințe
               </p>
-              <div className="flex items-center justify-between rounded-xl border border-[#F3F4F6] px-4 py-3">
+              <div className="flex items-center justify-between rounded-xl border border-[#E5E7EB] px-4 py-3">
                 <div>
                   <p className="text-sm font-medium text-[#111318]">Remindere SMS</p>
                   <p className="text-xs text-[#9CA3AF] mt-0.5">
@@ -219,7 +219,7 @@ export function ClientDrawer({ open, onClose, onSuccess, initial }: ClientDrawer
           </div>
 
           {/* Footer sticky */}
-          <div className="border-t border-[#F3F4F6] px-5 py-4 shrink-0 flex items-center justify-between gap-3">
+          <div className="border-t border-[#E5E7EB] px-5 py-4 shrink-0 flex items-center justify-between gap-3">
             <p className="text-[11px] text-[#9CA3AF]">* câmpuri obligatorii</p>
             <div className="flex items-center gap-2">
               <Button

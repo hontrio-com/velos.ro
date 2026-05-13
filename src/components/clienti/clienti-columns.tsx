@@ -204,7 +204,7 @@ export function getClientiColumns(callbacks: ActionsCallbacks): ColumnDef<Client
             Activ
           </span>
         ) : (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#F3F4F6] text-[#9CA3AF]">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#F7F8FA] text-[#9CA3AF]">
             Oprit
           </span>
         ),
@@ -240,7 +240,7 @@ export function getClientiColumns(callbacks: ActionsCallbacks): ColumnDef<Client
             onClick={(e) => e.stopPropagation()}
           >
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-[#F3F4F6] transition-colors">
+              <DropdownMenuTrigger className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-[#F7F8FA] transition-colors">
                 <MoreHorizontal className="h-4 w-4 text-[#6B7280]" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44">

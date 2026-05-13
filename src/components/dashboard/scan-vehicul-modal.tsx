@@ -84,7 +84,7 @@ export function ScanVehiculModal({ statieId, onClose }: Props) {
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[#F3F4F6]">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-[#E5E7EB]">
             <div className="flex items-center gap-2.5">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#EFF6FF]">
                 <ScanText className="h-4 w-4 text-[#1877F2]" />
@@ -113,7 +113,7 @@ export function ScanVehiculModal({ statieId, onClose }: Props) {
                   }}
                 />
 
-                <div className="bg-[#F7F8FA] border border-[#F3F4F6] rounded-xl p-6 flex flex-col items-center gap-3 text-center">
+                <div className="bg-white border border-[#E5E7EB] rounded-xl p-6 flex flex-col items-center gap-3 text-center">
                   <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#EFF6FF]">
                     <Camera className="h-7 w-7 text-[#1877F2]" />
                   </div>

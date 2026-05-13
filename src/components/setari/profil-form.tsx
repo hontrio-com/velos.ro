@@ -56,7 +56,7 @@ export function ProfilForm({ initialData }: ProfilFormProps) {
 
   return (
     <div className="max-w-lg">
-      <div className="bg-white border border-[#F3F4F6] rounded-xl p-6 space-y-5">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl p-6 space-y-5">
         {/* Email (read-only) */}
         <div className="space-y-1.5">
           <Label className="text-sm font-medium text-[#374151]">
@@ -67,7 +67,7 @@ export function ProfilForm({ initialData }: ProfilFormProps) {
             <Input
               value={initialData.email}
               disabled
-              className="pl-9 bg-[#F7F8FA] text-[#9CA3AF]"
+              className="pl-9 bg-white text-[#9CA3AF]"
             />
           </div>
           <p className="text-xs text-[#9CA3AF]">Emailul nu poate fi modificat</p>

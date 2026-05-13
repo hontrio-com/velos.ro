@@ -12,7 +12,7 @@ export function ReminderStatusBadge({ status, className }: ReminderStatusBadgePr
   const cfg = STATUS_CONFIG[status] ?? {
     label: status,
     colorClass: "text-[#9CA3AF]",
-    bgClass: "bg-[#F3F4F6]",
+    bgClass: "bg-[#F7F8FA]",
   };
 
   return (

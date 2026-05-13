@@ -170,7 +170,7 @@ export function RapoarteClient({
 
       {/* Tabs */}
       <Tabs value={tab ?? "financiar"} onValueChange={(v) => setTab(v as Tab)}>
-        <TabsList className="bg-[#F7F8FA] border border-[#F3F4F6] h-9 p-0.5">
+        <TabsList className="bg-white border border-[#E5E7EB] h-9 p-0.5">
           {[
             { value: "financiar", label: "Financiar", icon: DollarSign },
             { value: "programari", label: "Programări", icon: CalendarDays },

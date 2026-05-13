@@ -247,7 +247,7 @@ export function AbonamentClient({ currentPlan, email }: AbonamentClientProps) {
                 className={cn(
                   "w-full h-8 text-xs font-semibold transition-all",
                   isCurrent
-                    ? "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#F3F4F6] cursor-default"
+                    ? "bg-[#F7F8FA] text-[#6B7280] hover:bg-[#F7F8FA] cursor-default"
                     : ""
                 )}
                 style={
@@ -266,7 +266,7 @@ export function AbonamentClient({ currentPlan, email }: AbonamentClientProps) {
       </div>
 
       {/* FAQ / contact */}
-      <div className="bg-[#F7F8FA] border border-[#F3F4F6] rounded-xl p-5">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl p-5">
         <h3 className="text-sm font-semibold text-[#111318] mb-3">Întrebări frecvente</h3>
         <div className="grid gap-4 sm:grid-cols-2 text-xs text-[#6B7280]">
           <div>

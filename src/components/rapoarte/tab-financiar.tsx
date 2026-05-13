@@ -32,7 +32,7 @@ function TrendPill({ value }: { value: number }) {
 function ChartTip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white border border-[#F3F4F6] rounded-lg shadow-lg px-3 py-2 text-xs min-w-[140px]">
+    <div className="bg-white border border-[#E5E7EB] rounded-lg shadow-lg px-3 py-2 text-xs min-w-[140px]">
       <p className="font-semibold text-[#111318] mb-1.5">{label}</p>
       {payload.map((e: { name: string; value: number; color: string }) => (
         <div key={e.name} className="flex justify-between gap-3">
@@ -120,7 +120,7 @@ export function TabFinanciar({ statieId, from, to }: TabFinanciarProps) {
           { label: "Preț mediu / ITP", value: fmtRon(data.kpi.pret_mediu), trend: null },
           { label: "Rată colectare", value: `${data.kpi.rata_colectare}%`, trend: null },
         ].map(({ label, value, trend }) => (
-          <div key={label} className="bg-white border border-[#F3F4F6] rounded-xl p-4">
+          <div key={label} className="bg-white border border-[#E5E7EB] rounded-xl p-4">
             <p className="text-xs text-[#6B7280] mb-1">{label}</p>
             <p className="text-xl font-bold text-[#111318] leading-tight">{value}</p>
             {trend !== null && (
@@ -133,7 +133,7 @@ export function TabFinanciar({ statieId, from, to }: TabFinanciarProps) {
       </div>
 
       {/* Area chart */}
-      <div className="bg-white border border-[#F3F4F6] rounded-xl p-4">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl p-4">
         <h3 className="text-sm font-semibold text-[#111318] mb-3">Venituri zilnice</h3>
         {chartData.some((d) => d.venit > 0) ? (
           <div className="h-[220px]">
@@ -164,7 +164,7 @@ export function TabFinanciar({ statieId, from, to }: TabFinanciarProps) {
       {data.tipVehicul.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Bar chart */}
-          <div className="bg-white border border-[#F3F4F6] rounded-xl p-4">
+          <div className="bg-white border border-[#E5E7EB] rounded-xl p-4">
             <h3 className="text-sm font-semibold text-[#111318] mb-3">Venit pe tip vehicul</h3>
             <div className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -183,11 +183,11 @@ export function TabFinanciar({ statieId, from, to }: TabFinanciarProps) {
           </div>
 
           {/* Table */}
-          <div className="bg-white border border-[#F3F4F6] rounded-xl p-4">
+          <div className="bg-white border border-[#E5E7EB] rounded-xl p-4">
             <h3 className="text-sm font-semibold text-[#111318] mb-3">Detalii pe tip vehicul</h3>
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-[#F3F4F6]">
+                <tr className="border-b border-[#E5E7EB]">
                   <th className="text-left py-2 text-[#6B7280] font-medium">Tip vehicul</th>
                   <th className="text-right py-2 text-[#6B7280] font-medium">Nr ITP</th>
                   <th className="text-right py-2 text-[#6B7280] font-medium">Venit</th>
@@ -196,7 +196,7 @@ export function TabFinanciar({ statieId, from, to }: TabFinanciarProps) {
               </thead>
               <tbody>
                 {data.tipVehicul.map((t) => (
-                  <tr key={t.tip} className="border-b border-[#F3F4F6]">
+                  <tr key={t.tip} className="border-b border-[#E5E7EB]">
                     <td className="py-2 text-[#111318] font-medium">{t.tip}</td>
                     <td className="py-2 text-right text-[#374151]">{t.nr}</td>
                     <td className="py-2 text-right text-[#374151]">{fmtRon(t.venit)}</td>
@@ -218,14 +218,14 @@ export function TabFinanciar({ statieId, from, to }: TabFinanciarProps) {
       )}
 
       {/* Daily table */}
-      <div className="bg-white border border-[#F3F4F6] rounded-xl">
-        <div className="px-4 py-3 border-b border-[#F3F4F6]">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl">
+        <div className="px-4 py-3 border-b border-[#E5E7EB]">
           <h3 className="text-sm font-semibold text-[#111318]">Detalii zilnice</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-[#F3F4F6] bg-[#F9FAFB]">
+              <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
                 <th className="text-left px-4 py-2.5 text-[#6B7280] font-medium">Data</th>
                 <th className="text-right px-4 py-2.5 text-[#6B7280] font-medium">Total</th>
                 <th className="text-right px-4 py-2.5 text-[#6B7280] font-medium">Finalizate</th>
@@ -234,7 +234,7 @@ export function TabFinanciar({ statieId, from, to }: TabFinanciarProps) {
             </thead>
             <tbody>
               {data.zilnic.map((z) => (
-                <tr key={z.data} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
+                <tr key={z.data} className="border-b border-[#E5E7EB] hover:bg-[#F9FAFB]">
                   <td className="px-4 py-2 text-[#374151]">
                     {format(parseISO(z.data), "EEEE, d MMM yyyy", { locale: ro })}
                   </td>

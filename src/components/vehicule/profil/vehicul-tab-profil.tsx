@@ -142,7 +142,7 @@ export function VehiculTabProfil({ vehicul }: Props) {
   return (
     <div className="space-y-5">
       {/* Date generale */}
-      <div className="bg-white border border-[#F3F4F6] rounded-xl p-5">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl p-5">
         <SectionTitle icon={Car} title="Date vehicul" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Field label="Nr. înmatriculare *">
@@ -187,7 +187,7 @@ export function VehiculTabProfil({ vehicul }: Props) {
       </div>
 
       {/* Expirări */}
-      <div className="bg-white border border-[#F3F4F6] rounded-xl p-5">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl p-5">
         <SectionTitle icon={Settings} title="Date expirare" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
@@ -206,7 +206,7 @@ export function VehiculTabProfil({ vehicul }: Props) {
       </div>
 
       {/* Proprietar */}
-      <div className="bg-white border border-[#F3F4F6] rounded-xl p-5">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl p-5">
         <SectionTitle icon={User} title="Proprietar" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Field label="Tip proprietar">
@@ -226,7 +226,7 @@ export function VehiculTabProfil({ vehicul }: Props) {
       </div>
 
       {/* Observații */}
-      <div className="bg-white border border-[#F3F4F6] rounded-xl p-5">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl p-5">
         <SectionTitle icon={Settings} title="Observații" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Observații publice">

@@ -132,7 +132,7 @@ export function TabPending({ remindere, isLoading, onUpdate }: TabPendingProps) 
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.15, delay: i * 0.03 }}
             >
-              <div className="flex gap-0 rounded-xl border border-[#F3F4F6] bg-white overflow-hidden">
+              <div className="flex gap-0 rounded-xl border border-[#E5E7EB] bg-white overflow-hidden">
                 {/* Urgency bar */}
                 <div className={cn("w-1 shrink-0", tipCfg.bgClass.replace("bg-", "bg-").replace("50", "400"))} />
 
@@ -174,7 +174,7 @@ export function TabPending({ remindere, isLoading, onUpdate }: TabPendingProps) 
                       )}
                     </div>
 
-                    <div className="w-px self-stretch bg-[#F3F4F6]" />
+                    <div className="w-px self-stretch bg-[#F7F8FA]" />
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">

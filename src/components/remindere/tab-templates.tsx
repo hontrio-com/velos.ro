@@ -94,7 +94,7 @@ export function TabTemplates({ templates, onUpdate }: TabTemplatesProps) {
                 "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left text-sm transition-colors",
                 activeTip === tip
                   ? "bg-[#EFF6FF] text-[#1877F2] font-medium"
-                  : "hover:bg-[#F7F8FA] text-[#6B7280]"
+                  : "hover:bg-white text-[#6B7280]"
               )}
             >
               <span
@@ -129,7 +129,7 @@ export function TabTemplates({ templates, onUpdate }: TabTemplatesProps) {
                 Template personalizat
               </Badge>
             ) : (
-              <Badge className="border-0 bg-[#F3F4F6] text-[#6B7280] text-xs">
+              <Badge className="border-0 bg-[#F7F8FA] text-[#6B7280] text-xs">
                 Template global
               </Badge>
             )}
@@ -155,7 +155,7 @@ export function TabTemplates({ templates, onUpdate }: TabTemplatesProps) {
             <button
               key={v}
               onClick={() => insertVar(v)}
-              className="px-2 py-0.5 rounded-md bg-[#F3F4F6] text-[#1877F2] text-xs font-mono hover:bg-[#DBEAFE] transition-colors"
+              className="px-2 py-0.5 rounded-md bg-[#F7F8FA] text-[#1877F2] text-xs font-mono hover:bg-[#DBEAFE] transition-colors"
             >
               {v}
             </button>
@@ -164,12 +164,12 @@ export function TabTemplates({ templates, onUpdate }: TabTemplatesProps) {
 
         {preview ? (
           /* Preview */
-          <div className="p-4 rounded-xl bg-[#F7F8FA] border border-[#F3F4F6]">
+          <div className="p-4 rounded-xl bg-white border border-[#E5E7EB]">
             <div className="flex items-center gap-2 mb-3">
               <MessageSquare className="h-4 w-4 text-[#6B7280]" />
               <span className="text-xs font-medium text-[#6B7280]">Preview SMS</span>
             </div>
-            <div className="bg-white rounded-lg p-3 border border-[#F3F4F6]">
+            <div className="bg-white rounded-lg p-3 border border-[#E5E7EB]">
               <p className="text-sm text-[#111318] whitespace-pre-wrap leading-relaxed">
                 {previewText || <span className="text-[#9CA3AF] italic">Mesaj gol</span>}
               </p>

@@ -152,7 +152,7 @@ export function ClientiTable({ data, statieId }: ClientiTableProps) {
   return (
     <>
       {/* Toolbar */}
-      <div className="bg-white border border-[#F3F4F6] rounded-xl p-4 mb-4">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 mb-4">
         <div className="flex items-center gap-3">
           {/* Search */}
           <div className="relative flex-1 max-w-[320px]">
@@ -223,10 +223,10 @@ export function ClientiTable({ data, statieId }: ClientiTableProps) {
       </div>
 
       {/* Table */}
-      <div className="bg-white border border-[#F3F4F6] rounded-xl overflow-hidden">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden">
         {data.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#F3F4F6] mb-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#F7F8FA] mb-4">
               <Users className="h-6 w-6 text-[#9CA3AF]" />
             </div>
             <p className="text-sm font-medium text-[#111318]">Niciun client înregistrat</p>
@@ -258,7 +258,7 @@ export function ClientiTable({ data, statieId }: ClientiTableProps) {
             <table className="w-full">
               <thead>
                 {table.getHeaderGroups().map((hg) => (
-                  <tr key={hg.id} className="border-b border-[#F3F4F6] bg-[#F9FAFB]">
+                  <tr key={hg.id} className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
                     {hg.headers.map((h) => (
                       <th
                         key={h.id}
@@ -296,7 +296,7 @@ export function ClientiTable({ data, statieId }: ClientiTableProps) {
 
         {/* Footer / pagination */}
         {data.length > 0 && (
-          <div className="flex items-center justify-between px-5 py-3 border-t border-[#F3F4F6]">
+          <div className="flex items-center justify-between px-5 py-3 border-t border-[#E5E7EB]">
             <p className="text-xs text-[#9CA3AF]">
               Afișând {from}–{to} din {totalFiltered} clienți
             </p>

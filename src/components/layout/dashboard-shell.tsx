@@ -51,7 +51,7 @@ export function DashboardShell({
   }, [sidebarOpen]);
 
   return (
-    <div className="min-h-screen bg-[#F7F8FA]">
+    <div className="min-h-screen bg-white">
       <Sidebar
         statii={statii}
         isOpen={sidebarOpen}

@@ -62,7 +62,7 @@ function itpStatus(expirare: string | null): {
   if (!expirare) {
     return {
       label: "Necunoscut",
-      className: "bg-[#F3F4F6] text-[#9CA3AF]",
+      className: "bg-[#F7F8FA] text-[#9CA3AF]",
       icon: Car,
       days: null,
     };
@@ -161,8 +161,8 @@ export function ClientTabVehicule({
       </div>
 
       {vehicule.length === 0 ? (
-        <div className="bg-white border border-[#F3F4F6] rounded-xl py-16 flex flex-col items-center justify-center text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F3F4F6] mb-3">
+        <div className="bg-white border border-[#E5E7EB] rounded-xl py-16 flex flex-col items-center justify-center text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F7F8FA] mb-3">
             <Car className="h-5 w-5 text-[#9CA3AF]" />
           </div>
           <p className="text-sm font-medium text-[#374151]">
@@ -193,7 +193,7 @@ export function ClientTabVehicule({
                   "group bg-white border rounded-xl p-4 hover:shadow-sm transition-all flex flex-col gap-3",
                   isUrgent
                     ? "border-orange-200 bg-orange-50/30"
-                    : "border-[#F3F4F6]"
+                    : "border-[#E5E7EB]"
                 )}
               >
                 <div className="flex items-start justify-between">
@@ -226,7 +226,7 @@ export function ClientTabVehicule({
                 </div>
 
                 {(v.expirare_rca || v.expirare_rovinieta) && (
-                  <div className="flex items-center gap-3 pt-2 border-t border-[#F3F4F6]">
+                  <div className="flex items-center gap-3 pt-2 border-t border-[#E5E7EB]">
                     {v.expirare_rca && (
                       <span className="text-[11px] text-[#9CA3AF]">
                         RCA:{" "}
@@ -253,7 +253,7 @@ export function ClientTabVehicule({
       {/* Add vehicle sheet */}
       <Sheet open={sheetOpen} onOpenChange={(v) => !v && setSheetOpen(false)}>
         <SheetContent side="right" className="w-full sm:max-w-[460px] p-0 flex flex-col">
-          <SheetHeader className="px-5 py-4 border-b border-[#F3F4F6] shrink-0">
+          <SheetHeader className="px-5 py-4 border-b border-[#E5E7EB] shrink-0">
             <SheetTitle className="text-[#111318]">Vehicul nou</SheetTitle>
           </SheetHeader>
 
@@ -368,7 +368,7 @@ export function ClientTabVehicule({
               </div>
             </div>
 
-            <div className="border-t border-[#F3F4F6] px-5 py-4 shrink-0 flex items-center justify-end gap-2">
+            <div className="border-t border-[#E5E7EB] px-5 py-4 shrink-0 flex items-center justify-end gap-2">
               <Button
                 type="button"
                 variant="outline"

@@ -225,9 +225,9 @@ export function TabToate({ remindere, isLoading, onUpdate }: TabToateProps) {
         />
       </div>
 
-      <div className="rounded-xl border border-[#F3F4F6] overflow-hidden bg-white">
+      <div className="rounded-xl border border-[#E5E7EB] overflow-hidden bg-white">
         <table className="w-full text-sm">
-          <thead className="bg-[#F7F8FA] border-b border-[#F3F4F6]">
+          <thead className="bg-white border-b border-[#E5E7EB]">
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>
                 {hg.headers.map((h) => (
@@ -255,7 +255,7 @@ export function TabToate({ remindere, isLoading, onUpdate }: TabToateProps) {
               table.getRowModel().rows.map((row) => (
                 <tr
                   key={row.id}
-                  className="border-b border-[#F3F4F6] last:border-0 hover:bg-[#F7F8FA] transition-colors"
+                  className="border-b border-[#E5E7EB] last:border-0 hover:bg-white transition-colors"
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td

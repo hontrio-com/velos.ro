@@ -66,7 +66,7 @@ export function TrimiteSmsDialog({
 
         <div className="space-y-4 py-2">
           {/* Recipient */}
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-[#F7F8FA] border border-[#F3F4F6]">
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-white border border-[#E5E7EB]">
             <Phone className="h-4 w-4 text-[#6B7280] shrink-0" />
             <div className="min-w-0">
               <p className="text-sm font-medium text-[#111318]">{numeClient}</p>

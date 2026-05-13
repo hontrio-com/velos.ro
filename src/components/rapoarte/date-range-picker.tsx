@@ -105,7 +105,7 @@ export function DateRangePicker({ className }: DateRangePickerProps) {
           <span
             role="button"
             onClick={handleClear}
-            className="h-4 w-4 rounded flex items-center justify-center text-[#9CA3AF] hover:text-[#111318] hover:bg-[#F3F4F6] shrink-0"
+            className="h-4 w-4 rounded flex items-center justify-center text-[#9CA3AF] hover:text-[#111318] hover:bg-[#F7F8FA] shrink-0"
           >
             <X className="h-3 w-3" />
           </span>
@@ -115,7 +115,7 @@ export function DateRangePicker({ className }: DateRangePickerProps) {
       </PopoverTrigger>
 
       <PopoverContent className="w-auto p-0" align="end">
-        <div className="p-3 border-b border-[#F3F4F6]">
+        <div className="p-3 border-b border-[#E5E7EB]">
           <div className="flex flex-wrap gap-1">
             {SHORTCUTS.map((s) => (
               <button
@@ -129,7 +129,7 @@ export function DateRangePicker({ className }: DateRangePickerProps) {
                     s.fn().from.toDateString() === tempRange.from.toDateString() &&
                     s.fn().to.toDateString() === tempRange.to.toDateString()
                     ? "bg-[#1877F2] text-white border-[#1877F2]"
-                    : "bg-white text-[#6B7280] border-[#E5E7EB] hover:bg-[#F3F4F6]"
+                    : "bg-white text-[#6B7280] border-[#E5E7EB] hover:bg-[#F7F8FA]"
                 )}
               >
                 {s.label}
@@ -153,7 +153,7 @@ export function DateRangePicker({ className }: DateRangePickerProps) {
           </div>
         )}
 
-        <div className="flex items-center justify-between px-3 py-2 border-t border-[#F3F4F6]">
+        <div className="flex items-center justify-between px-3 py-2 border-t border-[#E5E7EB]">
           <span className="text-[11px] text-[#6B7280]">
             {tempRange?.from
               ? `${format(tempRange.from, "dd.MM.yyyy")}${tempRange.to ? ` → ${format(tempRange.to, "dd.MM.yyyy")}` : ""}`

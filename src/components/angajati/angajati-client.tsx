@@ -115,7 +115,7 @@ export function AngajatiClient({ statieId, statieNume }: AngajatiClientProps) {
           { label: "Activi", value: activi, icon: UserCheck, color: "#16A34A", bg: "#F0FDF4" },
           { label: "Inactivi", value: inactivi, icon: UserX, color: "#9CA3AF", bg: "#F9FAFB" },
         ].map(({ label, value, icon: Icon, color, bg }) => (
-          <div key={label} className="bg-white border border-[#F3F4F6] rounded-xl p-4 flex items-center gap-3">
+          <div key={label} className="bg-white border border-[#E5E7EB] rounded-xl p-4 flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg shrink-0" style={{ background: bg }}>
               <Icon className="h-4 w-4" style={{ color }} />
             </div>
@@ -135,7 +135,7 @@ export function AngajatiClient({ statieId, statieNume }: AngajatiClientProps) {
           ))}
         </div>
       ) : angajati.length === 0 ? (
-        <div className="bg-white border border-[#F3F4F6] rounded-xl py-16 flex flex-col items-center text-center gap-3">
+        <div className="bg-white border border-[#E5E7EB] rounded-xl py-16 flex flex-col items-center text-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#EFF6FF]">
             <Users className="h-6 w-6 text-[#1877F2]" />
           </div>
@@ -160,7 +160,7 @@ export function AngajatiClient({ statieId, statieNume }: AngajatiClientProps) {
               <div
                 key={a.id}
                 className={cn(
-                  "bg-white border border-[#F3F4F6] rounded-xl p-4 flex flex-col gap-3 transition-opacity",
+                  "bg-white border border-[#E5E7EB] rounded-xl p-4 flex flex-col gap-3 transition-opacity",
                   !a.activ && "opacity-60"
                 )}
               >
@@ -178,7 +178,7 @@ export function AngajatiClient({ statieId, statieNume }: AngajatiClientProps) {
                   </div>
                   <span className={cn(
                     "px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0",
-                    a.activ ? "bg-[#DCFCE7] text-[#15803D]" : "bg-[#F3F4F6] text-[#9CA3AF]"
+                    a.activ ? "bg-[#DCFCE7] text-[#15803D]" : "bg-[#F7F8FA] text-[#9CA3AF]"
                   )}>
                     {a.activ ? "Activ" : "Inactiv"}
                   </span>
@@ -205,7 +205,7 @@ export function AngajatiClient({ statieId, statieNume }: AngajatiClientProps) {
                   <button
                     type="button"
                     onClick={() => handleEdit(a)}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#111318] transition-colors"
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-[#6B7280] hover:bg-[#F7F8FA] hover:text-[#111318] transition-colors"
                   >
                     <Pencil className="h-3 w-3" />
                     Editează
@@ -214,7 +214,7 @@ export function AngajatiClient({ statieId, statieNume }: AngajatiClientProps) {
                     type="button"
                     onClick={() => handleToggle(a)}
                     disabled={isToggling}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#111318] transition-colors disabled:opacity-50"
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-[#6B7280] hover:bg-[#F7F8FA] hover:text-[#111318] transition-colors disabled:opacity-50"
                   >
                     {a.activ
                       ? <><ToggleLeft className="h-3 w-3" /> Dezactivează</>

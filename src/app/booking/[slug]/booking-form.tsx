@@ -193,7 +193,7 @@ export function BookingForm({ statieId, programLucru }: BookingFormProps) {
                   "flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold shrink-0 transition-colors",
                   done ? "bg-[#1877F2] text-white" :
                   active ? "bg-[#EFF6FF] text-[#1877F2] border-2 border-[#1877F2]" :
-                  "bg-[#F3F4F6] text-[#9CA3AF]"
+                  "bg-[#F7F8FA] text-[#9CA3AF]"
                 )}>
                   {done ? <CheckCircle2 className="h-4 w-4" /> : <Icon className="h-3.5 w-3.5" />}
                 </div>
@@ -216,12 +216,12 @@ export function BookingForm({ statieId, programLucru }: BookingFormProps) {
       {step === 1 && (
         <div className="space-y-5">
           {/* Calendar */}
-          <div className="bg-white border border-[#F3F4F6] rounded-xl p-4">
+          <div className="bg-white border border-[#E5E7EB] rounded-xl p-4">
             <div className="flex items-center justify-between mb-4">
               <button
                 type="button"
                 onClick={prevMonth}
-                className="h-7 w-7 flex items-center justify-center rounded-md border border-[#E5E7EB] hover:bg-[#F3F4F6] transition-colors"
+                className="h-7 w-7 flex items-center justify-center rounded-md border border-[#E5E7EB] hover:bg-[#F7F8FA] transition-colors"
               >
                 <ChevronLeft className="h-4 w-4 text-[#374151]" />
               </button>
@@ -231,7 +231,7 @@ export function BookingForm({ statieId, programLucru }: BookingFormProps) {
               <button
                 type="button"
                 onClick={nextMonth}
-                className="h-7 w-7 flex items-center justify-center rounded-md border border-[#E5E7EB] hover:bg-[#F3F4F6] transition-colors"
+                className="h-7 w-7 flex items-center justify-center rounded-md border border-[#E5E7EB] hover:bg-[#F7F8FA] transition-colors"
               >
                 <ChevronRight className="h-4 w-4 text-[#374151]" />
               </button>
@@ -285,7 +285,7 @@ export function BookingForm({ statieId, programLucru }: BookingFormProps) {
 
           {/* Slots */}
           {form.date && (
-            <div className="bg-white border border-[#F3F4F6] rounded-xl p-4">
+            <div className="bg-white border border-[#E5E7EB] rounded-xl p-4">
               <div className="flex items-center gap-2 mb-3">
                 <Clock className="h-4 w-4 text-[#6B7280]" />
                 <span className="text-sm font-semibold text-[#111318]">
@@ -328,7 +328,7 @@ export function BookingForm({ statieId, programLucru }: BookingFormProps) {
                             ? "border-[#1877F2] bg-[#1877F2] text-white shadow-sm"
                             : available
                             ? "border-[#E5E7EB] hover:border-[#1877F2]/50 hover:bg-[#EFF6FF] text-[#374151] cursor-pointer"
-                            : "border-[#F3F4F6] bg-[#F9FAFB] text-[#D1D5DB] cursor-not-allowed"
+                            : "border-[#E5E7EB] bg-[#F9FAFB] text-[#D1D5DB] cursor-not-allowed"
                         )}
                       >
                         <span>{slot}</span>
@@ -359,7 +359,7 @@ export function BookingForm({ statieId, programLucru }: BookingFormProps) {
       {/* ── STEP 2: Personal details ── */}
       {step === 2 && (
         <div className="space-y-5">
-          <div className="bg-white border border-[#F3F4F6] rounded-xl p-4 space-y-4">
+          <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 space-y-4">
             <h3 className="text-sm font-semibold text-[#111318]">Date personale</h3>
 
             <div className="grid grid-cols-2 gap-3">
@@ -385,7 +385,7 @@ export function BookingForm({ statieId, programLucru }: BookingFormProps) {
             />
           </div>
 
-          <div className="bg-white border border-[#F3F4F6] rounded-xl p-4 space-y-4">
+          <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 space-y-4">
             <h3 className="text-sm font-semibold text-[#111318]">Date vehicul</h3>
 
             <Field
@@ -484,7 +484,7 @@ export function BookingForm({ statieId, programLucru }: BookingFormProps) {
 
       {/* ── STEP 4: Success ── */}
       {step === 4 && (
-        <div className="bg-white border border-[#F3F4F6] rounded-xl p-8 flex flex-col items-center text-center gap-4">
+        <div className="bg-white border border-[#E5E7EB] rounded-xl p-8 flex flex-col items-center text-center gap-4">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#DCFCE7]">
             <CheckCircle2 className="h-8 w-8 text-[#16A34A]" />
           </div>
@@ -494,7 +494,7 @@ export function BookingForm({ statieId, programLucru }: BookingFormProps) {
               Programarea ta a fost înregistrată cu succes.
             </p>
           </div>
-          <div className="bg-[#F9FAFB] border border-[#F3F4F6] rounded-lg px-4 py-3 w-full text-left space-y-1.5">
+          <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg px-4 py-3 w-full text-left space-y-1.5">
             <p className="text-xs text-[#6B7280]">
               <span className="font-medium text-[#374151]">Data:</span>{" "}
               {selectedDateFormatted}

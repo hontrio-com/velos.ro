@@ -70,7 +70,7 @@ export function Header({ userEmail, userName, onMenuToggle }: HeaderProps) {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 lg:left-[220px] z-30 h-14 border-b border-[#F3F4F6] bg-white flex items-center justify-between px-4 md:px-6">
+      <header className="fixed top-0 left-0 right-0 lg:left-[220px] z-30 h-14 border-b border-[#E5E7EB] bg-white flex items-center justify-between px-4 md:px-6">
         {/* Left: hamburger (mobile) + search */}
         <div className="flex items-center gap-3">
           <button
@@ -93,7 +93,7 @@ export function Header({ userEmail, userName, onMenuToggle }: HeaderProps) {
           >
             <Search className="h-3.5 w-3.5 shrink-0" />
             <span className="flex-1 text-left">Caută client, vehicul...</span>
-            <span className="flex items-center justify-center px-1.5 py-0.5 rounded bg-[#F3F4F6] text-[#9CA3AF] text-[11px] font-mono leading-none">
+            <span className="flex items-center justify-center px-1.5 py-0.5 rounded bg-[#F7F8FA] text-[#9CA3AF] text-[11px] font-mono leading-none">
               ⌘K
             </span>
           </button>

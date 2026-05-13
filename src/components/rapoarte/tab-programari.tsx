@@ -29,7 +29,7 @@ function TrendPill({ value }: { value: number }) {
 function ChartTip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white border border-[#F3F4F6] rounded-lg shadow-lg px-3 py-2 text-xs">
+    <div className="bg-white border border-[#E5E7EB] rounded-lg shadow-lg px-3 py-2 text-xs">
       <p className="font-semibold text-[#111318] mb-1.5">{label}</p>
       {payload.map((e: { name: string; value: number; color: string }) => (
         <div key={e.name} className="flex justify-between gap-3">
@@ -136,7 +136,7 @@ export function TabProgramari({ statieId, from, to }: TabProgramariProps) {
           { label: "Neprezent", value: data.kpi.neprezent, trend: null },
           { label: "Rată prezență", value: `${data.kpi.rata_prezenta}%`, trend: null },
         ].map(({ label, value, trend }) => (
-          <div key={label} className="bg-white border border-[#F3F4F6] rounded-xl p-4">
+          <div key={label} className="bg-white border border-[#E5E7EB] rounded-xl p-4">
             <p className="text-xs text-[#6B7280] mb-1">{label}</p>
             <p className="text-xl font-bold text-[#111318] leading-tight">{value}</p>
             {trend !== null && <div className="mt-1.5"><TrendPill value={trend} /></div>}
@@ -145,7 +145,7 @@ export function TabProgramari({ statieId, from, to }: TabProgramariProps) {
       </div>
 
       {/* Stacked Bar Chart */}
-      <div className="bg-white border border-[#F3F4F6] rounded-xl p-4">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl p-4">
         <h3 className="text-sm font-semibold text-[#111318] mb-3">Programări pe zile</h3>
         {chartData.some((d) => d.finalizat + d.neprezent + d.anulat > 0) ? (
           <>
@@ -182,7 +182,7 @@ export function TabProgramari({ statieId, from, to }: TabProgramariProps) {
 
       {/* Status distribution donut */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white border border-[#F3F4F6] rounded-xl p-4">
+        <div className="bg-white border border-[#E5E7EB] rounded-xl p-4">
           <h3 className="text-sm font-semibold text-[#111318] mb-3">Distribuție status</h3>
           {data.statusDist.some((d) => d.count > 0) ? (
             <div className="flex items-center gap-4">
@@ -195,7 +195,7 @@ export function TabProgramari({ statieId, from, to }: TabProgramariProps) {
                     <Tooltip content={({ active, payload }) => {
                       if (!active || !payload?.length) return null;
                       const e = payload[0];
-                      return <div className="bg-white border border-[#F3F4F6] rounded-lg px-3 py-2 text-xs shadow-lg"><p className="font-semibold" style={{ color: e.payload.color }}>{e.name}</p><p className="font-bold">{e.value}</p></div>;
+                      return <div className="bg-white border border-[#E5E7EB] rounded-lg px-3 py-2 text-xs shadow-lg"><p className="font-semibold" style={{ color: e.payload.color }}>{e.name}</p><p className="font-bold">{e.value}</p></div>;
                     }} />
                   </PieChart>
                 </ResponsiveContainer>
@@ -221,14 +221,14 @@ export function TabProgramari({ statieId, from, to }: TabProgramariProps) {
         </div>
 
         {/* Daily table */}
-        <div className="bg-white border border-[#F3F4F6] rounded-xl">
-          <div className="px-4 py-3 border-b border-[#F3F4F6]">
+        <div className="bg-white border border-[#E5E7EB] rounded-xl">
+          <div className="px-4 py-3 border-b border-[#E5E7EB]">
             <h3 className="text-sm font-semibold text-[#111318]">Rezumat pe zile</h3>
           </div>
           <div className="max-h-[220px] overflow-y-auto">
             <table className="w-full text-xs">
               <thead className="sticky top-0 bg-[#F9FAFB]">
-                <tr className="border-b border-[#F3F4F6]">
+                <tr className="border-b border-[#E5E7EB]">
                   <th className="text-left px-4 py-2 text-[#6B7280] font-medium">Data</th>
                   <th className="text-right px-4 py-2 text-[#6B7280] font-medium">Total</th>
                   <th className="text-right px-4 py-2 text-[#6B7280] font-medium">Fin.</th>
@@ -237,7 +237,7 @@ export function TabProgramari({ statieId, from, to }: TabProgramariProps) {
               </thead>
               <tbody>
                 {data.zilnic.map((z) => (
-                  <tr key={z.data} className={cn("border-b border-[#F3F4F6]", z.rata < 70 && z.total > 0 && "bg-red-50/40")}>
+                  <tr key={z.data} className={cn("border-b border-[#E5E7EB]", z.rata < 70 && z.total > 0 && "bg-red-50/40")}>
                     <td className="px-4 py-1.5 text-[#374151]">{format(parseISO(z.data), "d MMM", { locale: ro })}</td>
                     <td className="px-4 py-1.5 text-right">{z.total}</td>
                     <td className="px-4 py-1.5 text-right">{z.finalizate}</td>

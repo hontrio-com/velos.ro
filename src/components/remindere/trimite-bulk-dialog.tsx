@@ -135,7 +135,7 @@ export function TrimiteBulkDialog({
                       ? "bg-[#1877F2] text-white"
                       : step > n
                       ? "bg-[#15803D] text-white"
-                      : "bg-[#F3F4F6] text-[#9CA3AF]"
+                      : "bg-[#F7F8FA] text-[#9CA3AF]"
                   )}
                 >
                   {step > n ? "✓" : n}
@@ -152,7 +152,7 @@ export function TrimiteBulkDialog({
         {/* Step 1: Recipients */}
         {step === 1 && (
           <div className="space-y-3 py-2">
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-[#F7F8FA] border border-[#F3F4F6]">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-white border border-[#E5E7EB]">
               <Users className="h-4 w-4 text-[#6B7280] shrink-0" />
               <div>
                 <p className="text-sm font-medium text-[#111318]">
@@ -170,7 +170,7 @@ export function TrimiteBulkDialog({
                 return (
                   <div
                     key={r.id}
-                    className="flex items-center gap-3 p-2.5 rounded-lg border border-[#F3F4F6]"
+                    className="flex items-center gap-3 p-2.5 rounded-lg border border-[#E5E7EB]"
                   >
                     <Badge
                       className={cn(

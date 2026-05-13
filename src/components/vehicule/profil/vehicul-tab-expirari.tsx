@@ -28,7 +28,7 @@ const STATUS_CONFIG = {
   curand:  { label: "Expiră curând", icon: Clock,  className: "bg-amber-100 text-amber-700",  bar: "#F59E0B" },
   urgent:  { label: "Urgent!", icon: AlertTriangle, className: "bg-orange-100 text-orange-700", bar: "#EA580C" },
   expirat: { label: "Expirat", icon: XCircle,      className: "bg-red-100 text-red-700",       bar: "#DC2626" },
-  lipsa:   { label: "Lipsă", icon: Info,           className: "bg-[#F3F4F6] text-[#9CA3AF]",  bar: "#E5E7EB" },
+  lipsa:   { label: "Lipsă", icon: Info,           className: "bg-[#F7F8FA] text-[#9CA3AF]",  bar: "#E5E7EB" },
 };
 
 function ExpiryCard({ label, date, tip }: ExpiryItem) {
@@ -50,7 +50,7 @@ function ExpiryCard({ label, date, tip }: ExpiryItem) {
     : 0;
 
   return (
-    <div className={cn("bg-white border border-[#F3F4F6] rounded-xl p-4 space-y-3", status === "expirat" && "border-red-200")}>
+    <div className={cn("bg-white border border-[#E5E7EB] rounded-xl p-4 space-y-3", status === "expirat" && "border-red-200")}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: tipColor }} />
@@ -76,7 +76,7 @@ function ExpiryCard({ label, date, tip }: ExpiryItem) {
           </div>
 
           {/* Progress bar */}
-          <div className="h-1.5 bg-[#F3F4F6] rounded-full overflow-hidden">
+          <div className="h-1.5 bg-[#F7F8FA] rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all"
               style={{ width: `${pct}%`, backgroundColor: cfg.bar }}
@@ -135,7 +135,7 @@ export function VehiculTabExpirari({ vehicul }: Props) {
           { label: "Curând", count: curand.length, color: "#F59E0B", bg: "#FFFBEB" },
           { label: "Valabile", count: valid.length, color: "#16A34A", bg: "#F0FDF4" },
         ].map(({ label, count, color, bg }) => (
-          <div key={label} className="bg-white border border-[#F3F4F6] rounded-xl p-3 text-center">
+          <div key={label} className="bg-white border border-[#E5E7EB] rounded-xl p-3 text-center">
             <p className="text-2xl font-bold" style={{ color }}>{count}</p>
             <p className="text-[11px] text-[#9CA3AF] mt-0.5">{label}</p>
           </div>
@@ -164,7 +164,7 @@ export function VehiculTabExpirari({ vehicul }: Props) {
       </div>
 
       {/* Hint */}
-      <div className="bg-[#F7F8FA] border border-[#F3F4F6] rounded-xl px-4 py-3 flex items-start gap-2">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl px-4 py-3 flex items-start gap-2">
         <Info className="h-3.5 w-3.5 text-[#9CA3AF] mt-0.5 shrink-0" />
         <p className="text-xs text-[#6B7280]">
           Datele de expirare se setează din tabul <strong>Profil</strong>. Remindere automate se configurează din modulul <strong>Remindere</strong>.

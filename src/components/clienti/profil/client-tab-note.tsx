@@ -34,7 +34,7 @@ export function ClientTabNote({ clientId, initialValue }: ClientTabNoteProps) {
   }
 
   return (
-    <div className="bg-white border border-[#F3F4F6] rounded-xl p-5">
+    <div className="bg-white border border-[#E5E7EB] rounded-xl p-5">
       <div className="flex items-center justify-between mb-3">
         <p className="text-sm font-medium text-[#111318]">Note interne</p>
         {status === "saving" && (

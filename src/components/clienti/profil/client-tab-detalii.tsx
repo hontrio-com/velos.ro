@@ -60,7 +60,7 @@ export function ClientTabDetalii({ client }: ClientTabDetaliiProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <div className="bg-white border border-[#F3F4F6] rounded-xl p-5 space-y-5">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl p-5 space-y-5">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF]">
           Informații principale
         </p>
@@ -121,7 +121,7 @@ export function ClientTabDetalii({ client }: ClientTabDetaliiProps) {
           </div>
         </div>
 
-        <div className="flex items-center justify-between rounded-xl border border-[#F3F4F6] px-4 py-3">
+        <div className="flex items-center justify-between rounded-xl border border-[#E5E7EB] px-4 py-3">
           <div>
             <p className="text-sm font-medium text-[#111318]">Remindere SMS</p>
             <p className="text-xs text-[#9CA3AF] mt-0.5">

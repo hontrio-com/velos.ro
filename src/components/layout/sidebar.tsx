@@ -113,7 +113,7 @@ function StatieSwitcher({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
-        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-[#F3F4F6] bg-white hover:bg-[#F9FAFB] transition-colors text-left"
+        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] transition-colors text-left"
       >
         <span
           className={cn(
@@ -201,14 +201,14 @@ export function Sidebar({ statii = [], isOpen = false, onClose }: SidebarProps) 
       <aside
         className={cn(
           "fixed left-0 top-0 z-40 h-full w-[220px] bg-white flex flex-col",
-          "border-r border-[#F3F4F6]",
+          "border-r border-[#E5E7EB]",
           "transition-transform duration-300 ease-in-out",
           "-translate-x-full lg:translate-x-0",
           isOpen && "translate-x-0"
         )}
       >
         {/* Logo */}
-        <div className="flex h-14 items-center justify-between px-4 border-b border-[#F3F4F6] shrink-0">
+        <div className="flex h-14 items-center justify-between px-4 border-b border-[#E5E7EB] shrink-0">
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-[7px] bg-[#1877F2] shrink-0">
               <span className="text-white font-bold text-[10px] leading-none">ITP</span>
@@ -228,7 +228,7 @@ export function Sidebar({ statii = [], isOpen = false, onClose }: SidebarProps) 
 
         {/* Station switcher */}
         {statii.length > 0 && (
-          <div className="px-3 py-3 border-b border-[#F3F4F6] shrink-0">
+          <div className="px-3 py-3 border-b border-[#E5E7EB] shrink-0">
             <StatieSwitcher
               statii={statii}
               selectedId={statieActivaId}
@@ -267,7 +267,7 @@ export function Sidebar({ statii = [], isOpen = false, onClose }: SidebarProps) 
         </nav>
 
         {/* Bottom */}
-        <div className="border-t border-[#F3F4F6] px-2 py-3 space-y-2 shrink-0">
+        <div className="border-t border-[#E5E7EB] px-2 py-3 space-y-2 shrink-0">
           <SmsQuotaWidget />
           <NavItemLink
             item={{ href: "/setari", label: "Setări", icon: Settings }}

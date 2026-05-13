@@ -64,7 +64,7 @@ function RelativeTime({ dateStr }: { dateStr: string }) {
 
 export function ActivitateRecenta({ items }: ActivitateRecentaProps) {
   return (
-    <Card className="border-[#F3F4F6] shadow-none h-full">
+    <Card className="border-[#E5E7EB] shadow-none h-full">
       <CardHeader className="pb-3">
         <CardTitle className="text-base text-[#111318]">
           Activitate recentă
@@ -78,7 +78,7 @@ export function ActivitateRecenta({ items }: ActivitateRecentaProps) {
         ) : (
           <div className="relative">
             {/* Timeline line */}
-            <div className="absolute left-[30px] top-0 bottom-0 w-px bg-[#F3F4F6]" />
+            <div className="absolute left-[30px] top-0 bottom-0 w-px bg-[#F7F8FA]" />
 
             <ul className="space-y-0">
               {items.map((item, i) => {

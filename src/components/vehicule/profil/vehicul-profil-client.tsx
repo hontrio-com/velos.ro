@@ -75,7 +75,7 @@ function StatusPill({ label, date }: { label: string; date: string | null }) {
     curand: "bg-amber-100 text-amber-700",
     urgent: "bg-orange-100 text-orange-700",
     expirat: "bg-red-100 text-red-700",
-    lipsa: "bg-[#F3F4F6] text-[#9CA3AF]",
+    lipsa: "bg-[#F7F8FA] text-[#9CA3AF]",
   };
   const icons = {
     ok: ShieldCheck,
@@ -127,7 +127,7 @@ export function VehiculProfilClient({ vehicul }: Props) {
       </div>
 
       {/* Header */}
-      <div className="bg-white border border-[#F3F4F6] rounded-xl p-5">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl p-5">
         <div className="flex flex-col sm:flex-row sm:items-start gap-4">
           {/* Avatar icon */}
           <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#EFF6FF] shrink-0">
@@ -180,7 +180,7 @@ export function VehiculProfilClient({ vehicul }: Props) {
 
       {/* Tabs */}
       <Tabs value={tab ?? "profil"} onValueChange={(v) => setTab(v as VTab)}>
-        <TabsList className="bg-[#F7F8FA] border border-[#F3F4F6] h-9 p-0.5">
+        <TabsList className="bg-white border border-[#E5E7EB] h-9 p-0.5">
           {[
             { value: "profil", label: "Profil", icon: Car },
             { value: "documente", label: "Documente", icon: FileText },

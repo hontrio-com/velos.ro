@@ -19,11 +19,11 @@ export const STATUS_CONFIG: Record<
   string,
   { label: string; colorClass: string; bgClass: string }
 > = {
-  pending: { label: "În așteptare", colorClass: "text-[#9CA3AF]",  bgClass: "bg-[#F3F4F6]" },
+  pending: { label: "În așteptare", colorClass: "text-[#9CA3AF]",  bgClass: "bg-[#F7F8FA]" },
   trimis:  { label: "Trimis",       colorClass: "text-[#1877F2]",  bgClass: "bg-[#EFF6FF]" },
   livrat:  { label: "Livrat ✓",     colorClass: "text-[#15803D]",  bgClass: "bg-[#DCFCE7]" },
   eroare:  { label: "Eroare",       colorClass: "text-red-600",    bgClass: "bg-red-50"     },
-  anulat:  { label: "Anulat",       colorClass: "text-[#9CA3AF]",  bgClass: "bg-[#F3F4F6]" },
+  anulat:  { label: "Anulat",       colorClass: "text-[#9CA3AF]",  bgClass: "bg-[#F7F8FA]" },
 };
 
 export const DEFAULT_TEMPLATES: Record<TipReminder, string> = {

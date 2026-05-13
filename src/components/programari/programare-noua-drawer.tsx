@@ -256,7 +256,7 @@ export function ProgramareNouaDrawer({
       {/* Panel */}
       <div className="fixed right-0 top-0 z-50 h-full w-full max-w-[480px] bg-white border-l border-[#E5E7EB] shadow-2xl flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#F3F4F6] shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#E5E7EB] shrink-0">
           <div>
             <p className="font-semibold text-[#111318]">Programare nouă</p>
             <p className="text-xs text-[#9CA3AF] mt-0.5">
@@ -273,7 +273,7 @@ export function ProgramareNouaDrawer({
         </div>
 
         {/* Step indicator */}
-        <div className="px-5 py-3 border-b border-[#F3F4F6] shrink-0">
+        <div className="px-5 py-3 border-b border-[#E5E7EB] shrink-0">
           <div className="flex items-center">
             {([1, 2, 3] as Step[]).map((s, i) => (
               <div key={s} className="flex items-center flex-1">
@@ -369,7 +369,7 @@ export function ProgramareNouaDrawer({
                           key={v.id}
                           type="button"
                           onClick={() => { setSelectedVehicul(v); setPlateSearch(""); }}
-                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F9FAFB] transition-colors text-left border-b border-[#F3F4F6] last:border-0"
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F9FAFB] transition-colors text-left border-b border-[#E5E7EB] last:border-0"
                         >
                           <Car className="h-4 w-4 text-[#9CA3AF] shrink-0" />
                           <div className="min-w-0">
@@ -527,7 +527,7 @@ export function ProgramareNouaDrawer({
           {step === 3 && (
             <div className="space-y-4">
               {/* Summary */}
-              <div className="rounded-xl border border-[#F3F4F6] bg-[#F9FAFB] px-4 py-3 text-sm space-y-2">
+              <div className="rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 text-sm space-y-2">
                 <div className="flex justify-between">
                   <span className="text-[#6B7280]">Vehicul</span>
                   <span className="font-medium text-[#111318]">
@@ -598,7 +598,7 @@ export function ProgramareNouaDrawer({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-[#F3F4F6] px-5 py-4 shrink-0">
+        <div className="border-t border-[#E5E7EB] px-5 py-4 shrink-0">
           <div className="flex justify-between gap-3">
             {step > 1 ? (
               <Button

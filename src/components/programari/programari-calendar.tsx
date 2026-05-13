@@ -188,7 +188,7 @@ export function ProgramariCalendar({
   );
 
   return (
-    <div className="bg-white border border-[#F3F4F6] rounded-xl overflow-hidden rbc-wrapper">
+    <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden rbc-wrapper">
       <style>{`
         .rbc-wrapper .rbc-calendar { font-family: inherit; }
         .rbc-wrapper .rbc-header { padding: 8px 0; font-size: 12px; font-weight: 500; color: #6B7280; border-bottom: 1px solid #F3F4F6; background: #F9FAFB; }

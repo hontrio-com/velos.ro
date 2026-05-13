@@ -39,7 +39,7 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   },
   anulat: {
     label: "Anulat",
-    className: "bg-[#F3F4F6] text-[#9CA3AF]",
+    className: "bg-[#F7F8FA] text-[#9CA3AF]",
   },
   neprezent: {
     label: "Neprezent",
@@ -50,8 +50,8 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 export function ClientTabProgramari({ programari }: ClientTabProgramariProps) {
   if (programari.length === 0) {
     return (
-      <div className="bg-white border border-[#F3F4F6] rounded-xl py-16 flex flex-col items-center justify-center text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F3F4F6] mb-3">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl py-16 flex flex-col items-center justify-center text-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F7F8FA] mb-3">
           <Calendar className="h-5 w-5 text-[#9CA3AF]" />
         </div>
         <p className="text-sm font-medium text-[#374151]">
@@ -81,11 +81,11 @@ export function ClientTabProgramari({ programari }: ClientTabProgramariProps) {
           <p className="text-xs font-semibold uppercase tracking-wider text-[#9CA3AF] mb-3">
             {year}
           </p>
-          <div className="bg-white border border-[#F3F4F6] rounded-xl overflow-hidden divide-y divide-[#F9FAFB]">
+          <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden divide-y divide-[#F9FAFB]">
             {byYear[year].map((p) => {
               const status = statusConfig[p.status] ?? {
                 label: p.status,
-                className: "bg-[#F3F4F6] text-[#9CA3AF]",
+                className: "bg-[#F7F8FA] text-[#9CA3AF]",
               };
               return (
                 <Link
@@ -106,7 +106,7 @@ export function ClientTabProgramari({ programari }: ClientTabProgramariProps) {
                   </div>
 
                   {/* Divider */}
-                  <div className="w-px h-8 bg-[#F3F4F6] shrink-0" />
+                  <div className="w-px h-8 bg-[#F7F8FA] shrink-0" />
 
                   {/* Details */}
                   <div className="flex-1 min-w-0">

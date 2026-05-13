@@ -186,7 +186,7 @@ export function TabItpExpirare({ vehicule, statieId, isLoading, onUpdate }: TabI
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.15, delay: i * 0.025 }}
           >
-            <div className="flex rounded-xl border border-[#F3F4F6] bg-white overflow-hidden">
+            <div className="flex rounded-xl border border-[#E5E7EB] bg-white overflow-hidden">
               <div className={cn("w-1 shrink-0", bar)} />
               <div className="flex-1 p-4">
                 <div className="flex items-center gap-3">

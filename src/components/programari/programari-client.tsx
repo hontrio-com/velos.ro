@@ -126,7 +126,7 @@ export function ProgramariClient({ statieId }: ProgramariClientProps) {
       )}
 
       {/* Toolbar */}
-      <div className="bg-white border border-[#F3F4F6] rounded-xl p-4 mb-4">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 mb-4">
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Day navigator (only in list mode) */}
           {viewMode === "lista" && (
@@ -202,7 +202,7 @@ export function ProgramariClient({ statieId }: ProgramariClientProps) {
                           statusConfig[s as keyof typeof statusConfig].className,
                           "border"
                         )
-                    : "bg-transparent text-[#9CA3AF] border-[#F3F4F6] hover:border-[#E5E7EB] hover:text-[#374151]"
+                    : "bg-transparent text-[#9CA3AF] border-[#E5E7EB] hover:border-[#E5E7EB] hover:text-[#374151]"
                 )}
               >
                 {s === "toate" ? "Toate" : statusConfig[s as keyof typeof statusConfig].label}

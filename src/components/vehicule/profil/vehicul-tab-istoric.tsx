@@ -47,7 +47,7 @@ function EventIcon({ type, status }: { type: TimelineEvent["type"]; status?: str
     const cfg = ITP_CONFIG[status as keyof typeof ITP_CONFIG] ?? ITP_CONFIG.admis;
     const Icon = cfg.icon;
     return (
-      <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-white shadow-sm ring-1 ring-[#F3F4F6]">
+      <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-white shadow-sm ring-1 ring-[#E5E7EB]">
         <Icon className="h-4 w-4" style={{ color: cfg.color }} />
       </div>
     );
@@ -60,7 +60,7 @@ function EventIcon({ type, status }: { type: TimelineEvent["type"]; status?: str
     );
   }
   return (
-    <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-white shadow-sm ring-1 ring-[#F3F4F6]">
+    <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-white shadow-sm ring-1 ring-[#E5E7EB]">
       <CalendarDays className="h-4 w-4 text-[#6B7280]" />
     </div>
   );
@@ -159,8 +159,8 @@ export function VehiculTabIstoric({ vehiculId, statieId, nrInmatriculare }: Prop
 
   if (events.length === 0) {
     return (
-      <div className="bg-white border border-[#F3F4F6] rounded-xl py-16 flex flex-col items-center text-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F3F4F6]">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl py-16 flex flex-col items-center text-center gap-3">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F7F8FA]">
           <History className="h-6 w-6 text-[#9CA3AF]" />
         </div>
         <div>
@@ -190,14 +190,14 @@ export function VehiculTabIstoric({ vehiculId, statieId, nrInmatriculare }: Prop
             <p className="text-xs font-semibold text-[#9CA3AF] uppercase tracking-wider">
               {format(parseISO(monthKey + "-01"), "MMMM yyyy", { locale: ro })}
             </p>
-            <div className="flex-1 h-px bg-[#F3F4F6]" />
+            <div className="flex-1 h-px bg-[#F7F8FA]" />
             <span className="text-xs text-[#9CA3AF]">{evs.length}</span>
           </div>
 
           {/* Events */}
           <div className="relative pl-10">
             {/* Vertical line */}
-            <div className="absolute left-3.5 top-0 bottom-0 w-px bg-[#F3F4F6]" />
+            <div className="absolute left-3.5 top-0 bottom-0 w-px bg-[#F7F8FA]" />
 
             <div className="space-y-3">
               {evs.map((ev) => (
@@ -208,7 +208,7 @@ export function VehiculTabIstoric({ vehiculId, statieId, nrInmatriculare }: Prop
                   </div>
 
                   {/* Card */}
-                  <div className="bg-white border border-[#F3F4F6] rounded-xl px-4 py-3">
+                  <div className="bg-white border border-[#E5E7EB] rounded-xl px-4 py-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-[#111318]">{ev.title}</p>

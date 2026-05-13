@@ -57,7 +57,7 @@ export function ClientTabMesaje({
   return (
     <div className="space-y-4">
       {/* Send box */}
-      <div className="bg-white border border-[#F3F4F6] rounded-xl p-4 space-y-3">
+      <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 space-y-3">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF]">
           Trimite SMS manual
         </p>
@@ -91,8 +91,8 @@ export function ClientTabMesaje({
 
       {/* Feed */}
       {mesaje.length === 0 ? (
-        <div className="bg-white border border-[#F3F4F6] rounded-xl py-14 flex flex-col items-center justify-center text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F3F4F6] mb-3">
+        <div className="bg-white border border-[#E5E7EB] rounded-xl py-14 flex flex-col items-center justify-center text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F7F8FA] mb-3">
             <MessageSquare className="h-5 w-5 text-[#9CA3AF]" />
           </div>
           <p className="text-sm font-medium text-[#374151]">
@@ -103,7 +103,7 @@ export function ClientTabMesaje({
           </p>
         </div>
       ) : (
-        <div className="bg-white border border-[#F3F4F6] rounded-xl overflow-hidden divide-y divide-[#F9FAFB]">
+        <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden divide-y divide-[#F9FAFB]">
           {mesaje.map((m) => {
             const isOutbound = m.directie === "outbound";
             return (
@@ -113,7 +113,7 @@ export function ClientTabMesaje({
                     "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
                     isOutbound
                       ? "bg-[#EFF6FF] text-[#1877F2]"
-                      : "bg-[#F3F4F6] text-[#6B7280]"
+                      : "bg-[#F7F8FA] text-[#6B7280]"
                   )}
                 >
                   {isOutbound ? (

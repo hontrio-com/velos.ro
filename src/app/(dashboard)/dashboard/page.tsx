@@ -297,11 +297,11 @@ export default async function DashboardPage() {
         </FadeUp>
 
         <FadeUp delay={0.54}>
-          <div className="bg-white border border-[#F3F4F6] rounded-xl p-5 h-full">
+          <div className="bg-white border border-[#E5E7EB] rounded-xl p-5 h-full">
             <p className="text-base font-semibold text-[#111318] mb-4">
               Rezumat {lunaLabelCap}
             </p>
-            <div className="grid grid-cols-2 gap-px bg-[#F3F4F6] rounded-lg overflow-hidden border border-[#F3F4F6]">
+            <div className="grid grid-cols-2 gap-px bg-[#F7F8FA] rounded-lg overflow-hidden border border-[#E5E7EB]">
               {[
                 { label: "Programate", value: totalLuna },
                 { label: "Finalizate", value: finalizateLuna },
