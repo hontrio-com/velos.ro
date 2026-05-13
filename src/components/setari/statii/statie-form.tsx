@@ -5,8 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   FileText, MapPin, Clock, DollarSign, MessageSquare,
-  Globe, Settings, Check, Loader2, Eye, EyeOff, Copy,
-  ExternalLink, AlertTriangle, X, Power,
+  Settings, Check, Loader2, AlertTriangle, Power,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +14,6 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { slugify } from "@/lib/utils/slugify";
@@ -23,10 +21,8 @@ import {
   updateStatieAction,
   updateLogoAction,
   deleteLogoAction,
-  checkSlugUnicAction,
   updateTarifeAction,
   updateSetariSmsAction,
-  testSmsoAction,
   toggleStatieActivaAction,
 } from "@/lib/actions/statii";
 import { statieBaseSchema, locatieSchema, programSchema } from "@/lib/validations/statie";
@@ -48,7 +44,6 @@ const TABS = [
   { id: "program", label: "Program & Capacitate", icon: Clock },
   { id: "tarife", label: "Tarife", icon: DollarSign },
   { id: "sms", label: "Remindere SMS", icon: MessageSquare },
-  { id: "booking", label: "Booking public", icon: Globe },
   { id: "avansat", label: "Avansat", icon: Settings },
 ] as const;
 
@@ -145,15 +140,6 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
     template_reminder_zi: setari?.template_reminder_zi ?? "",
   });
 
-  // Booking state
-  const [bookingActiv, setBookingActiv] = useState(statie.booking_activ);
-  const [bookingSlug, setBookingSlug] = useState(statie.slug);
-  const [slugStatus, setSlugStatus] = useState<"idle" | "checking" | "ok" | "taken">("idle");
-  const [mesajIntampinare, setMesajIntampinare] = useState(statie.mesaj_intampinare ?? "");
-  const [instructiuni, setInstructiuni] = useState(statie.instructiuni_client ?? "");
-  const [afisazaTarife, setAfisazaTarife] = useState(statie.afiseaza_tarife);
-  const [afisazaProgram, setAfisazaProgram] = useState(statie.afiseaza_program);
-
   // General form
   const baseForm = useForm<BaseForm>({
     resolver: zodResolver(statieBaseSchema),
@@ -173,20 +159,6 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
       lat: statie.lat ?? undefined, lng: statie.lng ?? undefined,
     },
   });
-
-  // Slug checker
-  useEffect(() => {
-    if (bookingSlug === statie.slug || bookingSlug.length < 3) {
-      setSlugStatus("idle");
-      return;
-    }
-    setSlugStatus("checking");
-    const t = setTimeout(async () => {
-      const r = await checkSlugUnicAction(bookingSlug, statie.id);
-      setSlugStatus(r.available ? "ok" : "taken");
-    }, 500);
-    return () => clearTimeout(t);
-  }, [bookingSlug, statie.id, statie.slug]);
 
   // Auto-save helper
   const triggerAutoSave = useCallback(
@@ -249,25 +221,6 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
       });
       if ("error" in r) toast.error(r.error);
       else toast.success("Setări SMS salvate!");
-    });
-  }
-
-  async function saveBooking() {
-    if (slugStatus === "taken") {
-      toast.error("Slug-ul este deja folosit");
-      return;
-    }
-    startTransition(async () => {
-      const r = await updateStatieAction(statie.id, "booking", {
-        booking_activ: bookingActiv,
-        slug: bookingSlug,
-        mesaj_intampinare: mesajIntampinare,
-        instructiuni_client: instructiuni,
-        afiseaza_tarife: afisazaTarife,
-        afiseaza_program: afisazaProgram,
-      });
-      if ("error" in r) toast.error(r.error);
-      else toast.success("Booking actualizat!");
     });
   }
 
@@ -611,119 +564,7 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
       </div>
     ),
 
-    // ── Tab 6: Booking ──────────────────────────────────────────
-    booking: (
-      <div className="space-y-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-semibold text-base">Booking public</h3>
-            <p className="text-sm text-muted-foreground mt-0.5">Permite clientilor sa se programeze online</p>
-          </div>
-          <Switch checked={bookingActiv} onCheckedChange={setBookingActiv} />
-        </div>
-
-        {bookingActiv && (
-          <>
-            <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[#9CA3AF]">Link public</p>
-            <div className="flex items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-4 py-3">
-              <p className="text-sm flex-1 font-mono truncate">
-                itpcrm.ro/booking/<span className="text-primary">{bookingSlug}</span>
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  navigator.clipboard.writeText(
-                    `${window.location.origin}/booking/${bookingSlug}`
-                  );
-                  toast.success("Link copiat!");
-                }}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <Copy className="h-4 w-4" />
-              </button>
-              <a
-                href={`/booking/${bookingSlug}`}
-                target="_blank"
-                rel="noreferrer"
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <ExternalLink className="h-4 w-4" />
-              </a>
-            </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Slug URL</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  value={bookingSlug}
-                  onChange={(e) => setBookingSlug(e.target.value.toLowerCase())}
-                  className="flex-1"
-                />
-                {slugStatus === "checking" && (
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground shrink-0" />
-                )}
-                {slugStatus === "ok" && (
-                  <Check className="h-4 w-4 text-green-500 shrink-0" />
-                )}
-                {slugStatus === "taken" && (
-                  <span className="text-xs text-destructive shrink-0">Ocupat</span>
-                )}
-              </div>
-            </div>
-
-            <div className="border-t border-[#E5E7EB]" />
-            <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[#9CA3AF]">Personalizare</p>
-            <div className="space-y-1.5">
-              <Label>Mesaj de intampinare</Label>
-              <Textarea
-                value={mesajIntampinare}
-                onChange={(e) => setMesajIntampinare(e.target.value)}
-                maxLength={200}
-                rows={2}
-                placeholder="Bine ați venit la stația noastră ITP..."
-              />
-              <p className="text-xs text-muted-foreground">{mesajIntampinare.length}/200</p>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Instructiuni pentru client</Label>
-              <Textarea
-                value={instructiuni}
-                onChange={(e) => setInstructiuni(e.target.value)}
-                rows={3}
-                placeholder="Va rugam sa ajungeti cu 5 minute inainte..."
-              />
-            </div>
-            </div>
-
-            <div className="border-t border-[#E5E7EB]" />
-
-            <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[#9CA3AF]">Optiuni afisare</p>
-              {[
-                { label: "Afiseaza tarife", state: afisazaTarife, set: setAfisazaTarife },
-                { label: "Afiseaza program de lucru", state: afisazaProgram, set: setAfisazaProgram },
-              ].map(({ label, state, set }) => (
-                <div key={label} className="flex items-center justify-between">
-                  <Label className="text-sm font-normal">{label}</Label>
-                  <Switch checked={state} onCheckedChange={set} />
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        <Button onClick={saveBooking} disabled={isPending} className="w-full">
-          {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Salveaza setarile booking
-        </Button>
-      </div>
-    ),
-
-    // ── Tab 7: Avansat ──────────────────────────────────────────
+    // ── Tab 6: Avansat ──────────────────────────────────────────
     avansat: (
       <div className="space-y-8">
         <div>
