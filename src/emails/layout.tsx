@@ -37,10 +37,10 @@ export function EmailLayout({ preview, children, footer }: LayoutProps) {
           {/* Logo / header */}
           <Section style={{ textAlign: "center", marginBottom: 24 }}>
             <Img
-              src="https://velos.ro/logo.png"
+              src="https://velos.ro/logo441x245.png"
               alt="Velos"
-              width={140}
-              height={36}
+              width={176}
+              height={98}
               style={{ margin: "0 auto", display: "block" }}
             />
           </Section>

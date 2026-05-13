@@ -9,11 +9,11 @@ export default function AuthLayout({
     <div className="min-h-dvh flex flex-col items-center justify-center bg-white px-4 py-8">
       <div className="mb-8">
         <Image
-          src="/logo.png"
+          src="/logo441x245.png"
           alt="Velos"
-          width={160}
-          height={40}
-          className="h-10 w-auto object-contain"
+          width={220}
+          height={122}
+          className="h-14 w-auto object-contain"
           priority
         />
       </div>

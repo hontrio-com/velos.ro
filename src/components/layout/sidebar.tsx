@@ -214,14 +214,14 @@ export function Sidebar({ statii = [], isOpen = false, onClose }: SidebarProps) 
         )}
       >
         {/* Logo */}
-        <div className="flex h-14 items-center justify-between px-4 border-b border-[#E5E7EB] shrink-0">
+        <div className="flex h-16 items-center justify-between px-4 border-b border-[#E5E7EB] shrink-0">
           <Link href="/dashboard" className="flex items-center">
             <Image
-              src="/logo.png"
+              src="/logo441x245.png"
               alt="Velos"
-              width={120}
-              height={32}
-              className="h-8 w-auto object-contain"
+              width={176}
+              height={98}
+              className="h-11 w-auto object-contain"
               priority
             />
           </Link>
