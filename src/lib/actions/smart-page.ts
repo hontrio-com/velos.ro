@@ -31,7 +31,7 @@ export type SmartPageData = {
 
 export async function getSmartPageAction(statieId: string): Promise<SmartPageData | null> {
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data } = await (supabase as any)
     .from("smart_page")
     .select("*")
     .eq("statie_id", statieId)
