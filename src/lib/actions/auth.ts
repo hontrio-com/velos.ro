@@ -74,11 +74,16 @@ export async function registerAction(
 
 export async function signInWithGoogleAction() {
   const supabase = await createClient();
+  const { headers } = await import("next/headers");
+  const headersList = await headers();
+  const host = headersList.get("host") ?? "localhost:3000";
+  const proto = host.includes("localhost") ? "http" : "https";
+  const baseUrl = `${proto}://${host}`;
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+      redirectTo: `${baseUrl}/auth/callback`,
       queryParams: { access_type: "offline", prompt: "consent" },
     },
   });
