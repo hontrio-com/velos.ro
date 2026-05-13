@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, MessageSquare, Zap, Check, Minus, Plus } from "lucide-react";
 
@@ -22,6 +23,9 @@ export function CumparaSmsModal({ open, onClose }: Props) {
   const [selected, setSelected] = useState<string>("p500");
   const [customQty, setCustomQty] = useState(200);
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const isCustom = selected === "custom";
   const cantitate = isCustom
@@ -46,7 +50,9 @@ export function CumparaSmsModal({ open, onClose }: Props) {
     }
   }
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <>
@@ -189,6 +195,7 @@ export function CumparaSmsModal({ open, onClose }: Props) {
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
