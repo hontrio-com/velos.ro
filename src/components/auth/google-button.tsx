@@ -10,10 +10,11 @@ export function GoogleButton() {
   async function handleClick() {
     setIsPending(true);
     const supabase = createClient();
+    const base = process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${base}/auth/callback`,
         queryParams: { access_type: "offline", prompt: "consent" },
       },
     });

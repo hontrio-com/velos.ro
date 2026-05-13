@@ -26,14 +26,9 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-    console.log("[auth/callback] exchange result:", {
-      error: error?.message ?? null,
-      user: data?.user?.email ?? null,
-      cookies: request.cookies.getAll().map(c => c.name),
-    });
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) return response;
-    return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error.message)}`);
+    return NextResponse.redirect(`${origin}/login`);
   }
 
   return NextResponse.redirect(`${origin}/login?error=no_code`);
