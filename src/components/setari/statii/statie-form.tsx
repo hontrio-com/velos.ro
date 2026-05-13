@@ -312,8 +312,8 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
 
         {/* Stare */}
         <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Stare</p>
-          <div className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3.5">
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#9CA3AF]">Stare</p>
+          <div className="flex items-center justify-between rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3.5">
             <div className="flex items-center gap-3">
               <div className={cn(
                 "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
@@ -338,7 +338,7 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
 
         {/* Identitate */}
         <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Identitate</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#9CA3AF]">Identitate</p>
           <div className="space-y-2">
             <Label>Logo statie</Label>
             <div className="flex justify-start">
@@ -372,11 +372,11 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
           </div>
         </div>
 
-        <div className="border-t border-border" />
+        <div className="border-t border-[#E5E7EB]" />
 
         {/* Contact */}
         <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Contact</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#9CA3AF]">Contact</p>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Telefon <span className="text-destructive">*</span></Label>
@@ -399,11 +399,11 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
           </div>
         </div>
 
-        <div className="border-t border-border" />
+        <div className="border-t border-[#E5E7EB]" />
 
         {/* Date fiscale */}
         <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#9CA3AF]">
             Date fiscale <span className="normal-case font-normal">(optional)</span>
           </p>
           <div className="grid grid-cols-2 gap-4">
@@ -525,7 +525,7 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
 
             {/* Toggleuri remindere ITP */}
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Reminder ITP expirat</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#9CA3AF]">Reminder ITP expirat</p>
               {[
                 { key: "reminder_30_zile", label: "Cu 30 de zile înainte" },
                 { key: "reminder_7_zile", label: "Cu 7 zile înainte" },
@@ -545,7 +545,7 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
 
             {/* Toggleuri programare */}
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Reminder programare</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#9CA3AF]">Reminder programare</p>
               {[
                 { key: "reminder_confirmare", label: "Confirmare programare (imediat)" },
                 { key: "reminder_ziua_programarii", label: "Ziua programării (cu 2h înainte)" },
@@ -568,7 +568,7 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
             </div>
             <Accordion multiple className="space-y-2">
               {SMS_TEMPLATES_DEF.map(({ key, label }) => (
-                <AccordionItem key={key} value={key} className="border border-border rounded-lg px-4">
+                <AccordionItem key={key} value={key} className="border border-[#E5E7EB] rounded-lg px-4 bg-white">
                   <AccordionTrigger className="text-sm font-medium">
                     {label}
                   </AccordionTrigger>
@@ -625,8 +625,8 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
         {bookingActiv && (
           <>
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Link public</p>
-            <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#9CA3AF]">Link public</p>
+            <div className="flex items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-4 py-3">
               <p className="text-sm flex-1 font-mono truncate">
                 itpcrm.ro/booking/<span className="text-primary">{bookingSlug}</span>
               </p>
@@ -673,9 +673,9 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
               </div>
             </div>
 
-            <div className="border-t border-border" />
+            <div className="border-t border-[#E5E7EB]" />
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Personalizare</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#9CA3AF]">Personalizare</p>
             <div className="space-y-1.5">
               <Label>Mesaj de intampinare</Label>
               <Textarea
@@ -699,10 +699,10 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
             </div>
             </div>
 
-            <div className="border-t border-border" />
+            <div className="border-t border-[#E5E7EB]" />
 
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Optiuni afisare</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#9CA3AF]">Optiuni afisare</p>
               {[
                 { label: "Afiseaza tarife", state: afisazaTarife, set: setAfisazaTarife },
                 { label: "Afiseaza program de lucru", state: afisazaProgram, set: setAfisazaProgram },
@@ -757,7 +757,7 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
               </Button>
             </div>
 
-            <div className="border-t border-border pt-4 flex items-center justify-between">
+            <div className="border-t border-[#E5E7EB] pt-4 flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-destructive">Sterge statia</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -776,21 +776,27 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
     <div className="flex gap-6 xl:gap-8">
       {/* Sidebar tabs */}
       <aside className="w-56 shrink-0 hidden md:block">
-        <nav className="space-y-0.5 sticky top-20 rounded-xl border border-border bg-card p-2">
+        <nav className="space-y-0.5 sticky top-20 rounded-xl border border-[#E5E7EB] bg-white p-2">
           {TABS.map((tab) => {
             const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
                   "w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors text-left",
-                  activeTab === tab.id
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  isActive
+                    ? "bg-[#EFF6FF] text-[#1877F2]"
+                    : "text-[#6B7280] hover:bg-[#F9FAFB] hover:text-[#111318]"
                 )}
               >
-                <Icon className="h-4 w-4 shrink-0" />
+                <div className={cn(
+                  "flex h-7 w-7 items-center justify-center rounded-md shrink-0 transition-colors",
+                  isActive ? "bg-[#1877F2]/10" : "bg-[#F3F4F6]"
+                )}>
+                  <Icon className="h-3.5 w-3.5" />
+                </div>
                 {tab.label}
               </button>
             );
@@ -825,7 +831,7 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
 
       {/* Tab content (desktop) */}
       <div className="flex-1 min-w-0 hidden md:block">
-        <div className="rounded-xl border border-border bg-card p-6">
+        <div className="rounded-xl border border-[#E5E7EB] bg-white p-6">
           {tabContent[activeTab]}
         </div>
       </div>

@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   MoreHorizontal, Settings, Copy, Power, Trash2, MapPin, Clock, Layers,
+  CheckCircle2, XCircle, Globe,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -64,68 +64,72 @@ export function StatieCard({ statie }: StatieCardProps) {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10, height: 0 }}
-        className="rounded-xl border border-border bg-card p-5"
+        className={[
+          "rounded-xl border bg-white overflow-hidden transition-shadow hover:shadow-md",
+          activa ? "border-[#E5E7EB]" : "border-[#E5E7EB] opacity-70",
+        ].join(" ")}
       >
-        <div className="flex items-start gap-4">
-          {/* Logo */}
-          <Avatar className="h-12 w-12 rounded-lg shrink-0">
-            {statie.logo_url && (
-              <AvatarImage src={statie.logo_url} alt={statie.nume} className="object-cover" />
-            )}
-            <AvatarFallback className="rounded-lg bg-primary/10 text-primary font-semibold text-sm">
-              {initiale}
-            </AvatarFallback>
-          </Avatar>
+        {/* Accent bar */}
+        {activa && (
+          <div className="h-0.5 bg-gradient-to-r from-[#1877F2] to-[#60A5FA]" />
+        )}
 
-          {/* Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-semibold text-base truncate">{statie.nume}</h3>
-              <Badge className={activa
-                ? "bg-[#DCFCE7] text-[#16A34A] hover:bg-[#DCFCE7]"
-                : "bg-muted text-muted-foreground hover:bg-muted"
-              }>
-                {activa ? "Activă" : "Inactivă"}
-              </Badge>
-              {statie.booking_activ && (
-                <Badge className="bg-[#EFF6FF] text-[#1D4ED8] hover:bg-[#EFF6FF]">
-                  Booking public
-                </Badge>
+        <div className="p-5">
+          <div className="flex items-start gap-4">
+            {/* Logo */}
+            <Avatar className="h-14 w-14 rounded-xl shrink-0 border border-[#E5E7EB]">
+              {statie.logo_url && (
+                <AvatarImage src={statie.logo_url} alt={statie.nume} className="object-cover" />
               )}
+              <AvatarFallback className="rounded-xl bg-[#EFF6FF] text-[#1877F2] font-bold text-sm">
+                {initiale}
+              </AvatarFallback>
+            </Avatar>
+
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                <h3 className="font-semibold text-base text-[#111318] truncate">{statie.nume}</h3>
+                {activa ? (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#DCFCE7] text-[#16A34A]">
+                    <CheckCircle2 className="h-3 w-3" /> Activă
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#F3F4F6] text-[#6B7280]">
+                    <XCircle className="h-3 w-3" /> Inactivă
+                  </span>
+                )}
+                {statie.booking_activ && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#EFF6FF] text-[#1877F2]">
+                    <Globe className="h-3 w-3" /> Booking activ
+                  </span>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#6B7280]">
+                {(statie.localitate || statie.judet) && (
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3.5 w-3.5" />
+                    {[statie.localitate, statie.judet].filter(Boolean).join(", ")}
+                  </span>
+                )}
+                {statie.nr_linii && (
+                  <span className="flex items-center gap-1">
+                    <Layers className="h-3.5 w-3.5" />
+                    {statie.nr_linii} {statie.nr_linii === 1 ? "linie" : "linii"}
+                  </span>
+                )}
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3.5 w-3.5" />
+                  {statie.durata_slot_minute} min/slot
+                </span>
+              </div>
             </div>
 
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-              {(statie.localitate || statie.judet) && (
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-3.5 w-3.5" />
-                  {[statie.localitate, statie.judet].filter(Boolean).join(", ")}
-                </span>
-              )}
-              {statie.nr_linii && (
-                <span className="flex items-center gap-1">
-                  <Layers className="h-3.5 w-3.5" />
-                  {statie.nr_linii} {statie.nr_linii === 1 ? "linie" : "linii"}
-                </span>
-              )}
-              <span className="flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5" />
-                {statie.durata_slot_minute} min/slot
-              </span>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-2 shrink-0">
-            <Link href={`/setari/statii/${statie.id}`}>
-              <Button size="sm" variant="outline">
-                <Settings className="mr-1.5 h-3.5 w-3.5" />
-                Configurează
-              </Button>
-            </Link>
-
+            {/* Dropdown */}
             <DropdownMenu>
-              <DropdownMenuTrigger>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-[#9CA3AF] hover:text-[#374151]">
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -154,10 +158,20 @@ export function StatieCard({ statie }: StatieCardProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+
+          {/* Footer row */}
+          <div className="mt-4 pt-4 border-t border-[#F3F4F6] flex items-center justify-between">
+            <p className="text-xs text-[#9CA3AF] font-mono">/{statie.slug}</p>
+            <Link href={`/setari/statii/${statie.id}`}>
+              <Button size="sm" className="bg-[#1877F2] hover:bg-[#1565D8] text-white gap-1.5 h-8 text-xs">
+                <Settings className="h-3.5 w-3.5" />
+                Configurează
+              </Button>
+            </Link>
+          </div>
         </div>
       </motion.div>
 
-      {/* Delete dialog controlled from outside */}
       {showDelete && (
         <DeleteStatieDialog
           statieId={statie.id}

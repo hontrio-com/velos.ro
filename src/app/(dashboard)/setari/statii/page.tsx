@@ -13,34 +13,26 @@ import type { StatieExtinsa } from "@/types/database.types";
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-24 text-center">
-      {/* SVG ilustrație stație */}
-      <svg
-        width="120"
-        height="100"
-        viewBox="0 0 120 100"
-        fill="none"
-        className="mb-6 opacity-40"
-      >
-        <rect x="10" y="40" width="100" height="50" rx="4" fill="#94a3b8" />
-        <rect x="20" y="20" width="80" height="25" rx="3" fill="#cbd5e1" />
-        <rect x="40" y="60" width="16" height="30" rx="2" fill="#64748b" />
-        <rect x="64" y="60" width="16" height="30" rx="2" fill="#64748b" />
-        <rect x="0" y="88" width="120" height="4" rx="2" fill="#e2e8f0" />
-        <rect x="50" y="10" width="20" height="12" rx="2" fill="#1877F2" opacity="0.6" />
-      </svg>
-
-      <h2 className="text-xl font-semibold text-foreground mb-2">
+    <div className="bg-white border border-[#E5E7EB] rounded-xl flex flex-col items-center justify-center py-20 text-center px-6">
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#EFF6FF] mb-5">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+          <rect x="2" y="14" width="28" height="16" rx="2" fill="#BFDBFE" />
+          <rect x="6" y="8" width="20" height="8" rx="1.5" fill="#93C5FD" />
+          <rect x="11" y="18" width="4" height="8" rx="1" fill="#1877F2" />
+          <rect x="17" y="18" width="4" height="8" rx="1" fill="#1877F2" />
+          <rect x="13" y="4" width="6" height="5" rx="1" fill="#1877F2" opacity="0.7" />
+        </svg>
+      </div>
+      <h2 className="text-lg font-semibold text-[#111318] mb-2">
         Nu ai nicio stație configurată
       </h2>
-      <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-        Adaugă prima ta stație ITP pentru a începe să gestionezi programările
-        și clienții.
+      <p className="text-sm text-[#6B7280] mb-6 max-w-xs">
+        Adaugă prima ta stație ITP pentru a începe să gestionezi programările și clienții.
       </p>
       <Link href="/setari/statii/noua">
-        <Button size="lg">
-          <Plus className="mr-2 h-4 w-4" />
-          Adaugă stație
+        <Button className="bg-[#1877F2] hover:bg-[#1565D8] text-white gap-2">
+          <Plus className="h-4 w-4" />
+          Adaugă prima stație
         </Button>
       </Link>
     </div>
@@ -71,8 +63,8 @@ export default async function StatiiPage() {
           description="Configurează și gestionează stațiile tale ITP"
         />
         <Link href="/setari/statii/noua">
-          <Button size="sm">
-            <Plus className="mr-1.5 h-4 w-4" />
+          <Button size="sm" className="bg-[#1877F2] hover:bg-[#1565D8] text-white gap-1.5">
+            <Plus className="h-4 w-4" />
             Adaugă stație
           </Button>
         </Link>
