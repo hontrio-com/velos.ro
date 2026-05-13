@@ -6,7 +6,7 @@ import { AuthDivider } from "@/components/auth/auth-divider";
 import { AuthCard } from "@/components/auth/auth-card";
 
 export const metadata: Metadata = {
-  title: "Cont nou - ITP CRM",
+  title: "Cont nou",
 };
 
 export default function RegisterPage() {

@@ -11,17 +11,25 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | VELOS CRM",
-    default: "VELOS CRM",
+    template: "%s - Velos.ro",
+    default: "Velos.ro",
   },
   description: "CRM profesional pentru gestionarea stațiilor ITP din România",
-  applicationName: "VELOS CRM",
+  applicationName: "Velos.ro",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "VELOS CRM",
+    title: "Velos.ro",
   },
   formatDetection: { telephone: false },
+  icons: {
+    icon: [
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/icons/icon-192.png",
+  },
 };
 
 export default function RootLayout({

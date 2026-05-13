@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "VELOS CRM",
+    name: "Velos.ro",
     short_name: "VELOS",
     description: "CRM profesional pentru stații ITP din România",
     start_url: "/dashboard",
