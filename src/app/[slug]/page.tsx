@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { SmartBookingWizard } from "@/components/smart-page/smart-booking-wizard";
 import { SmartChatbot } from "@/components/smart-page/smart-chatbot";
+import { SmartGallery } from "@/components/smart-page/smart-gallery";
 import type { SmartPageData } from "@/lib/actions/smart-page";
 
 interface Props {
@@ -234,19 +235,7 @@ export default async function SmartPage({ params }: Props) {
             <p className="text-sm text-[#6B7280]">Stația noastră</p>
           </div>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {galerieUrls.map((url, i) => (
-            <div key={i} className="relative aspect-square rounded-2xl overflow-hidden border border-[#E5E7EB] shadow-sm bg-[#F3F4F6]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={url}
-                alt={`${statie.nume} — foto ${i + 1}`}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-            </div>
-          ))}
-        </div>
+        <SmartGallery urls={galerieUrls} statieName={statie.nume} accent={accent} />
       </section>
     ) : null,
 
@@ -491,7 +480,7 @@ export default async function SmartPage({ params }: Props) {
             <p className="text-xs text-[#9CA3AF]">
               Powered by{" "}
               <Link href="/" className="font-semibold hover:text-[#374151] transition-colors">
-                ITPBASE.RO
+                VELOS.RO
               </Link>
             </p>
           </div>
