@@ -36,14 +36,13 @@ export function EmailLayout({ preview, children, footer }: LayoutProps) {
 
           {/* Logo / header */}
           <Section style={{ textAlign: "center", marginBottom: 24 }}>
-            <Text style={{
-              fontSize: 22, fontWeight: 700, color: BRAND, margin: 0, letterSpacing: "-0.5px"
-            }}>
-              velos.ro
-            </Text>
-            <Text style={{ fontSize: 11, color: MUTED, margin: "2px 0 0" }}>
-              Platforma pentru stații ITP
-            </Text>
+            <Img
+              src="https://velos.ro/logo.png"
+              alt="Velos"
+              width={140}
+              height={36}
+              style={{ margin: "0 auto", display: "block" }}
+            />
           </Section>
 
           {/* Card */}

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -214,14 +215,16 @@ export function Sidebar({ statii = [], isOpen = false, onClose }: SidebarProps) 
       >
         {/* Logo */}
         <div className="flex h-14 items-center justify-between px-4 border-b border-[#E5E7EB] shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-[7px] bg-[#1877F2] shrink-0">
-              <span className="text-white font-bold text-[10px] leading-none">ITP</span>
-            </div>
-            <span className="text-[15px] font-semibold text-[#111318] tracking-tight">
-              ITP CRM
-            </span>
-          </div>
+          <Link href="/dashboard" className="flex items-center">
+            <Image
+              src="/logo.png"
+              alt="Velos"
+              width={120}
+              height={32}
+              className="h-8 w-auto object-contain"
+              priority
+            />
+          </Link>
           <button
             type="button"
             onClick={onClose}
