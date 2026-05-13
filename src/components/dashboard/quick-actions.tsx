@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, X, CalendarDays, Users, Car, ScanText } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAppStore } from "@/stores/app-store";
 import { ScanVehiculModal } from "./scan-vehicul-modal";
 
 const NAV_ACTIONS = [
@@ -14,11 +13,10 @@ const NAV_ACTIONS = [
   { icon: Car,          label: "Vehicul nou",       href: "/vehicule",   color: "bg-[#16A34A]" },
 ];
 
-export function QuickActions() {
+export function QuickActions({ statieId }: { statieId: string }) {
   const [open, setOpen] = useState(false);
   const [showScan, setShowScan] = useState(false);
   const router = useRouter();
-  const statieId = useAppStore((s) => s.statieActivaId);
 
   function handleAction(href: string) {
     setOpen(false);
@@ -117,7 +115,7 @@ export function QuickActions() {
       </div>
 
       {/* Scan modal */}
-      {showScan && statieId && (
+      {showScan && (
         <ScanVehiculModal
           statieId={statieId}
           onClose={() => setShowScan(false)}

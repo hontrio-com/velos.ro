@@ -326,7 +326,7 @@ export default async function DashboardPage() {
         </FadeUp>
       </div>
 
-      <QuickActions />
+      <QuickActions statieId={statie.id} />
     </div>
   );
 }
