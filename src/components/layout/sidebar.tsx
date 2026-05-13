@@ -18,6 +18,7 @@ import {
   Check,
   Plus,
   UserCog,
+  Globe,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAppStore } from "@/stores/app-store";
@@ -56,6 +57,10 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "AUTOMATIZĂRI",
     items: [{ href: "/remindere", label: "Remindere", icon: Bell }],
+  },
+  {
+    label: "MARKETING",
+    items: [{ href: "/smart-page", label: "ITP Smart Page", icon: Globe }],
   },
   {
     label: "RAPOARTE",
