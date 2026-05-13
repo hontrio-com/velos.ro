@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__supabase__list_tables",
+      "mcp__supabase__list_migrations",
+      "mcp__supabase__get_logs",
+      "mcp__supabase__execute_sql",
+      "mcp__supabase__apply_migration",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(sed -i 's/— Platformă Stații ITP/- Platforma Statii ITP/g' src/app/layout.tsx)",
+      "Bash(sed -i 's/Autentificare — ITP CRM/Autentificare - ITP CRM/g' \"src/app/\\(auth\\)/login/page.tsx\")",
+      "Bash(sed -i 's/Cont nou — ITP CRM/Cont nou - ITP CRM/g' \"src/app/\\(auth\\)/register/page.tsx\")",
+      "Bash(sed -i 's/Test SMS ITP CRM — cheia/Test SMS ITP CRM - cheia/g' src/lib/actions/statii.ts)",
+      "Bash(grep -v \"//.*grid\")",
+      "Bash(node -e \"const {execSync} = require\\(''''child_process''''\\); try { execSync\\(''''npx next build 2>&1'''', {stdio:''''pipe''''}\\); } catch\\(e\\) { console.log\\(e.stdout?.toString\\(\\)?.slice\\(-3000\\)\\); }\"s)",
+      "mcp__supabase__generate_typescript_types",
+      "Bash(node -e \"const z = require\\(''zod''\\); const r = z.string\\(\\).min\\(1\\).safeParse\\(''''\\); console.log\\(Object.keys\\(r.error\\)\\);\")",
+      "Bash(node -e \"const {z} = require\\(''zod''\\); const r = z.string\\(\\).min\\(1\\).safeParse\\(''''\\); const e = r.error; console.log\\(''issues:'', !!e?.issues, ''errors:'', !!e?.errors\\);\")",
+      "Bash(node -e \"const zod = require\\(''zod''\\); const r = zod.z.string\\(\\).min\\(1\\).safeParse\\(''''\\); const e = r.error; console.log\\(''has issues:'', ''issues'' in e, ''has errors:'', ''errors'' in e\\);\")",
+      "Bash(npx next:*)",
+      "Bash(xargs grep:*)",
+      "Bash(grep -v \"^$\")",
+      "Bash(node -e \"console.log\\(require\\(''./node_modules/tesseract.js/package.json''\\).version\\)\")",
+      "Bash(cd:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "supabase"
+  ]
+}
