@@ -140,30 +140,38 @@ export function SmartBookingWizard({ statieId, programLucru, accent }: Props) {
     <div className="space-y-6">
       {/* Step indicator */}
       {step < 4 && (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center w-full gap-0">
           {steps.map((s, i) => {
             const Icon = s.icon;
             const done = step > s.n;
             const active = step === s.n;
             return (
-              <div key={s.n} className="flex items-center gap-2 flex-1">
-                <div
-                  className={cn(
-                    "flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold shrink-0 transition-colors",
-                    done ? "text-white" : active ? "bg-white border-2" : "bg-[#F3F4F6] text-[#9CA3AF]"
-                  )}
-                  style={done ? accentBg : active ? { ...accentBorder, ...accentText } : undefined}
-                >
-                  {done ? <CheckCircle2 className="h-4 w-4" /> : <Icon className="h-3.5 w-3.5" />}
+              <div key={s.n} className="flex items-center flex-1">
+                {/* Connector left */}
+                {i > 0 && (
+                  <div className="flex-1 h-px" style={done || active ? accentBg : { backgroundColor: "#E5E7EB" }} />
+                )}
+                {/* Step circle + label */}
+                <div className="flex flex-col items-center gap-1">
+                  <div
+                    className={cn(
+                      "flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold shrink-0 transition-colors",
+                      done ? "text-white" : active ? "bg-white border-2" : "bg-[#F3F4F6] text-[#9CA3AF]"
+                    )}
+                    style={done ? accentBg : active ? { ...accentBorder, ...accentText } : undefined}
+                  >
+                    {done ? <CheckCircle2 className="h-4 w-4" /> : <Icon className="h-3.5 w-3.5" />}
+                  </div>
+                  <span
+                    className={cn("text-[10px] font-medium text-center leading-tight",
+                      active ? "" : done ? "text-[#374151]" : "text-[#9CA3AF]"
+                    )}
+                    style={active ? accentText : undefined}
+                  >
+                    {s.label}
+                  </span>
                 </div>
-                <span
-                  className={cn("text-xs font-medium hidden sm:block",
-                    active ? "" : done ? "text-[#374151]" : "text-[#9CA3AF]"
-                  )}
-                  style={active ? accentText : undefined}
-                >
-                  {s.label}
-                </span>
+                {/* Connector right */}
                 {i < steps.length - 1 && (
                   <div className="flex-1 h-px" style={done ? accentBg : { backgroundColor: "#E5E7EB" }} />
                 )}
