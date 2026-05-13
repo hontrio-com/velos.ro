@@ -6,7 +6,6 @@ import { format, parseISO, differenceInDays, isValid } from "date-fns";
 import { ro } from "date-fns/locale";
 import { Download, FileText, Loader2, DollarSign, CalendarDays, ShieldCheck, MessageSquare, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { DateRangePicker } from "./date-range-picker";
 import { TabFinanciar } from "./tab-financiar";
@@ -169,44 +168,43 @@ export function RapoarteClient({
       )}
 
       {/* Tabs */}
-      <Tabs value={tab ?? "financiar"} onValueChange={(v) => setTab(v as Tab)}>
-        <TabsList className="bg-white border border-[#E5E7EB] h-9 p-0.5">
-          {[
-            { value: "financiar", label: "Financiar", icon: DollarSign },
+      <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden">
+        <div className="flex overflow-x-auto border-b border-[#E5E7EB]" style={{ scrollbarWidth: "none" }}>
+          {([
+            { value: "financiar",  label: "Financiar",  icon: DollarSign  },
             { value: "programari", label: "Programări", icon: CalendarDays },
-            { value: "itp", label: "ITP", icon: ShieldCheck },
-            { value: "sms", label: "SMS", icon: MessageSquare },
-            { value: "angajati", label: "Angajați", icon: Users },
-          ].map(({ value, label, icon: Icon }) => (
-            <TabsTrigger
-              key={value}
-              value={value}
-              className={cn(
-                "gap-1.5 text-xs h-8 px-3 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#1877F2]"
-              )}
-            >
-              <Icon className="h-3.5 w-3.5 shrink-0" />
-              <span className="hidden sm:inline">{label}</span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        <TabsContent value="financiar" className="mt-4">
-          <TabFinanciar statieId={statieId} from={from} to={to} />
-        </TabsContent>
-        <TabsContent value="programari" className="mt-4">
-          <TabProgramari statieId={statieId} from={from} to={to} />
-        </TabsContent>
-        <TabsContent value="itp" className="mt-4">
-          <TabItp statieId={statieId} from={from} to={to} />
-        </TabsContent>
-        <TabsContent value="sms" className="mt-4">
-          <TabSms statieId={statieId} profileId={profileId} from={from} to={to} />
-        </TabsContent>
-        <TabsContent value="angajati" className="mt-4">
-          <TabAngajati statieId={statieId} from={from} to={to} />
-        </TabsContent>
-      </Tabs>
+            { value: "itp",        label: "ITP",         icon: ShieldCheck  },
+            { value: "sms",        label: "SMS",         icon: MessageSquare },
+            { value: "angajati",   label: "Angajați",   icon: Users        },
+          ] as const).map(({ value, label, icon: Icon }) => {
+            const isActive = (tab ?? "financiar") === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setTab(value as Tab)}
+                className={[
+                  "relative flex items-center gap-2 px-5 py-3.5 text-sm font-medium whitespace-nowrap transition-colors shrink-0",
+                  "border-b-2 -mb-px focus-visible:outline-none",
+                  isActive
+                    ? "text-[#1877F2] border-[#1877F2] bg-white"
+                    : "text-[#6B7280] border-transparent hover:text-[#111318] hover:bg-[#F9FAFB]",
+                ].join(" ")}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                <span>{label}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="p-5">
+          {(tab ?? "financiar") === "financiar"  && <TabFinanciar statieId={statieId} from={from} to={to} />}
+          {(tab ?? "financiar") === "programari" && <TabProgramari statieId={statieId} from={from} to={to} />}
+          {(tab ?? "financiar") === "itp"        && <TabItp statieId={statieId} from={from} to={to} />}
+          {(tab ?? "financiar") === "sms"        && <TabSms statieId={statieId} profileId={profileId} from={from} to={to} />}
+          {(tab ?? "financiar") === "angajati"   && <TabAngajati statieId={statieId} from={from} to={to} />}
+        </div>
+      </div>
     </div>
   );
 }

@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VehiculTabProfil } from "./vehicul-tab-profil";
 import { VehiculTabDocumente } from "./vehicul-tab-documente";
 import { VehiculTabExpirari } from "./vehicul-tab-expirari";
@@ -179,38 +178,38 @@ export function VehiculProfilClient({ vehicul }: Props) {
       </div>
 
       {/* Tabs */}
-      <Tabs value={tab ?? "profil"} onValueChange={(v) => setTab(v as VTab)}>
-        <TabsList className="bg-white border border-[#E5E7EB] h-9 p-0.5">
-          {[
-            { value: "profil", label: "Profil", icon: Car },
-            { value: "documente", label: "Documente", icon: FileText },
-            { value: "expirari", label: "Expirări", icon: CalendarClock },
-            { value: "istoric", label: "Istoric", icon: History },
-          ].map(({ value, label, icon: Icon }) => (
-            <TabsTrigger
-              key={value}
-              value={value}
-              className="gap-1.5 text-xs h-8 px-3 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#1877F2]"
-            >
-              <Icon className="h-3.5 w-3.5 shrink-0" />
-              <span className="hidden sm:inline">{label}</span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        <TabsContent value="profil" className="mt-4">
-          <VehiculTabProfil vehicul={vehicul} />
-        </TabsContent>
-        <TabsContent value="documente" className="mt-4">
-          <VehiculTabDocumente vehiculId={vehicul.id} statieId={vehicul.statie_id} />
-        </TabsContent>
-        <TabsContent value="expirari" className="mt-4">
-          <VehiculTabExpirari vehicul={vehicul} />
-        </TabsContent>
-        <TabsContent value="istoric" className="mt-4">
-          <VehiculTabIstoric vehiculId={vehicul.id} statieId={vehicul.statie_id} nrInmatriculare={vehicul.nr_inmatriculare} />
-        </TabsContent>
-      </Tabs>
+      <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden">
+        <div className="flex overflow-x-auto border-b border-[#E5E7EB]" style={{ scrollbarWidth: "none" }}>
+          {([
+            { value: "profil",    label: "Profil",     icon: Car          },
+            { value: "documente", label: "Documente",  icon: FileText     },
+            { value: "expirari",  label: "Expirări",   icon: CalendarClock },
+            { value: "istoric",   label: "Istoric",    icon: History      },
+          ] as const).map(({ value, label, icon: Icon }) => {
+            const isActive = (tab ?? "profil") === value;
+            return (
+              <button key={value} type="button" onClick={() => setTab(value as VTab)}
+                className={[
+                  "relative flex items-center gap-2 px-5 py-3.5 text-sm font-medium whitespace-nowrap transition-colors shrink-0",
+                  "border-b-2 -mb-px focus-visible:outline-none",
+                  isActive
+                    ? "text-[#1877F2] border-[#1877F2] bg-white"
+                    : "text-[#6B7280] border-transparent hover:text-[#111318] hover:bg-[#F9FAFB]",
+                ].join(" ")}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                <span>{label}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="p-5">
+          {(tab ?? "profil") === "profil"    && <VehiculTabProfil vehicul={vehicul} />}
+          {(tab ?? "profil") === "documente" && <VehiculTabDocumente vehiculId={vehicul.id} statieId={vehicul.statie_id} />}
+          {(tab ?? "profil") === "expirari"  && <VehiculTabExpirari vehicul={vehicul} />}
+          {(tab ?? "profil") === "istoric"   && <VehiculTabIstoric vehiculId={vehicul.id} statieId={vehicul.statie_id} nrInmatriculare={vehicul.nr_inmatriculare} />}
+        </div>
+      </div>
     </div>
   );
 }
