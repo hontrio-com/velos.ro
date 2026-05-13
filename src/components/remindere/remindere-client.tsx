@@ -7,7 +7,6 @@ import { differenceInDays, parseISO } from "date-fns";
 import { Sparkles, Loader2, Clock, Bell, ShieldAlert, FileText } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { genereazaRemindereAction } from "@/lib/actions/remindere";
 import { RemindereStats } from "./remindere-stats";
@@ -25,6 +24,7 @@ export function RemindereClient({ statieId }: RemindereClientProps) {
   const queryClient = useQueryClient();
   const supabase = createClient();
   const [generating, setGenerating] = useState(false);
+  const [activeTab, setActiveTab] = useState<"pending" | "toate" | "itp" | "templates">("pending");
 
   const invalidateAll = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["remindere", statieId] });
@@ -142,108 +142,60 @@ export function RemindereClient({ statieId }: RemindereClientProps) {
       <RemindereStats statieId={statieId} />
 
       {/* Tabs */}
-      {(() => {
-        const TABS = [
-          {
-            value: "pending",
-            label: "În așteptare",
-            icon: Clock,
-            count: pendingCount,
-            badgeColor: "bg-amber-100 text-amber-700",
-          },
-          {
-            value: "toate",
-            label: "Toate",
-            icon: Bell,
-            count: allRemindere.length,
-            badgeColor: "bg-[#F7F8FA] text-[#6B7280]",
-          },
-          {
-            value: "itp",
-            label: "ITP Urgent",
-            icon: ShieldAlert,
-            count: itpCount,
-            badgeColor: "bg-red-100 text-red-600",
-          },
-          {
-            value: "templates",
-            label: "Template-uri",
-            icon: FileText,
-            count: 0,
-            badgeColor: "",
-          },
-        ] as const;
+      <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden">
+        {/* Tab bar */}
+        <div className="flex overflow-x-auto border-b border-[#E5E7EB]" style={{ scrollbarWidth: "none" }}>
+          {([
+            { value: "pending",   label: "În așteptare", icon: Clock,       count: pendingCount,          badgeClass: "bg-amber-100 text-amber-700" },
+            { value: "toate",     label: "Toate",         icon: Bell,        count: allRemindere.length,   badgeClass: "bg-[#F7F8FA] text-[#6B7280]" },
+            { value: "itp",       label: "ITP Urgent",   icon: ShieldAlert, count: itpCount,              badgeClass: "bg-red-100 text-red-600" },
+            { value: "templates", label: "Template-uri", icon: FileText,    count: 0,                     badgeClass: "" },
+          ] as const).map(({ value, label, icon: Icon, count, badgeClass }) => {
+            const isActive = activeTab === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setActiveTab(value)}
+                className={[
+                  "relative flex items-center gap-2 px-5 py-3.5 text-sm font-medium whitespace-nowrap transition-colors shrink-0",
+                  "border-b-2 -mb-px focus-visible:outline-none",
+                  isActive
+                    ? "text-[#1877F2] border-[#1877F2] bg-white"
+                    : "text-[#6B7280] border-transparent hover:text-[#111318] hover:bg-[#F9FAFB]",
+                ].join(" ")}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                <span>{label}</span>
+                {count > 0 && (
+                  <span className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-semibold ${badgeClass}`}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
 
-        return (
-          <Tabs defaultValue="pending">
-            {/* Tab bar */}
-            <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden">
-              <div className="flex overflow-x-auto scrollbar-none border-b border-[#E5E7EB]">
-                {TABS.map(({ value, label, icon: Icon, count, badgeColor }) => (
-                  <TabsTrigger
-                    key={value}
-                    value={value}
-                    className={[
-                      "relative flex items-center gap-2 px-5 py-3.5 text-sm font-medium whitespace-nowrap",
-                      "text-[#6B7280] hover:text-[#111318] hover:bg-[#F9FAFB] transition-colors",
-                      "border-b-2 border-transparent -mb-px rounded-none",
-                      "data-[state=active]:text-[#1877F2] data-[state=active]:border-[#1877F2] data-[state=active]:bg-white",
-                      "focus-visible:outline-none",
-                    ].join(" ")}
-                  >
-                    <Icon className="h-4 w-4 shrink-0" />
-                    <span>{label}</span>
-                    {count > 0 && (
-                      <span className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-semibold ${badgeColor}`}>
-                        {count}
-                      </span>
-                    )}
-                  </TabsTrigger>
-                ))}
-              </div>
-
-              {/* Tab content inside the card */}
-              <div className="p-5">
-                <TabsContent value="pending" className="mt-0">
-                  <TabPending
-                    remindere={pendingRemindere}
-                    isLoading={loadingAll}
-                    onUpdate={invalidateAll}
-                  />
-                </TabsContent>
-
-                <TabsContent value="toate" className="mt-0">
-                  <TabToate
-                    remindere={allRemindere}
-                    isLoading={loadingAll}
-                    onUpdate={invalidateAll}
-                  />
-                </TabsContent>
-
-                <TabsContent value="itp" className="mt-0">
-                  <TabItpExpirare
-                    vehicule={itpVehicule}
-                    statieId={statieId}
-                    isLoading={loadingVehicule}
-                    onUpdate={invalidateAll}
-                  />
-                </TabsContent>
-
-                <TabsContent value="templates" className="mt-0">
-                  {!loadingTemplates && (
-                    <TabTemplates
-                      templates={templates}
-                      onUpdate={() =>
-                        queryClient.invalidateQueries({ queryKey: ["sms-templates", statieId] })
-                      }
-                    />
-                  )}
-                </TabsContent>
-              </div>
-            </div>
-          </Tabs>
-        );
-      })()}
+        {/* Tab content */}
+        <div className="p-5">
+          {activeTab === "pending" && (
+            <TabPending remindere={pendingRemindere} isLoading={loadingAll} onUpdate={invalidateAll} />
+          )}
+          {activeTab === "toate" && (
+            <TabToate remindere={allRemindere} isLoading={loadingAll} onUpdate={invalidateAll} />
+          )}
+          {activeTab === "itp" && (
+            <TabItpExpirare vehicule={itpVehicule} statieId={statieId} isLoading={loadingVehicule} onUpdate={invalidateAll} />
+          )}
+          {activeTab === "templates" && !loadingTemplates && (
+            <TabTemplates
+              templates={templates}
+              onUpdate={() => queryClient.invalidateQueries({ queryKey: ["sms-templates", statieId] })}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 }
