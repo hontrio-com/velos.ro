@@ -122,7 +122,6 @@ export function LocationPicker({
     if (searchInput) {
       const autocomplete = new google.maps.places.Autocomplete(searchInput, {
         componentRestrictions: { country: "ro" },
-        types: ["address"],
       });
       autocomplete.addListener("place_changed", () => {
         const place = autocomplete.getPlace();
