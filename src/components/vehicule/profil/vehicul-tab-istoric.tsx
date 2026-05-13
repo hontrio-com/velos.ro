@@ -15,6 +15,7 @@ interface Props {
   vehiculId: string;
   statieId: string;
   nrInmatriculare: string;
+  userStatii: { id: string; nume: string }[];
 }
 
 interface TimelineEvent {
@@ -26,6 +27,7 @@ interface TimelineEvent {
   status?: string;
   badge?: string;
   badgeColor?: string;
+  statieName?: string; // cross-stație
 }
 
 const STATUS_CONFIG = {
@@ -66,12 +68,14 @@ function EventIcon({ type, status }: { type: TimelineEvent["type"]; status?: str
   );
 }
 
-export function VehiculTabIstoric({ vehiculId, statieId, nrInmatriculare }: Props) {
+export function VehiculTabIstoric({ vehiculId, statieId, nrInmatriculare, userStatii }: Props) {
   const supabase = createClient();
 
   const { data: events = [], isLoading } = useQuery<TimelineEvent[]>({
-    queryKey: ["vehicul-istoric", vehiculId],
+    queryKey: ["vehicul-istoric", vehiculId, userStatii.map(s => s.id).join(",")],
     queryFn: async () => {
+      const otherStatiiIds = userStatii.filter(s => s.id !== statieId).map(s => s.id);
+
       const [{ data: programari }, { data: documente }] = await Promise.all([
         supabase
           .from("programari")
@@ -91,45 +95,86 @@ export function VehiculTabIstoric({ vehiculId, statieId, nrInmatriculare }: Prop
           .limit(50),
       ]);
 
+      // ── Cross-stație: aceeași mașină la alte stații ale aceluiași owner ──
+      let crossProgramari: typeof programari = [];
+      if (otherStatiiIds.length > 0) {
+        const { data: otherVehicule } = await supabase
+          .from("vehicule")
+          .select("id, statie_id")
+          .eq("nr_inmatriculare", nrInmatriculare)
+          .in("statie_id", otherStatiiIds);
+
+        if (otherVehicule && otherVehicule.length > 0) {
+          const { data: cp } = await supabase
+            .from("programari")
+            .select(`
+              id, data_programare, ora_start, status, tip_serviciu, pret, observatii,
+              vehicul_id,
+              angajat:angajati(nume),
+              rezultate_itp(rezultat, data_inspectie, expirare_noua, inspector, observatii_tehnice)
+            `)
+            .in("vehicul_id", otherVehicule.map(v => v.id))
+            .order("data_programare", { ascending: false })
+            .limit(100);
+
+          // Atașăm statieName pe fiecare programare cross
+          crossProgramari = (cp ?? []).map(p => {
+            const ov = otherVehicule.find(v => v.id === (p as any).vehicul_id);
+            const statieNume = userStatii.find(s => s.id === ov?.statie_id)?.nume;
+            return { ...p, _statieName: statieNume };
+          }) as typeof programari;
+        }
+      }
+
       const timeline: TimelineEvent[] = [];
 
-      for (const p of programari ?? []) {
-        const angajat = Array.isArray(p.angajat) ? p.angajat[0] : p.angajat;
-        const statusCfg = STATUS_CONFIG[p.status as keyof typeof STATUS_CONFIG];
-        const rezultate = Array.isArray(p.rezultate_itp) ? p.rezultate_itp : [];
+      function addProgramariToTimeline(list: typeof programari, statieName?: string) {
+        for (const p of list ?? []) {
+          const angajat = Array.isArray(p.angajat) ? p.angajat[0] : p.angajat;
+          const statusCfg = STATUS_CONFIG[p.status as keyof typeof STATUS_CONFIG];
+          const rezultate = Array.isArray(p.rezultate_itp) ? p.rezultate_itp : [];
 
-        timeline.push({
-          id: p.id,
-          type: "programare",
-          date: p.data_programare,
-          title: `${p.tip_serviciu} — ${p.ora_start.slice(0, 5)}`,
-          subtitle: [
-            angajat?.nume ? `Inspector: ${angajat.nume}` : null,
-            p.pret ? `${Number(p.pret).toLocaleString("ro-RO")} RON` : null,
-            p.observatii ?? null,
-          ].filter(Boolean).join(" · ") || undefined,
-          status: p.status,
-          badge: statusCfg?.label,
-          badgeColor: statusCfg?.color,
-        });
-
-        for (const rez of rezultate) {
-          const itpCfg = ITP_CONFIG[rez.rezultat as keyof typeof ITP_CONFIG];
           timeline.push({
-            id: `${p.id}-itp`,
-            type: "itp",
-            date: rez.data_inspectie,
-            title: `ITP ${itpCfg?.label ?? rez.rezultat}`,
+            id: statieName ? `cross-${p.id}` : p.id,
+            type: "programare",
+            date: p.data_programare,
+            title: `${p.tip_serviciu} — ${p.ora_start.slice(0, 5)}`,
             subtitle: [
-              rez.expirare_noua ? `Expiră: ${format(parseISO(rez.expirare_noua), "d MMM yyyy", { locale: ro })}` : null,
-              rez.inspector ? `Inspector: ${rez.inspector}` : null,
-              rez.observatii_tehnice ?? null,
+              angajat?.nume ? `Inspector: ${angajat.nume}` : null,
+              p.pret ? `${Number(p.pret).toLocaleString("ro-RO")} RON` : null,
+              p.observatii ?? null,
             ].filter(Boolean).join(" · ") || undefined,
-            status: rez.rezultat,
-            badge: itpCfg?.label,
-            badgeColor: itpCfg?.color,
+            status: p.status,
+            badge: statusCfg?.label,
+            badgeColor: statusCfg?.color,
+            statieName,
           });
+
+          for (const rez of rezultate) {
+            const itpCfg = ITP_CONFIG[rez.rezultat as keyof typeof ITP_CONFIG];
+            timeline.push({
+              id: statieName ? `cross-${p.id}-itp` : `${p.id}-itp`,
+              type: "itp",
+              date: rez.data_inspectie,
+              title: `ITP ${itpCfg?.label ?? rez.rezultat}`,
+              subtitle: [
+                rez.expirare_noua ? `Expiră: ${format(parseISO(rez.expirare_noua), "d MMM yyyy", { locale: ro })}` : null,
+                rez.inspector ? `Inspector: ${rez.inspector}` : null,
+                rez.observatii_tehnice ?? null,
+              ].filter(Boolean).join(" · ") || undefined,
+              status: rez.rezultat,
+              badge: itpCfg?.label,
+              badgeColor: itpCfg?.color,
+              statieName,
+            });
+          }
         }
+      }
+
+      addProgramariToTimeline(programari);
+      // Cross-stație: fiecare programare cu statieName individual
+      for (const cp of crossProgramari as any[]) {
+        addProgramariToTimeline([cp], cp._statieName);
       }
 
       for (const d of documente ?? []) {
@@ -208,12 +253,22 @@ export function VehiculTabIstoric({ vehiculId, statieId, nrInmatriculare }: Prop
                   </div>
 
                   {/* Card */}
-                  <div className="bg-white border border-[#E5E7EB] rounded-xl px-4 py-3">
+                  <div className={cn(
+                    "bg-white rounded-xl px-4 py-3",
+                    ev.statieName
+                      ? "border border-dashed border-[#C7D2FE] bg-[#F5F3FF]/50"
+                      : "border border-[#E5E7EB]"
+                  )}>
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-[#111318]">{ev.title}</p>
                         {ev.subtitle && (
                           <p className="text-xs text-[#6B7280] mt-0.5 truncate">{ev.subtitle}</p>
+                        )}
+                        {ev.statieName && (
+                          <p className="text-[11px] text-[#6366F1] mt-1 font-medium">
+                            📍 {ev.statieName}
+                          </p>
                         )}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">

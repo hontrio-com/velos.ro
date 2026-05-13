@@ -56,7 +56,10 @@ export interface VehiculComplet {
   } | null;
 }
 
-interface Props { vehicul: VehiculComplet }
+interface Props {
+  vehicul: VehiculComplet;
+  userStatii: { id: string; nume: string }[];
+}
 
 function getExpiryStatus(date: string | null): "expirat" | "urgent" | "curand" | "ok" | "lipsa" {
   if (!date) return "lipsa";
@@ -100,7 +103,7 @@ function StatusPill({ label, date }: { label: string; date: string | null }) {
   );
 }
 
-export function VehiculProfilClient({ vehicul }: Props) {
+export function VehiculProfilClient({ vehicul, userStatii }: Props) {
   const [tab, setTab] = useQueryState<VTab>("tab", {
     defaultValue: "profil",
     parse: (v) => (["profil", "documente", "expirari", "istoric"].includes(v) ? v as VTab : "profil"),
@@ -207,7 +210,7 @@ export function VehiculProfilClient({ vehicul }: Props) {
           {(tab ?? "profil") === "profil"    && <VehiculTabProfil vehicul={vehicul} />}
           {(tab ?? "profil") === "documente" && <VehiculTabDocumente vehiculId={vehicul.id} statieId={vehicul.statie_id} />}
           {(tab ?? "profil") === "expirari"  && <VehiculTabExpirari vehicul={vehicul} />}
-          {(tab ?? "profil") === "istoric"   && <VehiculTabIstoric vehiculId={vehicul.id} statieId={vehicul.statie_id} nrInmatriculare={vehicul.nr_inmatriculare} />}
+          {(tab ?? "profil") === "istoric"   && <VehiculTabIstoric vehiculId={vehicul.id} statieId={vehicul.statie_id} nrInmatriculare={vehicul.nr_inmatriculare} userStatii={userStatii} />}
         </div>
       </div>
     </div>

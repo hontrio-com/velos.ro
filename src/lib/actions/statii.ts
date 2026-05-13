@@ -385,3 +385,34 @@ export async function toggleStatieActivaAction(
   revalidatePath("/setari/statii");
   return { success: true };
 }
+
+// ── updateRecenziiAction ─────────────────────────────────────────
+export async function updateRecenziiAction(
+  statieId: string,
+  data: { recenzii_activ: boolean; google_review_url: string }
+): Promise<{ success: true } | { error: string }> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Neautentificat" };
+
+  const { data: statie } = await supabase
+    .from("statii")
+    .select("id")
+    .eq("id", statieId)
+    .eq("owner_id", user.id)
+    .single();
+
+  if (!statie) return { error: "Stație negăsită" };
+
+  const { error } = await (supabase as any)
+    .from("setari_statie")
+    .upsert(
+      { statie_id: statieId, ...data },
+      { onConflict: "statie_id" }
+    );
+
+  if (error) return { error: error.message };
+  revalidatePath(`/setari/statii/${statieId}`);
+  return { success: true };
+}

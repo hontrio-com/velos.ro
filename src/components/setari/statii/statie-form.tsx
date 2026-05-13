@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   FileText, MapPin, Clock, DollarSign, MessageSquare,
-  Settings, Check, Loader2, AlertTriangle, Power,
+  Settings, Check, Loader2, AlertTriangle, Power, Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ import {
   deleteLogoAction,
   updateTarifeAction,
   updateSetariSmsAction,
+  updateRecenziiAction,
   toggleStatieActivaAction,
 } from "@/lib/actions/statii";
 import { statieBaseSchema, locatieSchema, programSchema } from "@/lib/validations/statie";
@@ -44,6 +45,7 @@ const TABS = [
   { id: "program", label: "Program & Capacitate", icon: Clock },
   { id: "tarife", label: "Tarife", icon: DollarSign },
   { id: "sms", label: "Remindere SMS", icon: MessageSquare },
+  { id: "recenzii", label: "Recenzii Google", icon: Star },
   { id: "avansat", label: "Avansat", icon: Settings },
 ] as const;
 
@@ -140,6 +142,10 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
     template_reminder_zi: setari?.template_reminder_zi ?? "",
   });
 
+  // Recenzii state
+  const [recenziiActiv, setRecenziiActiv] = useState((setari as any)?.recenzii_activ ?? false);
+  const [googleReviewUrl, setGoogleReviewUrl] = useState((setari as any)?.google_review_url ?? "");
+
   // General form
   const baseForm = useForm<BaseForm>({
     resolver: zodResolver(statieBaseSchema),
@@ -221,6 +227,17 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
       });
       if ("error" in r) toast.error(r.error);
       else toast.success("Setări SMS salvate!");
+    });
+  }
+
+  async function saveRecenzii() {
+    startTransition(async () => {
+      const r = await updateRecenziiAction(statie.id, {
+        recenzii_activ: recenziiActiv,
+        google_review_url: googleReviewUrl,
+      });
+      if ("error" in r) toast.error(r.error);
+      else toast.success("Setări recenzii salvate!");
     });
   }
 
@@ -564,7 +581,61 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
       </div>
     ),
 
-    // ── Tab 6: Avansat ──────────────────────────────────────────
+    // ── Tab 6: Recenzii ─────────────────────────────────────────
+    recenzii: (
+      <div className="space-y-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-base">Recenzii Google automate</h3>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Trimite un SMS cu link de recenzie la finalul fiecărui ITP
+            </p>
+          </div>
+          <Switch checked={recenziiActiv} onCheckedChange={setRecenziiActiv} />
+        </div>
+
+        {recenziiActiv && (
+          <>
+            <div className="p-3 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-sm text-[#1877F2]">
+              SMS-ul se trimite automat când o programare este marcată ca{" "}
+              <strong>Finalizat</strong>. Clientul primește linkul direct pe telefon.
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Link recenzie Google Maps</Label>
+              <Input
+                value={googleReviewUrl}
+                onChange={(e) => setGoogleReviewUrl(e.target.value)}
+                placeholder="https://g.page/r/..."
+                type="url"
+              />
+              <p className="text-xs text-muted-foreground">
+                Găsești linkul în Google Business Profile → Obțineți recenzii.
+              </p>
+            </div>
+
+            {googleReviewUrl && (
+              <div className="rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-4 space-y-1">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#9CA3AF] mb-2">
+                  Previzualizare SMS
+                </p>
+                <p className="text-sm text-[#374151] leading-relaxed">
+                  Multumim ca ati ales <strong>{statie.nume}</strong> pentru ITP! Ne-ar ajuta mult o recenzie:{" "}
+                  <span className="text-[#1877F2] break-all">{googleReviewUrl}</span>
+                </p>
+              </div>
+            )}
+          </>
+        )}
+
+        <Button onClick={saveRecenzii} disabled={isPending} className="w-full">
+          {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Salvează setările recenzii
+        </Button>
+      </div>
+    ),
+
+    // ── Tab 7: Avansat ──────────────────────────────────────────
     avansat: (
       <div className="space-y-8">
         <div>

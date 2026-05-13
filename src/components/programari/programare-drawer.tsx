@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { statusConfig } from "./programari-client";
 import { RezultatItpForm } from "./rezultat-itp-form";
+import { trimiteRecenzieAction } from "@/lib/actions/recenzii";
 
 type Status = "programat" | "in_lucru" | "finalizat" | "anulat" | "neprezent";
 
@@ -152,7 +153,11 @@ export function ProgramareDrawer({
     } else {
       toast.success(`Status: ${statusConfig[newStatus].label}`);
       invalidate();
-      if (newStatus === "finalizat") setShowRezultatForm(true);
+      if (newStatus === "finalizat") {
+        setShowRezultatForm(true);
+        // Trimite SMS recenzie dacă e activat pentru stație
+        trimiteRecenzieAction(programareId).catch(() => null);
+      }
     }
     setUpdatingStatus(false);
   }

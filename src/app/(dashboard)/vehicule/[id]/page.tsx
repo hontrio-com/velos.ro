@@ -45,11 +45,20 @@ export default async function VehiculProfilPage({ params }: Props) {
 
   if (!statie || statie.owner_id !== user.id) notFound();
 
+  // Toate stațiile deținute de user — pentru istoricul cross-stație
+  const { data: userStatii } = await supabase
+    .from("statii")
+    .select("id, nume")
+    .eq("owner_id", user.id);
+
   const client = Array.isArray(vehicul.client) ? vehicul.client[0] : vehicul.client;
 
   return (
     <PageTransition>
-      <VehiculProfilClient vehicul={{ ...vehicul, client }} />
+      <VehiculProfilClient
+        vehicul={{ ...vehicul, client }}
+        userStatii={userStatii ?? []}
+      />
     </PageTransition>
   );
 }
