@@ -1,15 +1,21 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { signInWithGoogleAction } from "@/lib/actions/auth";
+import { createClient } from "@/lib/supabase/client";
 
 export function GoogleButton() {
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
 
-  function handleClick() {
-    startTransition(async () => {
-      await signInWithGoogleAction();
+  async function handleClick() {
+    setIsPending(true);
+    const supabase = createClient();
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: { access_type: "offline", prompt: "consent" },
+      },
     });
   }
 
