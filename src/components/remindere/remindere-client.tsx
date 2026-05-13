@@ -142,72 +142,108 @@ export function RemindereClient({ statieId }: RemindereClientProps) {
       <RemindereStats statieId={statieId} />
 
       {/* Tabs */}
-      <Tabs defaultValue="pending">
-        <TabsList className="bg-white border border-[#E5E7EB] h-9 p-0.5">
-          {[
-            { value: "pending", label: "În așteptare", icon: Clock, count: pendingCount },
-            { value: "toate", label: "Toate", icon: Bell, count: allRemindere.length },
-            { value: "itp", label: "ITP Urgent", icon: ShieldAlert, count: itpCount },
-            { value: "templates", label: "Template-uri", icon: FileText, count: 0 },
-          ].map(({ value, label, icon: Icon, count }) => (
-            <TabsTrigger
-              key={value}
-              value={value}
-              className="gap-1.5 text-xs h-8 px-3 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#1877F2]"
-            >
-              <Icon className="h-3.5 w-3.5 shrink-0" />
-              <span className="hidden sm:inline">{label}</span>
-              {count > 0 && (
-                <span className={
-                  value === "pending"
-                    ? "inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold"
-                    : "text-[10px] text-[#9CA3AF]"
-                }>
-                  {count}
-                </span>
-              )}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      {(() => {
+        const TABS = [
+          {
+            value: "pending",
+            label: "În așteptare",
+            icon: Clock,
+            count: pendingCount,
+            badgeColor: "bg-amber-100 text-amber-700",
+          },
+          {
+            value: "toate",
+            label: "Toate",
+            icon: Bell,
+            count: allRemindere.length,
+            badgeColor: "bg-[#F7F8FA] text-[#6B7280]",
+          },
+          {
+            value: "itp",
+            label: "ITP Urgent",
+            icon: ShieldAlert,
+            count: itpCount,
+            badgeColor: "bg-red-100 text-red-600",
+          },
+          {
+            value: "templates",
+            label: "Template-uri",
+            icon: FileText,
+            count: 0,
+            badgeColor: "",
+          },
+        ] as const;
 
-        <div className="pt-4">
-          <TabsContent value="pending" className="mt-0">
-            <TabPending
-              remindere={pendingRemindere}
-              isLoading={loadingAll}
-              onUpdate={invalidateAll}
-            />
-          </TabsContent>
+        return (
+          <Tabs defaultValue="pending">
+            {/* Tab bar */}
+            <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden">
+              <div className="flex overflow-x-auto scrollbar-none border-b border-[#E5E7EB]">
+                {TABS.map(({ value, label, icon: Icon, count, badgeColor }) => (
+                  <TabsTrigger
+                    key={value}
+                    value={value}
+                    className={[
+                      "relative flex items-center gap-2 px-5 py-3.5 text-sm font-medium whitespace-nowrap",
+                      "text-[#6B7280] hover:text-[#111318] hover:bg-[#F9FAFB] transition-colors",
+                      "border-b-2 border-transparent -mb-px rounded-none",
+                      "data-[state=active]:text-[#1877F2] data-[state=active]:border-[#1877F2] data-[state=active]:bg-white",
+                      "focus-visible:outline-none",
+                    ].join(" ")}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span>{label}</span>
+                    {count > 0 && (
+                      <span className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-semibold ${badgeColor}`}>
+                        {count}
+                      </span>
+                    )}
+                  </TabsTrigger>
+                ))}
+              </div>
 
-          <TabsContent value="toate" className="mt-0">
-            <TabToate
-              remindere={allRemindere}
-              isLoading={loadingAll}
-              onUpdate={invalidateAll}
-            />
-          </TabsContent>
+              {/* Tab content inside the card */}
+              <div className="p-5">
+                <TabsContent value="pending" className="mt-0">
+                  <TabPending
+                    remindere={pendingRemindere}
+                    isLoading={loadingAll}
+                    onUpdate={invalidateAll}
+                  />
+                </TabsContent>
 
-          <TabsContent value="itp" className="mt-0">
-            <TabItpExpirare
-              vehicule={itpVehicule}
-              statieId={statieId}
-              isLoading={loadingVehicule}
-              onUpdate={invalidateAll}
-            />
-          </TabsContent>
+                <TabsContent value="toate" className="mt-0">
+                  <TabToate
+                    remindere={allRemindere}
+                    isLoading={loadingAll}
+                    onUpdate={invalidateAll}
+                  />
+                </TabsContent>
 
-          <TabsContent value="templates" className="mt-0">
-            {!loadingTemplates && (
-              <TabTemplates
-                templates={templates}
-                onUpdate={() =>
-                  queryClient.invalidateQueries({ queryKey: ["sms-templates", statieId] })
-                }
-              />
-            )}
-          </TabsContent>
-        </div>
-      </Tabs>
+                <TabsContent value="itp" className="mt-0">
+                  <TabItpExpirare
+                    vehicule={itpVehicule}
+                    statieId={statieId}
+                    isLoading={loadingVehicule}
+                    onUpdate={invalidateAll}
+                  />
+                </TabsContent>
+
+                <TabsContent value="templates" className="mt-0">
+                  {!loadingTemplates && (
+                    <TabTemplates
+                      templates={templates}
+                      onUpdate={() =>
+                        queryClient.invalidateQueries({ queryKey: ["sms-templates", statieId] })
+                      }
+                    />
+                  )}
+                </TabsContent>
+              </div>
+            </div>
+          </Tabs>
+        );
+      })()}
     </div>
   );
 }
