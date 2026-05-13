@@ -19,6 +19,7 @@ import {
   FileText,
   ClipboardList,
   UserCog,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +28,7 @@ import { toast } from "sonner";
 import { statusConfig } from "./programari-client";
 import { RezultatItpForm } from "./rezultat-itp-form";
 import { trimiteRecenzieAction } from "@/lib/actions/recenzii";
+import { deleteProgramareAction } from "@/lib/actions/programari";
 
 type Status = "programat" | "in_lucru" | "finalizat" | "anulat" | "neprezent";
 
@@ -61,6 +63,8 @@ export function ProgramareDrawer({
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [showRezultatForm, setShowRezultatForm] = useState(false);
   const [updatingAngajat, setUpdatingAngajat] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const { data: p, isLoading } = useQuery({
     queryKey: ["programare-detail", programareId],
@@ -518,6 +522,58 @@ export function ProgramareDrawer({
                 </>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Delete footer */}
+        {p && (
+          <div className="border-t border-border px-4 py-3 shrink-0">
+            {!confirmDelete ? (
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                className="flex items-center gap-1.5 text-xs text-[#9CA3AF] hover:text-destructive transition-colors"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Șterge programarea
+              </button>
+            ) : (
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs text-destructive font-medium">Ești sigur? Acțiunea e ireversibilă.</p>
+                <div className="flex gap-2 shrink-0">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setConfirmDelete(false)}
+                    disabled={deleting}
+                    className="h-7 text-xs px-3"
+                  >
+                    Anulează
+                  </Button>
+                  <Button
+                    size="sm"
+                    disabled={deleting}
+                    onClick={async () => {
+                      if (!programareId) return;
+                      setDeleting(true);
+                      const r = await deleteProgramareAction(programareId);
+                      if ("error" in r) {
+                        toast.error(r.error);
+                        setDeleting(false);
+                        setConfirmDelete(false);
+                      } else {
+                        toast.success("Programare ștearsă");
+                        onUpdate();
+                        onClose();
+                      }
+                    }}
+                    className="h-7 text-xs px-3 bg-destructive hover:bg-destructive/90 text-white"
+                  >
+                    {deleting ? "Se șterge..." : "Confirmă"}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
