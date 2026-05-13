@@ -1,7 +1,8 @@
 "use server";
-
+import { sendBookingOnlineEmail } from "@/lib/actions/email";
 import { createServiceClient } from "@/lib/supabase/server";
-import { parseISO, getDay } from "date-fns";
+import { parseISO, getDay, format } from "date-fns";
+import { ro } from "date-fns/locale";
 
 const ZILE_MAP: Record<number, string> = {
   1: "luni",
@@ -120,7 +121,7 @@ export async function createBookingAction(
     // Fetch station to get durata_slot_minute + verify it exists
     const { data: statie } = await supabase
       .from("statii")
-      .select("id, durata_slot_minute, owner_id")
+      .select("id, nume, adresa, telefon, durata_slot_minute, owner_id")
       .eq("id", input.statieId)
       .eq("activa", true)
       .single();
@@ -223,6 +224,22 @@ export async function createBookingAction(
 
     if (progErr || !programare) {
       return { success: false, error: "Eroare la crearea programării" };
+    }
+
+    // Send booking confirmation email if client provided email
+    if (input.email) {
+      sendBookingOnlineEmail(input.email, {
+        numeClient: `${input.nume} ${input.prenume}`.trim(),
+        nrInmatriculare: input.nrInmatriculare,
+        marcaModel: input.marcaModel,
+        dataFormatata: format(parseISO(input.date), "d MMMM yyyy", { locale: ro }),
+        ora: input.slot,
+        tipServiciu: "ITP",
+        numeStatie: (statie as any).nume ?? "Stație ITP",
+        adresaStatie: (statie as any).adresa ?? undefined,
+        telefonStatie: (statie as any).telefon ?? undefined,
+        observatii: input.observatii,
+      }).catch(console.error);
     }
 
     return { success: true, programareId: programare.id };

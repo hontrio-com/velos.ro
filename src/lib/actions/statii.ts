@@ -1,4 +1,5 @@
 "use server";
+import { sendStatieNouaEmail } from "@/lib/actions/email";
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
@@ -68,6 +69,20 @@ export async function createStatieAction(data: {
   if (error) return { error: error.message };
 
   await supabase.from("setari_statie").insert({ statie_id: statie.id });
+
+  // Send new station email to owner
+  if (user.email) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", user.id)
+      .single();
+    sendStatieNouaEmail(user.email, {
+      numeProprietar: profile?.full_name ?? user.email,
+      numeStatie: data.nume,
+      slugStatie: statie.slug,
+    }).catch(console.error);
+  }
 
   revalidatePath("/setari/statii");
   return { id: statie.id, slug: statie.slug };

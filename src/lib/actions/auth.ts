@@ -7,6 +7,7 @@ import {
   registerSchema,
   forgotPasswordSchema,
 } from "@/lib/validations/auth";
+import { sendBunVenitEmail } from "@/lib/actions/email";
 
 export async function loginAction(
   _prev: { error: string } | null,
@@ -64,6 +65,9 @@ export async function registerAction(
     }
     return { error: error.message };
   }
+
+  // Send welcome email (fire and forget)
+  sendBunVenitEmail(parsed.data.email, parsed.data.full_name).catch(console.error);
 
   redirect("/dashboard");
 }

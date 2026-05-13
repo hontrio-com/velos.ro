@@ -23,7 +23,8 @@
       "Bash(xargs grep:*)",
       "Bash(grep -v \"^$\")",
       "Bash(node -e \"console.log\\(require\\(''./node_modules/tesseract.js/package.json''\\).version\\)\")",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(python3:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
