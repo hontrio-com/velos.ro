@@ -6,7 +6,7 @@ const pageVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { duration: 0.2, ease: "easeOut" },
+    transition: { duration: 0.12, ease: "easeOut" },
   },
 };
 
@@ -14,7 +14,7 @@ const cardVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { duration: 0.2, ease: "easeOut" },
+    transition: { duration: 0.12, ease: "easeOut" },
   },
 };
 
@@ -23,7 +23,7 @@ const listVariants: Variants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.06,
+      staggerChildren: 0.03,
     },
   },
 };
@@ -32,7 +32,7 @@ const listItemVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { duration: 0.15, ease: "easeOut" },
+    transition: { duration: 0.1, ease: "easeOut" },
   },
 };
 
