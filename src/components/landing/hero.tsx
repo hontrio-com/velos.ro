@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 export default function LandingHero() {
   return (
     <section
-      className="relative bg-white min-h-[88vh] flex flex-col items-center justify-center py-24"
+      className="relative bg-white min-h-[88vh] flex flex-col items-center justify-center pt-12 pb-20"
       style={{
         backgroundImage: `radial-gradient(circle, #CBD5E1 1px, transparent 1px)`,
         backgroundSize: "28px 28px",
@@ -37,7 +37,7 @@ export default function LandingHero() {
           className="animate-fade-in-up max-w-lg text-base sm:text-lg text-[#6B7280] leading-relaxed mb-10 px-2 sm:px-0"
           style={{ animationDelay: "0.15s" }}
         >
-          Tot ce ai nevoie pentru administrarea unei stații ITP moderne — reminder-e automate prin SMS, management vehicule, programări online, administrare angajați și evidență completă într-un singur loc.
+          Tot ce ai nevoie pentru administrarea unei stații ITP moderne: reminder-e automate prin SMS, management vehicule, programări online, administrare angajați și evidență completă într-un singur loc.
         </p>
 
         {/* CTAs */}
