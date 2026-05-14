@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import Stripe from "stripe";
+import type Stripe from "stripe";
 import { stripe, getPlanFromPriceId } from "@/lib/stripe";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
 
       if (profileId && plan && subscriptionId) {
         // Fetch subscription to get period dates
-        const sub = await stripe.subscriptions.retrieve(subscriptionId);
+        const sub = await stripe.subscriptions.retrieve(subscriptionId) as any;
         const periodEnd = new Date(sub.current_period_end * 1000).toISOString();
 
         await supabase
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
 
   // ── Subscription updated (upgrade/downgrade/renewal) ──────────────────
   if (event.type === "customer.subscription.updated") {
-    const sub = event.data.object as Stripe.Subscription;
+    const sub = event.data.object as any;
     const profileId = sub.metadata?.profile_id;
     if (!profileId) return NextResponse.json({ received: true });
 
@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
 
   // ── Subscription canceled/deleted ─────────────────────────────────────
   if (event.type === "customer.subscription.deleted") {
-    const sub = event.data.object as Stripe.Subscription;
+    const sub = event.data.object as any;
     const profileId = sub.metadata?.profile_id;
     if (!profileId) return NextResponse.json({ received: true });
 
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
 
   // ── Invoice paid (renewal) ────────────────────────────────────────────
   if (event.type === "invoice.paid") {
-    const invoice = event.data.object as Stripe.Invoice;
+    const invoice = event.data.object as any;
     const customerId = invoice.customer as string;
     if (!customerId || invoice.billing_reason === "subscription_create") {
       // subscription_create is handled by checkout.session.completed
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
     if (profile) {
       const subId = invoice.subscription as string;
       if (subId) {
-        const sub = await stripe.subscriptions.retrieve(subId);
+        const sub = await stripe.subscriptions.retrieve(subId) as any;
         const periodEnd = new Date(sub.current_period_end * 1000).toISOString();
         await supabase
           .from("profiles")
@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
 
   // ── Invoice payment failed ────────────────────────────────────────────
   if (event.type === "invoice.payment_failed") {
-    const invoice = event.data.object as Stripe.Invoice;
+    const invoice = event.data.object as any;
     const customerId = invoice.customer as string;
     if (!customerId) return NextResponse.json({ received: true });
 
