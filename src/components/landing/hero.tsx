@@ -4,12 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const STATS = [
-  { value: "+40%", label: "mai mulți clienți care revin" },
-  { value: "-30%", label: "pierderi din expirări uitate" },
-  { value: "+ venit lunar", label: "prin automatizare și retenție" },
-];
-
 export default function LandingHero() {
   return (
     <section
@@ -40,15 +34,15 @@ export default function LandingHero() {
 
         {/* Subheadline */}
         <p
-          className="animate-fade-in-up max-w-xl text-lg sm:text-xl text-[#6B7280] leading-relaxed mb-10"
+          className="animate-fade-in-up max-w-lg text-base sm:text-lg text-[#6B7280] leading-relaxed mb-10 px-2 sm:px-0"
           style={{ animationDelay: "0.15s" }}
         >
-          Tot ce ai nevoie pentru administrarea unei stații ITP moderne: reminder-e automate prin SMS, management vehicule, programări online, administrare angajați și evidență completă într-un singur loc.
+          Tot ce ai nevoie pentru administrarea unei stații ITP moderne — reminder-e automate prin SMS, management vehicule, programări online, administrare angajați și evidență completă într-un singur loc.
         </p>
 
         {/* CTAs */}
         <div
-          className="animate-fade-in-up flex flex-col sm:flex-row items-center gap-3 mb-20 w-full sm:w-auto"
+          className="animate-fade-in-up flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto"
           style={{ animationDelay: "0.2s" }}
         >
           <Link
@@ -58,7 +52,7 @@ export default function LandingHero() {
               "gap-2 px-8 h-12 text-sm w-full sm:w-auto justify-center"
             )}
           >
-            Incearca 15 zile gratuit
+            Încearcă 15 zile gratuit
             <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
@@ -68,21 +62,8 @@ export default function LandingHero() {
               "px-8 h-12 text-sm w-full sm:w-auto justify-center"
             )}
           >
-            Cum functioneaza
+            Cum funcționează
           </Link>
-        </div>
-
-        {/* Stats card */}
-        <div
-          className="animate-fade-in-up w-full max-w-lg border border-[#E5E7EB] rounded-2xl bg-[#F9FAFB] px-6 py-6 grid grid-cols-3 gap-4"
-          style={{ animationDelay: "0.25s" }}
-        >
-          {STATS.map((s, i) => (
-            <div key={i} className={`text-center ${i < STATS.length - 1 ? "border-r border-[#E5E7EB]" : ""}`}>
-              <p className="text-2xl font-bold text-[#0A0F1E]">{s.value}</p>
-              <p className="text-xs text-[#9CA3AF] mt-1 leading-snug">{s.label}</p>
-            </div>
-          ))}
         </div>
 
       </div>
