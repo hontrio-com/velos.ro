@@ -25,8 +25,8 @@ const PLANS: Plan[] = [
     id: "trial",
     name: "Trial",
     price: "Gratuit",
-    priceNote: "30 de zile",
-    sms: "50 SMS/lună",
+    priceNote: "15 zile",
+    sms: "20 SMS incluse",
     description: "Pentru a testa platforma",
     icon: Zap,
     color: "#6B7280",
@@ -34,7 +34,7 @@ const PLANS: Plan[] = [
     cta: "Plan curent",
     features: [
       "1 stație ITP",
-      "50 SMS-uri/lună",
+      "20 SMS-uri (total trial)",
       "Programări nelimitate",
       "Gestionare clienți",
       "Rapoarte de bază",
@@ -271,7 +271,7 @@ export function AbonamentClient({ currentPlan, email }: AbonamentClientProps) {
         <div className="grid gap-4 sm:grid-cols-2 text-xs text-[#6B7280]">
           <div>
             <p className="font-medium text-[#374151] mb-1">Cum se numără SMS-urile?</p>
-            <p>Fiecare SMS trimis (reminder, confirmare, manual) consumă 1 unitate din quota lunară. Quota se resetează în prima zi a fiecărei luni.</p>
+            <p>Fiecare SMS trimis (reminder, confirmare, manual) consumă 1 unitate din quota. Planul Trial include 20 SMS total pe 15 zile. Planurile plătite au quota lunară care se resetează în prima zi a fiecărei luni.</p>
           </div>
           <div>
             <p className="font-medium text-[#374151] mb-1">Pot schimba planul oricând?</p>

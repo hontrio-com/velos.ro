@@ -42,6 +42,7 @@ export async function middleware(request: NextRequest) {
     "/setari",
     "/calendar",
     "/smart-page",
+    "/admin",
   ];
 
   const authRoutes = ["/login", "/register", "/forgot-password"];

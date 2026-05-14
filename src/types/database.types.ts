@@ -18,6 +18,8 @@ export type Database = {
           avatar_url: string | null;
           plan: "trial" | "basic" | "pro" | "enterprise";
           sms_credit: number;
+          trial_expires_at: string;
+          is_admin: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -29,6 +31,8 @@ export type Database = {
           avatar_url?: string | null;
           plan?: "trial" | "basic" | "pro" | "enterprise";
           sms_credit?: number;
+          trial_expires_at?: string;
+          is_admin?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -40,6 +44,8 @@ export type Database = {
           avatar_url?: string | null;
           plan?: "trial" | "basic" | "pro" | "enterprise";
           sms_credit?: number;
+          trial_expires_at?: string;
+          is_admin?: boolean;
           updated_at?: string;
         };
         Relationships: [];
