@@ -125,12 +125,24 @@ export async function startPaidOnboardingAction(
   const ownerEmail = (profile as any)?.email ?? user.email ?? "";
   const ownerName = (profile as any)?.full_name ?? ownerEmail;
 
-  try {
-    await createStatie(user.id, statieData, ownerEmail, ownerName);
-    await markOnboardingComplete(user.id);
-  } catch (e: unknown) {
-    return { error: e instanceof Error ? e.message : "Eroare la creare stație" };
+  // Only create station if one doesn't exist yet (handles refresh/cancel flow)
+  const { data: existingStatie } = await supabase
+    .from("statii")
+    .select("id")
+    .eq("owner_id", user.id)
+    .limit(1)
+    .maybeSingle();
+
+  if (!existingStatie) {
+    try {
+      await createStatie(user.id, statieData, ownerEmail, ownerName);
+    } catch (e: unknown) {
+      return { error: e instanceof Error ? e.message : "Eroare la creare stație" };
+    }
   }
+
+  // NOTE: onboarding_completed is marked AFTER payment — in /onboarding/success
+  // or as a backup in the checkout.session.completed webhook
 
   try {
     // Get or create Stripe customer
@@ -159,8 +171,8 @@ export async function startPaidOnboardingAction(
         metadata: { profile_id: user.id, plan, cycle },
       },
       metadata: { profile_id: user.id, plan, cycle, type: "subscription" },
-      success_url: `${appUrl}/setari/abonament?success=1&plan=${plan}`,
-      cancel_url: `${appUrl}/setari/abonament?canceled=1`,
+      success_url: `${appUrl}/onboarding/success?plan=${plan}`,
+      cancel_url: `${appUrl}/onboarding`,
       allow_promotion_codes: true,
       billing_address_collection: "auto",
       customer_update: { name: "auto", address: "auto" },

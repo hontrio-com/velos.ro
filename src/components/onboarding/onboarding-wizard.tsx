@@ -5,6 +5,8 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, ChevronRight, ChevronLeft, Loader2, Zap, Shield, Star, Gift, CalendarDays, MessageSquare, BarChart3, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { PLAN_CONFIG, type PlanId, type BillingCycle } from "@/lib/stripe-config";
 import { completeTrialOnboardingAction, startPaidOnboardingAction } from "@/lib/actions/onboarding";
 import type { StatieOnboardingData } from "@/lib/actions/onboarding";
@@ -23,8 +25,8 @@ const PLAN_ICONS: Record<PlanId, React.ReactNode> = {
   enterprise: <Star className="h-4 w-4" />,
 };
 
-export function OnboardingWizard({ userEmail }: { userEmail: string }) {
-  const [step, setStep] = useState(0);
+export function OnboardingWizard({ userEmail, hasStation }: { userEmail: string; hasStation: boolean }) {
+  const [step, setStep] = useState(hasStation ? 2 : 0);
   const [statie, setStatie] = useState<StatieOnboardingData>({ nume: "", oras: "", telefon: "" });
   const [statieError, setStatieError] = useState<Partial<StatieOnboardingData>>({});
   const [selectedPlan, setSelectedPlan] = useState<PlanId | "trial" | null>(null);
@@ -266,29 +268,26 @@ export function OnboardingWizard({ userEmail }: { userEmail: string }) {
 
                   {/* Billing cycle toggle */}
                   <div className="flex items-center gap-3 mb-6">
-                    <span className={cn("text-sm font-medium", cycle === "monthly" ? "text-[#111318]" : "text-[#9CA3AF]")}>
-                      Lunar
-                    </span>
-                    <button
-                      onClick={() => setCycle((c) => c === "monthly" ? "yearly" : "monthly")}
-                      className={cn(
-                        "relative w-10 h-5 rounded-full transition-colors",
-                        cycle === "yearly" ? "bg-[#1877F2]" : "bg-[#D1D5DB]"
-                      )}
+                    <Label
+                      htmlFor="cycle-switch"
+                      className={cn("text-sm font-medium cursor-pointer", cycle === "monthly" ? "text-[#111318]" : "text-[#9CA3AF]")}
                     >
-                      <span
-                        className={cn(
-                          "absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform",
-                          cycle === "yearly" ? "translate-x-5" : "translate-x-0.5"
-                        )}
-                      />
-                    </button>
-                    <span className={cn("text-sm font-medium", cycle === "yearly" ? "text-[#111318]" : "text-[#9CA3AF]")}>
+                      Lunar
+                    </Label>
+                    <Switch
+                      id="cycle-switch"
+                      checked={cycle === "yearly"}
+                      onCheckedChange={(v) => setCycle(v ? "yearly" : "monthly")}
+                    />
+                    <Label
+                      htmlFor="cycle-switch"
+                      className={cn("text-sm font-medium cursor-pointer", cycle === "yearly" ? "text-[#111318]" : "text-[#9CA3AF]")}
+                    >
                       Anual
-                    </span>
+                    </Label>
                     {cycle === "yearly" && (
                       <span className="text-xs font-semibold text-[#059669] bg-[#ECFDF5] px-2 py-0.5 rounded-full">
-                        Economisești ~20%
+                        Economisesti ~20%
                       </span>
                     )}
                   </div>

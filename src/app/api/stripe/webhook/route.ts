@@ -78,6 +78,7 @@ export async function POST(request: NextRequest) {
             stripe_subscription_id: subscriptionId,
             billing_cycle: cycle,
             subscription_ends_at: periodEnd,
+            onboarding_completed: true,
           } as never)
           .eq("id", profileId);
 
