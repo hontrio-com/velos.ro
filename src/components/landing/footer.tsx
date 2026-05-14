@@ -54,7 +54,7 @@ const SOCIALS = [
 
 export default function LandingFooter() {
   return (
-    <footer className="bg-[#060A14] text-white">
+    <footer className="bg-[#F7F8FA] border-t border-[#E5E7EB]">
       <div className="max-w-6xl mx-auto px-6 pt-16 pb-8">
         {/* Top grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-14">
@@ -67,7 +67,7 @@ export default function LandingFooter() {
               height={56}
               className="h-9 w-auto mb-5"
             />
-            <p className="text-sm text-[#64748B] leading-relaxed max-w-xs">
+            <p className="text-sm text-[#6B7280] leading-relaxed max-w-xs">
               Platforma CRM dedicata statiilor ITP din Romania. Trimite SMS-uri automate, gestioneaza programari si recupereaza clientii pierduti.
             </p>
             <div className="flex items-center gap-4 mt-6">
@@ -78,7 +78,7 @@ export default function LandingFooter() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={s.label}
-                  className="h-8 w-8 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-[#64748B] hover:text-white flex items-center justify-center transition-colors"
+                  className="h-8 w-8 rounded-lg bg-white border border-[#E5E7EB] hover:border-[#D1D5DB] text-[#6B7280] hover:text-[#111318] flex items-center justify-center transition-colors"
                 >
                   {s.icon}
                 </a>
@@ -89,7 +89,7 @@ export default function LandingFooter() {
           {/* Link columns */}
           {Object.entries(LINKS).map(([title, links]) => (
             <div key={title}>
-              <h4 className="text-xs font-semibold text-white uppercase tracking-widest mb-5">
+              <h4 className="text-xs font-semibold text-[#111318] uppercase tracking-widest mb-5">
                 {title}
               </h4>
               <ul className="space-y-3">
@@ -97,7 +97,7 @@ export default function LandingFooter() {
                   <li key={l.label}>
                     <Link
                       href={l.href}
-                      className="text-sm text-[#64748B] hover:text-white transition-colors"
+                      className="text-sm text-[#6B7280] hover:text-[#111318] transition-colors"
                     >
                       {l.label}
                     </Link>
@@ -109,16 +109,16 @@ export default function LandingFooter() {
         </div>
 
         {/* Bottom bar */}
-        <div className="pt-8 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-[#475569]">
+        <div className="pt-8 border-t border-[#E5E7EB] flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-[#9CA3AF]">
             &copy; {new Date().getFullYear()} Velos SRL. Toate drepturile rezervate.
           </p>
           <div className="flex items-center gap-6">
-            <span className="text-xs text-[#475569] flex items-center gap-1.5">
+            <span className="text-xs text-[#9CA3AF] flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-[#22C55E]" />
               Toate sistemele functionale
             </span>
-            <span className="text-xs text-[#475569]">Facut in Romania</span>
+            <span className="text-xs text-[#9CA3AF]">Facut in Romania</span>
           </div>
         </div>
       </div>

@@ -26,7 +26,7 @@ export default function LandingNavbar() {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-[#060A14]/90 backdrop-blur-xl border-b border-white/[0.06] shadow-lg shadow-black/20"
+          ? "bg-white/90 backdrop-blur-xl border-b border-[#F3F4F6] shadow-sm"
           : "bg-transparent"
       }`}
     >
@@ -47,7 +47,7 @@ export default function LandingNavbar() {
             <a
               key={l.href}
               href={l.href}
-              className="text-sm text-[#94A3B8] hover:text-white transition-colors duration-150"
+              className="text-sm text-[#6B7280] hover:text-[#111318] transition-colors duration-150"
             >
               {l.label}
             </a>
@@ -57,7 +57,7 @@ export default function LandingNavbar() {
         <div className="hidden md:flex items-center gap-3">
           <Link
             href="/login"
-            className="text-sm text-[#94A3B8] hover:text-white transition-colors px-4 py-2 rounded-lg"
+            className="text-sm text-[#6B7280] hover:text-[#111318] transition-colors px-4 py-2 rounded-lg"
           >
             Autentificare
           </Link>
@@ -70,7 +70,7 @@ export default function LandingNavbar() {
         </div>
 
         <button
-          className="md:hidden text-white p-2 -mr-2"
+          className="md:hidden text-[#374151] p-2 -mr-2"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="Deschide meniu"
         >
@@ -79,23 +79,23 @@ export default function LandingNavbar() {
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden bg-[#060A14] border-b border-white/[0.06] px-6 pb-6">
+        <div className="md:hidden bg-white border-b border-[#F3F4F6] px-6 pb-6">
           <nav className="flex flex-col gap-1 pt-4">
             {NAV_LINKS.map((l) => (
               <a
                 key={l.href}
                 href={l.href}
-                className="text-sm text-[#94A3B8] hover:text-white py-2.5 transition-colors"
+                className="text-sm text-[#6B7280] hover:text-[#111318] py-2.5 transition-colors"
                 onClick={() => setMobileOpen(false)}
               >
                 {l.label}
               </a>
             ))}
           </nav>
-          <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-white/[0.06]">
+          <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-[#F3F4F6]">
             <Link
               href="/login"
-              className="text-sm text-[#94A3B8] py-2.5 text-center"
+              className="text-sm text-[#6B7280] py-2.5 text-center"
               onClick={() => setMobileOpen(false)}
             >
               Autentificare

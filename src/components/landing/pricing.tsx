@@ -24,7 +24,7 @@ const PLANS = [
   },
   {
     name: "Basic",
-    price: { monthly: 49, yearly: 39 },
+    price: { monthly: 149, yearly: 119 },
     description: "Pentru statiile cu un singur punct de lucru.",
     duration: null,
     features: [
@@ -41,7 +41,7 @@ const PLANS = [
   },
   {
     name: "Pro",
-    price: { monthly: 99, yearly: 79 },
+    price: { monthly: 249, yearly: 199 },
     description: "Cel mai ales de statiile in crestere.",
     duration: null,
     features: [
@@ -59,7 +59,7 @@ const PLANS = [
   },
   {
     name: "Enterprise",
-    price: { monthly: 199, yearly: 159 },
+    price: { monthly: 499, yearly: 399 },
     description: "Pentru retele mari cu nevoi specifice.",
     duration: null,
     features: [
