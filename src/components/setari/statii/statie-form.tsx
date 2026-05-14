@@ -126,7 +126,7 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
   );
 
   // SMS state
-  const [smsActiv, setSmsActiv] = useState(false);
+  const [smsActiv, setSmsActiv] = useState(setari?.sms_activ ?? false);
   const [smsToggles, setSmsToggles] = useState({
     reminder_30_zile: setari?.reminder_30_zile ?? true,
     reminder_7_zile: setari?.reminder_7_zile ?? true,
@@ -143,8 +143,8 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
   });
 
   // Recenzii state
-  const [recenziiActiv, setRecenziiActiv] = useState((setari as any)?.recenzii_activ ?? false);
-  const [googleReviewUrl, setGoogleReviewUrl] = useState((setari as any)?.google_review_url ?? "");
+  const [recenziiActiv, setRecenziiActiv] = useState(setari?.recenzii_activ ?? false);
+  const [googleReviewUrl, setGoogleReviewUrl] = useState(setari?.google_review_url ?? "");
 
   // General form
   const baseForm = useForm<BaseForm>({

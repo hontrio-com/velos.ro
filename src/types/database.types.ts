@@ -184,6 +184,8 @@ export type Database = {
           template_confirmare: string | null;
           template_reminder_zi: string | null;
           tarife: Json;
+          google_review_url: string | null;
+          recenzii_activ: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -202,6 +204,8 @@ export type Database = {
           template_confirmare?: string | null;
           template_reminder_zi?: string | null;
           tarife?: Json;
+          google_review_url?: string | null;
+          recenzii_activ?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -219,6 +223,8 @@ export type Database = {
           template_confirmare?: string | null;
           template_reminder_zi?: string | null;
           tarife?: Json;
+          google_review_url?: string | null;
+          recenzii_activ?: boolean;
           updated_at?: string;
         };
         Relationships: [
