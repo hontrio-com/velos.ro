@@ -1,6 +1,11 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { TrialBanner } from "@/components/dashboard/trial-banner";
+import type { SubscriptionStatus } from "@/lib/stripe";
+
+// Routes that are accessible even when trial expired / subscription canceled
+const BILLING_EXEMPT = ["/setari/abonament", "/setari/profil", "/suspendat"];
 
 export default async function DashboardLayout({
   children,
@@ -12,13 +17,14 @@ export default async function DashboardLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect("/login");
-  }
-
+  if (!user) redirect("/login");
 
   const [{ data: profile }, { data: statii }] = await Promise.all([
-    supabase.from("profiles").select("full_name, suspended_at").eq("id", user.id).single(),
+    supabase
+      .from("profiles")
+      .select("full_name, suspended_at, plan, subscription_status, trial_expires_at")
+      .eq("id", user.id)
+      .single(),
     supabase
       .from("statii")
       .select("id, nume, activa")
@@ -26,9 +32,17 @@ export default async function DashboardLayout({
       .order("created_at"),
   ]);
 
-  if (profile?.suspended_at) {
-    redirect("/suspendat");
-  }
+  if (profile?.suspended_at) redirect("/suspendat");
+
+  // Subscription gating — check if trial is still valid
+  const subscriptionStatus = ((profile as any)?.subscription_status ?? "trial") as SubscriptionStatus;
+  const trialEndsAt = (profile as any)?.trial_expires_at as string | null;
+
+  // If trial is stored as 'trial' but the date has passed, treat as expired
+  const effectiveStatus: SubscriptionStatus =
+    subscriptionStatus === "trial" && trialEndsAt && new Date(trialEndsAt) < new Date()
+      ? "trial_expired"
+      : subscriptionStatus;
 
   return (
     <DashboardShell
@@ -36,6 +50,11 @@ export default async function DashboardLayout({
       userName={profile?.full_name ?? undefined}
       statii={statii ?? []}
     >
+      <TrialBanner
+        subscriptionStatus={effectiveStatus}
+        trialEndsAt={trialEndsAt}
+        plan={(profile as any)?.plan ?? "trial"}
+      />
       {children}
     </DashboardShell>
   );
