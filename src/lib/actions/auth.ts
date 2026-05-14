@@ -7,7 +7,8 @@ import {
   registerSchema,
   forgotPasswordSchema,
 } from "@/lib/validations/auth";
-import { sendBunVenitEmail } from "@/lib/actions/email";
+import { sendBunVenitEmail, sendResetParolaEmail } from "@/lib/actions/email";
+import { createServiceClient } from "@/lib/supabase/service";
 
 export async function loginAction(
   _prev: { error: string } | null,
@@ -112,12 +113,34 @@ export async function forgotPasswordAction(
     return { error: parsed.error.issues[0].message };
   }
 
-  const { error } = await supabase.auth.resetPasswordForEmail(
-    parsed.data.email,
-    { redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password` }
-  );
+  const serviceSupabase = createServiceClient();
 
-  if (error) return { error: error.message };
+  // Fetch profile name for personalized email
+  const { data: profile } = await serviceSupabase
+    .from("profiles")
+    .select("full_name")
+    .eq("email", parsed.data.email)
+    .maybeSingle();
+
+  // Generate reset link via Admin API so we can send it through Resend
+  const { data: linkData, error: linkError } = await serviceSupabase.auth.admin.generateLink({
+    type: "recovery",
+    email: parsed.data.email,
+    options: {
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`,
+    },
+  });
+
+  if (linkError) return { error: linkError.message };
+
+  const resetUrl = (linkData as any)?.properties?.action_link as string | undefined;
+  if (!resetUrl) return { error: "Nu am putut genera link-ul de resetare" };
+
+  await sendResetParolaEmail(
+    parsed.data.email,
+    profile?.full_name ?? parsed.data.email,
+    resetUrl
+  );
 
   return { error: "", success: true };
 }

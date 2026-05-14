@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { stripe, PLAN_CONFIG, isValidPlan, isValidCycle, type PlanId, type BillingCycle } from "@/lib/stripe";
 import { redirect } from "next/navigation";
+import { sendStatieNouaEmail } from "@/lib/actions/email";
 
 export interface StatieOnboardingData {
   nume: string;
@@ -23,7 +24,12 @@ function generateSlug(name: string): string {
   return `${base}-${suffix}`;
 }
 
-async function createStatie(userId: string, data: StatieOnboardingData) {
+async function createStatie(
+  userId: string,
+  data: StatieOnboardingData,
+  ownerEmail: string,
+  ownerName: string
+) {
   const supabase = await createClient();
   const slug = generateSlug(data.nume);
 
@@ -41,10 +47,20 @@ async function createStatie(userId: string, data: StatieOnboardingData) {
 
   if (error) throw new Error(error.message);
 
-  // Create default station settings row (required by reminders, SMS templates, etc.)
-  await supabase.from("setari_statie").insert({ statie_id: (statie as any).id } as never);
+  const statieId = (statie as any).id as string;
+  const statieSlug = (statie as any).slug as string;
 
-  return statie as { id: string; slug: string };
+  // Create default station settings row (required by reminders, SMS templates, etc.)
+  await supabase.from("setari_statie").insert({ statie_id: statieId } as never);
+
+  // Send station created email (fire and forget)
+  sendStatieNouaEmail(ownerEmail, {
+    numeProprietar: ownerName,
+    numeStatie: data.nume,
+    slugStatie: statieSlug,
+  }).catch(console.error);
+
+  return { id: statieId, slug: statieSlug };
 }
 
 async function markOnboardingComplete(userId: string) {
@@ -63,8 +79,17 @@ export async function completeTrialOnboardingAction(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Neautentificat" };
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("email, full_name")
+    .eq("id", user.id)
+    .single();
+
+  const ownerEmail = (profile as any)?.email ?? user.email ?? "";
+  const ownerName = (profile as any)?.full_name ?? ownerEmail;
+
   try {
-    await createStatie(user.id, statieData);
+    await createStatie(user.id, statieData, ownerEmail, ownerName);
     await markOnboardingComplete(user.id);
   } catch (e: unknown) {
     return { error: e instanceof Error ? e.message : "Eroare necunoscută" };
@@ -93,12 +118,15 @@ export async function startPaidOnboardingAction(
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("stripe_customer_id, email")
+    .select("stripe_customer_id, email, full_name")
     .eq("id", user.id)
     .single();
 
+  const ownerEmail = (profile as any)?.email ?? user.email ?? "";
+  const ownerName = (profile as any)?.full_name ?? ownerEmail;
+
   try {
-    await createStatie(user.id, statieData);
+    await createStatie(user.id, statieData, ownerEmail, ownerName);
     await markOnboardingComplete(user.id);
   } catch (e: unknown) {
     return { error: e instanceof Error ? e.message : "Eroare la creare stație" };
