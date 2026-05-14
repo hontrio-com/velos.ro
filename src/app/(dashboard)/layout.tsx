@@ -16,14 +16,19 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
+
   const [{ data: profile }, { data: statii }] = await Promise.all([
-    supabase.from("profiles").select("full_name").eq("id", user.id).single(),
+    supabase.from("profiles").select("full_name, suspended_at").eq("id", user.id).single(),
     supabase
       .from("statii")
       .select("id, nume, activa")
       .eq("owner_id", user.id)
       .order("created_at"),
   ]);
+
+  if (profile?.suspended_at) {
+    redirect("/suspendat");
+  }
 
   return (
     <DashboardShell

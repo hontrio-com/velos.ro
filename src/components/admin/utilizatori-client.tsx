@@ -3,9 +3,9 @@
 import { useState, useTransition } from "react";
 import { format } from "date-fns";
 import { ro } from "date-fns/locale";
-import { Search, Shield, ChevronDown, Plus, Minus, Check, X } from "lucide-react";
+import { Search, Shield, ChevronDown, Plus, Check, X, Ban, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { updateUserPlan, addSmsCredit, setSmsCredit, toggleAdminRole } from "@/lib/actions/admin";
+import { updateUserPlan, addSmsCredit, setSmsCredit, toggleAdminRole, suspendUser, unsuspendUser } from "@/lib/actions/admin";
 
 const PLAN_COLORS: Record<string, string> = {
   trial: "#6B7280",
@@ -24,6 +24,8 @@ interface User {
   sms_credit: number;
   trial_expires_at: string;
   is_admin: boolean;
+  suspended_at: string | null;
+  suspend_reason: string | null;
   created_at: string;
   statiiCount: number;
   smsTrimise: number;
@@ -108,6 +110,31 @@ export function UtilizatoriClient({ users: initialUsers }: { users: User[] }) {
         showMsg(userId, "Eroare", false);
       }
     });
+  }
+
+  function handleSuspend(userId: string, isSuspended: boolean) {
+    if (isSuspended) {
+      if (!window.confirm("Reactivezi acest cont?")) return;
+      startTransition(async () => {
+        try {
+          await unsuspendUser(userId);
+          showMsg(userId, "Cont reactivat", true);
+        } catch {
+          showMsg(userId, "Eroare", false);
+        }
+      });
+    } else {
+      const reason = window.prompt("Motivul suspendării (obligatoriu):");
+      if (!reason?.trim()) return;
+      startTransition(async () => {
+        try {
+          await suspendUser(userId, reason);
+          showMsg(userId, "Cont suspendat", true);
+        } catch {
+          showMsg(userId, "Eroare", false);
+        }
+      });
+    }
   }
 
   return (
@@ -282,20 +309,40 @@ export function UtilizatoriClient({ users: initialUsers }: { users: User[] }) {
                     </td>
 
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => handleToggleAdmin(user.id, user.is_admin)}
-                        disabled={isPending}
-                        title={user.is_admin ? "Elimină admin" : "Acordă admin"}
-                        className={cn(
-                          "flex items-center gap-1 text-[10px] px-2 py-1 rounded-md font-medium transition-colors",
-                          user.is_admin
-                            ? "bg-[#1877F2]/10 text-[#1877F2] hover:bg-[#1877F2]/20"
-                            : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]"
-                        )}
-                      >
-                        <Shield className="h-3 w-3" />
-                        {user.is_admin ? "Admin" : "Normal"}
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => handleToggleAdmin(user.id, user.is_admin)}
+                          disabled={isPending}
+                          className={cn(
+                            "flex items-center gap-1 text-[10px] px-2 py-1 rounded-md font-medium transition-colors",
+                            user.is_admin
+                              ? "bg-[#1877F2]/10 text-[#1877F2] hover:bg-[#1877F2]/20"
+                              : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]"
+                          )}
+                        >
+                          <Shield className="h-3 w-3" />
+                          {user.is_admin ? "Admin" : "Normal"}
+                        </button>
+                        <button
+                          onClick={() => handleSuspend(user.id, !!user.suspended_at)}
+                          disabled={isPending}
+                          className={cn(
+                            "flex items-center gap-1 text-[10px] px-2 py-1 rounded-md font-medium transition-colors",
+                            user.suspended_at
+                              ? "bg-green-50 text-[#059669] hover:bg-green-100"
+                              : "bg-red-50 text-red-500 hover:bg-red-100"
+                          )}
+                        >
+                          {user.suspended_at
+                            ? <><CheckCircle2 className="h-3 w-3" />Reactivează</>
+                            : <><Ban className="h-3 w-3" />Suspendă</>}
+                        </button>
+                      </div>
+                      {user.suspended_at && (
+                        <p className="text-[10px] text-red-500 mt-0.5">
+                          Suspendat {format(new Date(user.suspended_at), "d MMM", { locale: ro })}
+                        </p>
+                      )}
                     </td>
                   </tr>
                 );

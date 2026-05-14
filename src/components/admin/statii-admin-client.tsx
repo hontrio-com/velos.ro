@@ -3,9 +3,17 @@
 import { useState, useTransition } from "react";
 import { format } from "date-fns";
 import { ro } from "date-fns/locale";
-import { Search, CheckCircle2, XCircle, Globe, Trash2 } from "lucide-react";
+import { Search, CheckCircle2, XCircle, Globe, Trash2, ChevronRight, ChevronDown, CalendarDays, Users, Briefcase, Clock } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
-import { toggleStation, deleteStation } from "@/lib/actions/admin";
+import { toggleStation, deleteStation, getStatieStats } from "@/lib/actions/admin";
+
+interface StatieStats {
+  programariCount: number;
+  angajatiCount: number;
+  clientiUnici: number;
+  ultimaProgramare: string | null;
+}
 
 interface Statie {
   id: string;
@@ -23,6 +31,21 @@ export function StatiiAdminClient({ statii: initialStatii }: { statii: Statie[] 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
   const [isPending, startTransition] = useTransition();
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [statsCache, setStatsCache] = useState<Record<string, StatieStats | "loading">>({});
+
+  function handleExpand(id: string) {
+    if (expandedId === id) { setExpandedId(null); return; }
+    setExpandedId(id);
+    if (!statsCache[id]) {
+      setStatsCache((prev) => ({ ...prev, [id]: "loading" }));
+      getStatieStats(id).then((stats) => {
+        setStatsCache((prev) => ({ ...prev, [id]: stats }));
+      }).catch(() => {
+        setStatsCache((prev) => { const n = { ...prev }; delete n[id]; return n; });
+      });
+    }
+  }
   const [message, setMessage] = useState<{ id: string; text: string; ok: boolean } | null>(null);
 
   const filtered = initialStatii.filter((s) => {
@@ -94,6 +117,7 @@ export function StatiiAdminClient({ statii: initialStatii }: { statii: Statie[] 
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#F3F4F6] bg-[#F9FAFB]">
+                <th className="w-8 px-2 py-3" />
                 <th className="text-left px-4 py-3 text-xs font-semibold text-[#6B7280]">Stație</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-[#6B7280]">Proprietar</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-[#6B7280]">Localitate</th>
@@ -113,8 +137,21 @@ export function StatiiAdminClient({ statii: initialStatii }: { statii: Statie[] 
               )}
               {filtered.map((statie) => {
                 const msg = message?.id === statie.id ? message : null;
+                const isExpanded = expandedId === statie.id;
+                const stats = statsCache[statie.id];
                 return (
+                  <>
                   <tr key={statie.id} className="border-b border-[#F9FAFB] hover:bg-[#F9FAFB] transition-colors">
+                    <td className="px-2 py-3">
+                      <button
+                        onClick={() => handleExpand(statie.id)}
+                        className="text-[#9CA3AF] hover:text-[#374151] transition-colors"
+                      >
+                        {isExpanded
+                          ? <ChevronDown className="h-3.5 w-3.5" />
+                          : <ChevronRight className="h-3.5 w-3.5" />}
+                      </button>
+                    </td>
                     <td className="px-4 py-3">
                       <p className="font-medium text-[#111318]">{statie.nume}</p>
                       <p className="text-xs text-[#9CA3AF]">/itp/{statie.slug}</p>
@@ -179,6 +216,52 @@ export function StatiiAdminClient({ statii: initialStatii }: { statii: Statie[] 
                       </div>
                     </td>
                   </tr>
+                  {isExpanded && (
+                    <tr key={`${statie.id}-stats`} className="bg-[#F9FAFB] border-b border-[#F3F4F6]">
+                      <td />
+                      <td colSpan={6} className="px-4 py-3">
+                        {stats === "loading" ? (
+                          <p className="text-xs text-[#9CA3AF]">Se încarcă statisticile...</p>
+                        ) : stats ? (
+                          <div className="flex flex-wrap gap-6">
+                            <div className="flex items-center gap-1.5">
+                              <CalendarDays className="h-3.5 w-3.5 text-[#1877F2]" />
+                              <div>
+                                <p className="text-xs font-semibold text-[#111318]">{stats.programariCount}</p>
+                                <p className="text-[10px] text-[#9CA3AF]">Programări</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <Users className="h-3.5 w-3.5 text-[#059669]" />
+                              <div>
+                                <p className="text-xs font-semibold text-[#111318]">{stats.clientiUnici}</p>
+                                <p className="text-[10px] text-[#9CA3AF]">Clienți unici</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <Briefcase className="h-3.5 w-3.5 text-[#7C3AED]" />
+                              <div>
+                                <p className="text-xs font-semibold text-[#111318]">{stats.angajatiCount}</p>
+                                <p className="text-[10px] text-[#9CA3AF]">Angajați</p>
+                              </div>
+                            </div>
+                            {stats.ultimaProgramare && (
+                              <div className="flex items-center gap-1.5">
+                                <Clock className="h-3.5 w-3.5 text-[#EA580C]" />
+                                <div>
+                                  <p className="text-xs font-semibold text-[#111318]">
+                                    {formatDistanceToNow(new Date(stats.ultimaProgramare), { addSuffix: true, locale: ro })}
+                                  </p>
+                                  <p className="text-[10px] text-[#9CA3AF]">Ultima programare</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ) : null}
+                      </td>
+                    </tr>
+                  )}
+                  </>
                 );
               })}
             </tbody>

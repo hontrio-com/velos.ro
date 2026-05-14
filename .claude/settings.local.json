@@ -31,7 +31,13 @@
       "Bash(cat src/app/\\\\\\(auth\\\\\\)/register/page.tsx])",
       "Bash(node -e \":*)",
       "Bash(grep -E \"\\\\.ts$|^d\")",
-      "mcp__supabase__get_advisors"
+      "mcp__supabase__get_advisors",
+      "Bash(sed -i 's/Autentificare - ITP CRM/Autentificare/' src/app/\\\\\\(auth\\\\\\)/login/page.tsx)",
+      "Bash(sed -i 's/Cont nou - ITP CRM/Cont nou/' src/app/\\\\\\(auth\\\\\\)/register/page.tsx)",
+      "Bash(sed -i 's/VELOS CRM/Velos.ro/g' src/app/manifest.ts)",
+      "Bash(cp public/favicon.ico src/app/favicon.ico)",
+      "Bash(cp public/favicon-32x32.png src/app/icon.png)",
+      "Bash(cp public/icons/icon-192.png src/app/apple-icon.png)"
     ]
   },
   "enableAllProjectMcpServers": true,

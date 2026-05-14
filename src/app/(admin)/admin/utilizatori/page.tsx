@@ -9,7 +9,7 @@ export default async function AdminUtilizatoriPage() {
 
   const { data: users } = await supabase
     .from("profiles")
-    .select("id, email, full_name, plan, sms_credit, trial_expires_at, is_admin, created_at")
+    .select("id, email, full_name, plan, sms_credit, trial_expires_at, is_admin, suspended_at, suspend_reason, created_at")
     .order("created_at", { ascending: false });
 
   // Get statii count per user

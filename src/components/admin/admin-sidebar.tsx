@@ -4,7 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard, Users, Building2, CreditCard, MessageSquare, ArrowLeft, Shield,
+  LayoutDashboard, Users, Building2, CreditCard, MessageSquare,
+  ArrowLeft, Shield, Settings, Send, ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +15,9 @@ const NAV = [
   { href: "/admin/statii", label: "Stații", icon: Building2 },
   { href: "/admin/plati", label: "Plăți SMS", icon: CreditCard },
   { href: "/admin/sms", label: "SMS Quota", icon: MessageSquare },
+  { href: "/admin/broadcast", label: "Broadcast", icon: Send },
+  { href: "/admin/setari", label: "Setări", icon: Settings },
+  { href: "/admin/audit", label: "Audit Log", icon: ClipboardList },
 ];
 
 interface AdminSidebarProps {

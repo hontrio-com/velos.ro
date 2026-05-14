@@ -20,6 +20,8 @@ export type Database = {
           sms_credit: number;
           trial_expires_at: string;
           is_admin: boolean;
+          suspended_at: string | null;
+          suspend_reason: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -33,6 +35,8 @@ export type Database = {
           sms_credit?: number;
           trial_expires_at?: string;
           is_admin?: boolean;
+          suspended_at?: string | null;
+          suspend_reason?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -46,7 +50,33 @@ export type Database = {
           sms_credit?: number;
           trial_expires_at?: string;
           is_admin?: boolean;
+          suspended_at?: string | null;
+          suspend_reason?: string | null;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      notificari: {
+        Row: {
+          id: string;
+          profile_id: string;
+          titlu: string;
+          mesaj: string;
+          tip: "info" | "warning" | "success" | "update";
+          citita: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          profile_id: string;
+          titlu: string;
+          mesaj: string;
+          tip?: "info" | "warning" | "success" | "update";
+          citita?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          citita?: boolean;
         };
         Relationships: [];
       };

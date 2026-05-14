@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
-  Bell,
   ChevronDown,
   LogOut,
   Settings,
@@ -26,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SearchCommand } from "./search-command";
+import { NotificationsBell } from "./notifications-bell";
 import { cn } from "@/lib/utils";
 
 interface HeaderProps {
@@ -115,12 +115,7 @@ export function Header({ userEmail, userName, onMenuToggle }: HeaderProps) {
           </button>
 
           {/* Bell */}
-          <button
-            type="button"
-            className="relative flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[#F9FAFB] transition-colors"
-          >
-            <Bell className="h-4 w-4 text-[#374151]" />
-          </button>
+          <NotificationsBell />
 
           {/* User menu */}
           <DropdownMenu>

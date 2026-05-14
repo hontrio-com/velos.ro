@@ -6,6 +6,7 @@ import {
 import { format } from "date-fns";
 import { ro } from "date-fns/locale";
 import Link from "next/link";
+import { OverviewCharts } from "@/components/admin/overview-charts";
 
 export const metadata: Metadata = { title: "Admin - Overview" };
 
@@ -41,6 +42,8 @@ export default async function AdminOverviewPage() {
   const supabase = createServiceClient();
   const thisMonth = new Date().toISOString().substring(0, 7) + "-01";
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
   const [
     { data: allProfiles },
@@ -49,6 +52,8 @@ export default async function AdminOverviewPage() {
     { data: purchases },
     { data: recentUsers },
     { data: recentPayments },
+    { data: usersForChart },
+    { data: paymentsForChart },
   ] = await Promise.all([
     supabase.from("profiles").select("id, email, full_name, plan, created_at, is_admin"),
     supabase.from("statii").select("id, activa"),
@@ -65,7 +70,29 @@ export default async function AdminOverviewPage() {
       .eq("status", "completed")
       .order("created_at", { ascending: false })
       .limit(8),
+    supabase.from("profiles").select("created_at").gte("created_at", thirtyDaysAgo),
+    (supabase as any).from("sms_purchases").select("pret_total, created_at")
+      .eq("status", "completed").gte("created_at", sixMonthsAgo.toISOString()),
   ]);
+
+  // Build chart data
+  const usersByDay = Array.from({ length: 30 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (29 - i));
+    const dateStr = d.toISOString().split("T")[0];
+    const count = (usersForChart as any[])?.filter((u: any) => u.created_at.startsWith(dateStr)).length ?? 0;
+    return { date: dateStr, utilizatori: count };
+  });
+
+  const revenueByMonth = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - (5 - i));
+    const monthStr = d.toISOString().substring(0, 7);
+    const total = (paymentsForChart as any[])
+      ?.filter((p: any) => p.created_at.startsWith(monthStr))
+      .reduce((sum: number, p: any) => sum + Number(p.pret_total ?? 0), 0) ?? 0;
+    return { luna: format(d, "MMM", { locale: ro }), venituri: Math.round(total * 100) / 100 };
+  });
 
   // Compute stats
   const totalUsers = allProfiles?.length ?? 0;
@@ -128,6 +155,9 @@ export default async function AdminOverviewPage() {
           href="/admin/plati"
         />
       </div>
+
+      {/* Charts */}
+      <OverviewCharts usersByDay={usersByDay} revenueByMonth={revenueByMonth} />
 
       {/* Plan distribution */}
       <div className="bg-white border border-[#F3F4F6] rounded-xl p-5">

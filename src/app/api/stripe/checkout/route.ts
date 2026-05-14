@@ -1,10 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import Stripe from "stripe";
 import { createServerClient } from "@supabase/ssr";
+import { createServiceClient } from "@/lib/supabase/service";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
-const PRET_PER_SMS = 0.05; // EUR
 
 export async function POST(request: NextRequest) {
   const response = NextResponse.next();
@@ -31,7 +30,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Minim 50 SMS-uri" }, { status: 400 });
   }
 
-  const pretTotal = Math.round(cantitate * PRET_PER_SMS * 100); // în cenți
+  // Citim prețul din admin_settings (fallback 0.05€)
+  const serviceSupabase = createServiceClient();
+  const { data: priceSetting } = await (serviceSupabase as any)
+    .from("admin_settings").select("valoare").eq("cheie", "sms_pret_eur").single();
+  const pretPerSms = parseFloat(priceSetting?.valoare ?? "0.05");
+
+  const pretTotal = Math.round(cantitate * pretPerSms * 100); // în cenți
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://velos.ro";
 
@@ -46,7 +51,7 @@ export async function POST(request: NextRequest) {
           unit_amount: pretTotal,
           product_data: {
             name: `${cantitate} SMS-uri Velos CRM`,
-            description: `Pachet de ${cantitate} SMS-uri (0,05€/SMS) — nu expiră`,
+            description: `Pachet de ${cantitate} SMS-uri (${pretPerSms.toFixed(3)}€/SMS) — nu expiră`,
           },
         },
       },
