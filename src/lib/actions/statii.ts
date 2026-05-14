@@ -352,7 +352,7 @@ export async function testSmsoAction(
       },
       body: JSON.stringify({
         to: profile.phone,
-        message: "Test SMS ITP CRM - cheia API funcționează corect.",
+        body: "Test SMS ITP CRM - cheia API functioneaza corect.",
         sender: "ITPCRM",
       }),
     });

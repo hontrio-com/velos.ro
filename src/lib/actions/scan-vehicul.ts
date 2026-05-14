@@ -38,8 +38,11 @@ export async function scanVehiculAction(input: ScanVehiculInput) {
     .select("id")
     .single();
 
-  if (vErr || !vehicul)
+  if (vErr || !vehicul) {
+    if (vErr?.code === "23505")
+      return { success: false as const, error: "Numarul de inmatriculare este deja inregistrat" };
     return { success: false as const, error: vErr?.message ?? "Eroare la creare vehicul" };
+  }
 
   // Create ITP reminders if expiry date is provided
   if (input.expirareItp) {

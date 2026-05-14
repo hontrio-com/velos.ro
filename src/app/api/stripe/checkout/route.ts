@@ -1,9 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
-import Stripe from "stripe";
+import { stripe } from "@/lib/stripe";
 import { createServerClient } from "@supabase/ssr";
 import { createServiceClient } from "@/lib/supabase/service";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(request: NextRequest) {
   const response = NextResponse.next();

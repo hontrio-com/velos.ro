@@ -92,6 +92,7 @@ interface AbonamentClientProps {
   smsCredit: number;
   successPlan: string | null;
   wasCanceled: boolean;
+  smsSuccessCantitate: number | null;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -107,6 +108,7 @@ export function AbonamentClient({
   smsCredit,
   successPlan,
   wasCanceled,
+  smsSuccessCantitate,
 }: AbonamentClientProps) {
   const router = useRouter();
   const [yearly, setYearly] = useState(billingCycle === "yearly");
@@ -157,6 +159,15 @@ export function AbonamentClient({
           <div>
             <p className="text-sm font-semibold text-[#065F46]">Abonament activat cu succes!</p>
             <p className="text-xs text-[#047857]">Planul tau a fost actualizat. Poti folosi toate functiile platformei.</p>
+          </div>
+        </div>
+      )}
+      {smsSuccessCantitate != null && smsSuccessCantitate > 0 && (
+        <div className="rounded-xl bg-[#ECFDF5] border border-[#A7F3D0] px-4 py-3 flex items-center gap-3">
+          <CheckCircle2 className="h-5 w-5 text-[#059669] shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-[#065F46]">{smsSuccessCantitate} SMS-uri adaugate cu succes!</p>
+            <p className="text-xs text-[#047857]">Creditul tau SMS a fost actualizat. SMS-urile nu expira niciodata.</p>
           </div>
         </div>
       )}

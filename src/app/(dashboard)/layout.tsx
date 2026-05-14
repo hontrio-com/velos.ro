@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { TrialBanner } from "@/components/dashboard/trial-banner";
@@ -46,6 +47,14 @@ export default async function DashboardLayout({
     subscriptionStatus === "trial" && trialEndsAt && new Date(trialEndsAt) < new Date()
       ? "trial_expired"
       : subscriptionStatus;
+
+  // Gate access for expired trial — redirect to billing page (except exempt routes)
+  if (effectiveStatus === "trial_expired") {
+    const headersList = await headers();
+    const pathname = headersList.get("x-pathname") ?? "";
+    const isBillingExempt = BILLING_EXEMPT.some((r) => pathname.startsWith(r));
+    if (!isBillingExempt) redirect("/setari/abonament");
+  }
 
   return (
     <DashboardShell

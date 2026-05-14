@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Abonament" };
 export default async function AbonamentPage({
   searchParams,
 }: {
-  searchParams: Promise<{ success?: string; canceled?: string; plan?: string }>;
+  searchParams: Promise<{ success?: string; canceled?: string; plan?: string; sms_success?: string; cantitate?: string }>;
 }) {
   const supabase = await createClient();
   const {
@@ -26,7 +26,7 @@ export default async function AbonamentPage({
     .eq("id", user.id)
     .single();
 
-  const { success, canceled } = await searchParams;
+  const { success, canceled, sms_success, cantitate } = await searchParams;
 
   const trialEndsAt = (profile as any)?.trial_expires_at as string | null;
   const subscriptionStatus = ((profile as any)?.subscription_status ?? "trial") as SubscriptionStatus;
@@ -56,6 +56,7 @@ export default async function AbonamentPage({
           smsCredit={(profile as any)?.sms_credit ?? 0}
           successPlan={success ? ((profile as any)?.plan ?? null) : null}
           wasCanceled={!!canceled}
+          smsSuccessCantitate={sms_success ? Number(cantitate ?? 0) : null}
         />
       </div>
     </PageTransition>

@@ -115,7 +115,8 @@ export async function POST(request: NextRequest) {
       stripeStatus === "active" ? "active"
       : stripeStatus === "past_due" ? "past_due"
       : stripeStatus === "canceled" ? "canceled"
-      : "active";
+      : stripeStatus === "trialing" ? "trial"
+      : "active"; // incomplete, incomplete_expired, unpaid → treat as active (Stripe will follow up)
 
     const periodEnd = new Date(sub.current_period_end * 1000).toISOString();
 

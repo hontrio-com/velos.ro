@@ -256,7 +256,7 @@ export default async function DashboardPage() {
           {getGreeting(profile?.full_name)}
         </h1>
         <p className="text-sm text-[#6B7280] mt-0.5">
-          {dataAziCap} — {statie.nume}
+          {dataAziCap} · {statie.nume}
         </p>
       </FadeUp>
 
