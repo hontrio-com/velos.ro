@@ -19,7 +19,6 @@ export function TrialBanner({ subscriptionStatus, trialEndsAt, plan }: TrialBann
 
   if (dismissed) return null;
   if (subscriptionStatus === "active") return null;
-  if (plan !== "trial" && subscriptionStatus === "active") return null;
 
   const daysLeft = trialEndsAt
     ? Math.max(0, differenceInDays(parseISO(trialEndsAt), new Date()))
