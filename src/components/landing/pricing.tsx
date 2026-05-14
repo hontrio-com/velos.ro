@@ -136,7 +136,7 @@ export default function LandingPricing() {
                 key={plan.name}
                 className={`relative rounded-2xl p-7 flex flex-col ${
                   plan.highlight
-                    ? "bg-[#0A0F1E] text-white shadow-2xl shadow-[#1877F2]/10 ring-1 ring-[#1877F2]/30 scale-[1.02]"
+                    ? "bg-white border-2 border-[#1877F2] shadow-md shadow-[#1877F2]/10 scale-[1.02]"
                     : "bg-white border border-[#F3F4F6]"
                 }`}
               >
@@ -150,47 +150,21 @@ export default function LandingPricing() {
                 )}
 
                 <div className="mb-6">
-                  <h3
-                    className={`text-base font-bold mb-1 ${
-                      plan.highlight ? "text-white" : "text-[#111318]"
-                    }`}
-                  >
+                  <h3 className="text-base font-bold mb-1 text-[#111318]">
                     {plan.name}
                   </h3>
-                  <p
-                    className={`text-xs leading-relaxed ${
-                      plan.highlight ? "text-[#94A3B8]" : "text-[#9CA3AF]"
-                    }`}
-                  >
+                  <p className="text-xs leading-relaxed text-[#9CA3AF]">
                     {plan.description}
                   </p>
                 </div>
 
                 <div className="mb-6">
                   {plan.duration ? (
-                    <p
-                      className={`text-2xl font-bold ${
-                        plan.highlight ? "text-white" : "text-[#111318]"
-                      }`}
-                    >
-                      {plan.duration}
-                    </p>
+                    <p className="text-2xl font-bold text-[#111318]">{plan.duration}</p>
                   ) : (
                     <div className="flex items-end gap-1">
-                      <span
-                        className={`text-3xl font-bold ${
-                          plan.highlight ? "text-white" : "text-[#111318]"
-                        }`}
-                      >
-                        {price} lei
-                      </span>
-                      <span
-                        className={`text-sm mb-1 ${
-                          plan.highlight ? "text-[#94A3B8]" : "text-[#9CA3AF]"
-                        }`}
-                      >
-                        /luna
-                      </span>
+                      <span className="text-3xl font-bold text-[#111318]">{price} lei</span>
+                      <span className="text-sm mb-1 text-[#9CA3AF]">/luna</span>
                     </div>
                   )}
                   {yearly && plan.price.monthly > 0 && (
@@ -203,25 +177,15 @@ export default function LandingPricing() {
                 <ul className="space-y-2.5 mb-8 flex-1">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-2.5">
-                      <Check
-                        className={`h-4 w-4 mt-0.5 shrink-0 ${
-                          plan.highlight ? "text-[#60A5FA]" : "text-[#1877F2]"
-                        }`}
-                      />
-                      <span
-                        className={`text-sm ${
-                          plan.highlight ? "text-[#CBD5E1]" : "text-[#374151]"
-                        }`}
-                      >
-                        {feature}
-                      </span>
+                      <Check className="h-4 w-4 mt-0.5 shrink-0 text-[#1877F2]" />
+                      <span className="text-sm text-[#374151]">{feature}</span>
                     </li>
                   ))}
                 </ul>
 
                 <Link
                   href={plan.href}
-                  className={`text-sm font-semibold text-center py-3 rounded-xl transition-colors ${
+                  className={`text-sm font-semibold text-center py-3 rounded-lg transition-colors ${
                     plan.highlight
                       ? "bg-[#1877F2] hover:bg-[#1565D8] text-white"
                       : "bg-[#F3F4F6] hover:bg-[#E5E7EB] text-[#111318]"
