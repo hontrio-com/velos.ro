@@ -5,9 +5,9 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const STATS = [
-  { value: "94%", label: "rata de citire SMS" },
-  { value: "15 min", label: "pentru configurare" },
-  { value: "+40%", label: "clienti care revin" },
+  { value: "+40%", label: "mai mulți clienți care revin" },
+  { value: "-30%", label: "pierderi din expirări uitate" },
+  { value: "+ venit lunar", label: "prin automatizare și retenție" },
 ];
 
 export default function LandingHero() {
@@ -24,7 +24,7 @@ export default function LandingHero() {
         {/* Badge */}
         <div className="animate-fade-in-up mb-10">
           <Badge variant="outline" className="text-[#1877F2] border-[#BFDBFE] bg-[#EFF6FF] px-4 py-1 rounded-full text-xs font-semibold tracking-wide h-auto">
-            Platforma CRM pentru statii ITP
+            Crește numărul de clienți care revin
           </Badge>
         </div>
 
@@ -33,9 +33,9 @@ export default function LandingHero() {
           className="animate-fade-in-up text-4xl sm:text-5xl lg:text-6xl xl:text-[72px] font-bold text-[#0A0F1E] leading-[1.1] tracking-tight mb-6"
           style={{ animationDelay: "0.1s" }}
         >
-          7 din 10 clienti ITP
+          Clienții uită de ITP.
           <br />
-          <span className="text-[#1877F2]">nu se mai intorc.</span>
+          <span className="text-[#1877F2]">Velos îi aduce înapoi.</span>
         </h1>
 
         {/* Subheadline */}
@@ -43,9 +43,7 @@ export default function LandingHero() {
           className="animate-fade-in-up max-w-xl text-lg sm:text-xl text-[#6B7280] leading-relaxed mb-10"
           style={{ animationDelay: "0.15s" }}
         >
-          Velos trimite automat SMS-uri de reamintire cu{" "}
-          <span className="text-[#374151] font-semibold">30, 15 si 7 zile</span> inainte de
-          expirarea ITP-ului fiecarui client. Ei revin la tine, nu la concurenta.
+          Tot ce ai nevoie pentru administrarea unei stații ITP moderne: reminder-e automate prin SMS, management vehicule, programări online, administrare angajați și evidență completă într-un singur loc.
         </p>
 
         {/* CTAs */}
