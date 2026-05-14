@@ -15,7 +15,7 @@ export default async function AdminStatiiPage() {
     `)
     .order("created_at", { ascending: false });
 
-  const normalized = statii?.map((s) => ({
+  const normalized = (statii as any[])?.map((s: any) => ({
     ...s,
     owner: Array.isArray(s.profiles) ? s.profiles[0] : s.profiles,
   })) ?? [];
