@@ -163,7 +163,7 @@ export async function startPaidOnboardingAction(
       cancel_url: `${appUrl}/setari/abonament?canceled=1`,
       allow_promotion_codes: true,
       billing_address_collection: "auto",
-      customer_update: { name: "auto" },
+      customer_update: { name: "auto", address: "auto" },
       tax_id_collection: { enabled: true },
       locale: "ro",
     });
