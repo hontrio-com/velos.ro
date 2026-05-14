@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { differenceInDays, parseISO } from "date-fns";
 import { AlertTriangle, Clock, XCircle, ArrowRight, X } from "lucide-react";
 import { useState } from "react";
@@ -15,10 +15,13 @@ interface TrialBannerProps {
 
 export function TrialBanner({ subscriptionStatus, trialEndsAt, plan }: TrialBannerProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [dismissed, setDismissed] = useState(false);
 
   if (dismissed) return null;
   if (subscriptionStatus === "active") return null;
+  // Don't show banner on the subscription page itself
+  if (pathname === "/setari/abonament") return null;
 
   const daysLeft = trialEndsAt
     ? Math.max(0, differenceInDays(parseISO(trialEndsAt), new Date()))
@@ -27,7 +30,7 @@ export function TrialBanner({ subscriptionStatus, trialEndsAt, plan }: TrialBann
   // past_due — payment failed
   if (subscriptionStatus === "past_due") {
     return (
-      <div className="mx-4 mt-3 lg:mx-6 rounded-xl bg-[#FEF2F2] border border-[#FECACA] px-4 py-3 flex items-center gap-3">
+      <div className="mb-4 rounded-xl bg-[#FEF2F2] border border-[#FECACA] px-4 py-3 flex items-center gap-3">
         <XCircle className="h-4 w-4 text-[#DC2626] shrink-0" />
         <p className="text-sm text-[#DC2626] flex-1">
           <strong>Plată eșuată.</strong> Actualizează metoda de plată pentru a păstra accesul.
@@ -45,7 +48,7 @@ export function TrialBanner({ subscriptionStatus, trialEndsAt, plan }: TrialBann
   // canceled
   if (subscriptionStatus === "canceled") {
     return (
-      <div className="mx-4 mt-3 lg:mx-6 rounded-xl bg-[#FFF7ED] border border-[#FED7AA] px-4 py-3 flex items-center gap-3">
+      <div className="mb-4 rounded-xl bg-[#FFF7ED] border border-[#FED7AA] px-4 py-3 flex items-center gap-3">
         <AlertTriangle className="h-4 w-4 text-[#EA580C] shrink-0" />
         <p className="text-sm text-[#EA580C] flex-1">
           <strong>Abonament anulat.</strong> Reactivează pentru a continua să folosești platforma.
@@ -63,7 +66,7 @@ export function TrialBanner({ subscriptionStatus, trialEndsAt, plan }: TrialBann
   // trial_expired
   if (subscriptionStatus === "trial_expired") {
     return (
-      <div className="mx-4 mt-3 lg:mx-6 rounded-xl bg-[#FEF2F2] border border-[#FECACA] px-4 py-3 flex items-center gap-3">
+      <div className="mb-4 rounded-xl bg-[#FEF2F2] border border-[#FECACA] px-4 py-3 flex items-center gap-3">
         <XCircle className="h-4 w-4 text-[#DC2626] shrink-0" />
         <p className="text-sm text-[#DC2626] flex-1">
           <strong>Trial expirat.</strong> Alege un plan pentru a continua să folosești platforma.
@@ -86,7 +89,7 @@ export function TrialBanner({ subscriptionStatus, trialEndsAt, plan }: TrialBann
     return (
       <div
         className={cn(
-          "mx-4 mt-3 lg:mx-6 rounded-xl border px-4 py-3 flex items-center gap-3",
+          "mb-4 rounded-xl border px-4 py-3 flex items-center gap-3",
           urgent
             ? "bg-[#FEF2F2] border-[#FECACA]"
             : warning
@@ -111,7 +114,8 @@ export function TrialBanner({ subscriptionStatus, trialEndsAt, plan }: TrialBann
           ) : daysLeft === 1 ? (
             <><strong>1 zi rămasă din trial.</strong> Alege un plan ca să nu pierzi accesul.</>
           ) : (
-            <><strong>{daysLeft} zile rămase din trial.</strong> Testezi gratuit — alege un plan oricând.</>
+            <><strong>{daysLeft} zile ramase din trial.</strong> Testezi gratuit, alege un plan oricand.</>
+
           )}
         </p>
         <button

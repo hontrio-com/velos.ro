@@ -12,6 +12,7 @@ import {
   Search,
   Building2,
   MessageSquare,
+  CreditCard,
 } from "lucide-react";
 import { CumparaSmsModal } from "@/components/sms/cumpara-sms-modal";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -145,6 +146,10 @@ export function Header({ userEmail, userName, onMenuToggle }: HeaderProps) {
                 <DropdownMenuItem onClick={() => router.push("/setari/statii")}>
                   <Building2 className="h-4 w-4" />
                   Stațiile mele
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/setari/abonament")}>
+                  <CreditCard className="h-4 w-4" />
+                  Abonament
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push("/setari")}>
                   <Settings className="h-4 w-4" />
