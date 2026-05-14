@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, ChevronRight, ChevronLeft, Loader2, Zap, Shield, Building2, Star } from "lucide-react";
+import { Check, ChevronRight, ChevronLeft, Loader2, Zap, Shield, Star, Gift, CalendarDays, MessageSquare, BarChart3, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PLAN_CONFIG, type PlanId, type BillingCycle } from "@/lib/stripe-config";
 import { completeTrialOnboardingAction, startPaidOnboardingAction } from "@/lib/actions/onboarding";
@@ -17,9 +18,9 @@ const PLAN_FEATURES: Record<PlanId, string[]> = {
 };
 
 const PLAN_ICONS: Record<PlanId, React.ReactNode> = {
-  basic: <Shield className="h-5 w-5" />,
-  pro: <Zap className="h-5 w-5" />,
-  enterprise: <Star className="h-5 w-5" />,
+  basic: <Shield className="h-4 w-4" />,
+  pro: <Zap className="h-4 w-4" />,
+  enterprise: <Star className="h-4 w-4" />,
 };
 
 export function OnboardingWizard({ userEmail }: { userEmail: string }) {
@@ -72,12 +73,14 @@ export function OnboardingWizard({ userEmail }: { userEmail: string }) {
     <div className="min-h-screen bg-[#F7F8FA] flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-[#F3F4F6]">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-[#1877F2] flex items-center justify-center">
-            <Building2 className="h-4 w-4 text-white" />
-          </div>
-          <span className="font-semibold text-[#111318] text-sm">ITP CRM</span>
-        </div>
+        <Image
+          src="/logo441x245.png"
+          alt="Velos"
+          width={132}
+          height={74}
+          className="h-8 w-auto object-contain"
+          priority
+        />
         <span className="text-xs text-[#9CA3AF]">{userEmail}</span>
       </div>
 
@@ -142,12 +145,12 @@ export function OnboardingWizard({ userEmail }: { userEmail: string }) {
                   </div>
                   <div className="grid grid-cols-3 gap-4 w-full mt-2">
                     {[
-                      { icon: "📅", label: "Programări", desc: "Calendar inteligent" },
-                      { icon: "📱", label: "SMS-uri", desc: "Remindere automate" },
-                      { icon: "📊", label: "Rapoarte", desc: "Statistici în timp real" },
+                      { icon: <CalendarDays className="h-5 w-5 text-[#1877F2]" />, label: "Programări", desc: "Calendar inteligent" },
+                      { icon: <MessageSquare className="h-5 w-5 text-[#1877F2]" />, label: "SMS-uri", desc: "Remindere automate" },
+                      { icon: <BarChart3 className="h-5 w-5 text-[#1877F2]" />, label: "Rapoarte", desc: "Statistici în timp real" },
                     ].map((f) => (
-                      <div key={f.label} className="bg-[#F7F8FA] rounded-xl p-3 text-center">
-                        <div className="text-2xl mb-1">{f.icon}</div>
+                      <div key={f.label} className="bg-[#F7F8FA] rounded-xl p-3 text-center flex flex-col items-center gap-1">
+                        <div className="w-9 h-9 rounded-lg bg-[#EFF6FF] flex items-center justify-center mb-0.5">{f.icon}</div>
                         <div className="text-xs font-semibold text-[#111318]">{f.label}</div>
                         <div className="text-xs text-[#9CA3AF]">{f.desc}</div>
                       </div>
@@ -356,11 +359,11 @@ export function OnboardingWizard({ userEmail }: { userEmail: string }) {
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-[#F3F4F6] flex items-center justify-center">
-                        <span className="text-base">🎁</span>
+                        <Gift className="h-4 w-4 text-[#6B7280]" />
                       </div>
                       <div className="text-left">
-                        <div className="font-semibold text-[#111318]">Trial gratuit — 15 zile</div>
-                        <div className="text-xs text-[#9CA3AF]">Toate funcțiile Pro, fără card</div>
+                        <div className="font-semibold text-[#111318]">Testeaza gratuit - 15 zile</div>
+                        <div className="text-xs text-[#9CA3AF]">Toate functiile Pro, fara card</div>
                       </div>
                     </div>
                     {selectedPlan === "trial" && (

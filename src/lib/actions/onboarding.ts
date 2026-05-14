@@ -132,39 +132,43 @@ export async function startPaidOnboardingAction(
     return { error: e instanceof Error ? e.message : "Eroare la creare stație" };
   }
 
-  // Get or create Stripe customer
-  let customerId = (profile as any)?.stripe_customer_id as string | null;
-  if (!customerId) {
-    const customer = await stripe.customers.create({
-      email: (profile as any)?.email ?? user.email,
-      metadata: { profile_id: user.id },
+  try {
+    // Get or create Stripe customer
+    let customerId = (profile as any)?.stripe_customer_id as string | null;
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: (profile as any)?.email ?? user.email,
+        metadata: { profile_id: user.id },
+      });
+      customerId = customer.id;
+
+      const serviceSupabase = createServiceClient();
+      await serviceSupabase
+        .from("profiles")
+        .update({ stripe_customer_id: customerId } as never)
+        .eq("id", user.id);
+    }
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://velos.ro";
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      customer: customerId,
+      line_items: [{ price: priceId, quantity: 1 }],
+      subscription_data: {
+        metadata: { profile_id: user.id, plan, cycle },
+      },
+      metadata: { profile_id: user.id, plan, cycle, type: "subscription" },
+      success_url: `${appUrl}/setari/abonament?success=1&plan=${plan}`,
+      cancel_url: `${appUrl}/setari/abonament?canceled=1`,
+      allow_promotion_codes: true,
+      billing_address_collection: "auto",
+      tax_id_collection: { enabled: true },
+      locale: "ro",
     });
-    customerId = customer.id;
 
-    const serviceSupabase = createServiceClient();
-    await serviceSupabase
-      .from("profiles")
-      .update({ stripe_customer_id: customerId } as never)
-      .eq("id", user.id);
+    return { checkoutUrl: session.url ?? undefined };
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : "Eroare la inițializarea plații" };
   }
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://velos.ro";
-
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    customer: customerId,
-    line_items: [{ price: priceId, quantity: 1 }],
-    subscription_data: {
-      metadata: { profile_id: user.id, plan, cycle },
-    },
-    metadata: { profile_id: user.id, plan, cycle, type: "subscription" },
-    success_url: `${appUrl}/setari/abonament?success=1&plan=${plan}`,
-    cancel_url: `${appUrl}/setari/abonament?canceled=1`,
-    allow_promotion_codes: true,
-    billing_address_collection: "auto",
-    tax_id_collection: { enabled: true },
-    locale: "ro",
-  });
-
-  return { checkoutUrl: session.url ?? undefined };
 }
