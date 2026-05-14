@@ -1,6 +1,7 @@
 import LandingNavbar from "@/components/landing/navbar";
 import LandingHero from "@/components/landing/hero";
 import LandingFeatures from "@/components/landing/features";
+import LandingSmartPage from "@/components/landing/smart-page-section";
 import LandingPricing from "@/components/landing/pricing";
 import LandingTestimonials from "@/components/landing/testimonials";
 import LandingFaq from "@/components/landing/faq";
@@ -18,6 +19,7 @@ export default function LandingPage() {
       <LandingNavbar />
       <LandingHero />
       <LandingFeatures />
+      <LandingSmartPage />
       <LandingPricing />
       <LandingTestimonials />
       <LandingFaq />
