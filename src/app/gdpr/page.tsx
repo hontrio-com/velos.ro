@@ -249,56 +249,56 @@ export default function GdprPage() {
                   article="Art. 15"
                   title="Dreptul de acces"
                   description="Aveți dreptul de a ști dacă prelucrăm datele dumneavoastră și, dacă da, de a obține o copie a acestora (extras de date), împreună cu informații despre: scopuri, categorii de date, destinatari, durată de stocare, dreptul de portabilitate și rectificare."
-                  howTo="Trimiteți un email la contact@velos.ro cu subiectul „GDPR — Drept de acces". Vom răspunde în max. 30 zile cu un export al datelor dumneavoastră."
+                  howTo={"Trimiteți un email la contact@velos.ro cu subiectul „GDPR — Drept de acces”. Vom răspunde în max. 30 zile cu un export al datelor dumneavoastră."}
                   color="border-[#BFDBFE] bg-[#EFF6FF]"
                 />
                 <RightCard
                   article="Art. 16"
                   title="Dreptul la rectificare"
                   description="Dacă datele dumneavoastră sunt inexacte sau incomplete, aveți dreptul de a solicita corectarea sau completarea lor fără întârzieri nejustificate."
-                  howTo="Puteți actualiza datele direct din setările contului Velos sau trimiteți o cerere la contact@velos.ro cu subiectul „GDPR — Rectificare"."
+                  howTo={"Puteți actualiza datele direct din setările contului Velos sau trimiteți o cerere la contact@velos.ro cu subiectul „GDPR — Rectificare”."}
                   color="border-[#A7F3D0] bg-[#ECFDF5]"
                 />
                 <RightCard
                   article="Art. 17"
-                  title="Dreptul la ștergere („dreptul de a fi uitat")"
+                  title={"Dreptul la ștergere („dreptul de a fi uitat”)"}
                   description="Puteți solicita ștergerea datelor atunci când: nu mai sunt necesare scopului inițial, v-ați retras consimțământul, ați obiectat la prelucrare, datele au fost prelucrate ilegal sau ștergerea este impusă de o obligație legală. Nu se aplică pentru date supuse obligațiilor legale de arhivare (ex. facturi — 10 ani)."
-                  howTo="Trimiteți o cerere la contact@velos.ro cu subiectul „GDPR — Ștergere date". Vom confirma ștergerea sau vă vom explica motivul pentru care nu poate fi efectuată."
+                  howTo={"Trimiteți o cerere la contact@velos.ro cu subiectul „GDPR — Ștergere date”. Vom confirma ștergerea sau vă vom explica motivul pentru care nu poate fi efectuată."}
                   color="border-[#FCA5A5] bg-[#FEF2F2]"
                 />
                 <RightCard
                   article="Art. 18"
                   title="Dreptul la restricționarea prelucrării"
-                  description="Puteți solicita „înghețarea" prelucrării datelor (nu și ștergerea) în situații specifice: contestați exactitatea datelor (pe durata verificării), prelucrarea este ilegală dar preferați restricționarea în loc de ștergere, aveți nevoie de date pentru constatarea unui drept în instanță."
-                  howTo="Trimiteți o cerere la contact@velos.ro cu subiectul „GDPR — Restricționare". Vom aplica restricția și vă vom notifica înainte de ridicarea ei."
+                  description={"Puteți solicita „înghețarea” prelucrării datelor (nu și ștergerea) în situații specifice: contestați exactitatea datelor (pe durata verificării), prelucrarea este ilegală dar preferați restricționarea în loc de ștergere, aveți nevoie de date pentru constatarea unui drept în instanță."}
+                  howTo={"Trimiteți o cerere la contact@velos.ro cu subiectul „GDPR — Restricționare”. Vom aplica restricția și vă vom notifica înainte de ridicarea ei."}
                   color="border-[#FDE68A] bg-[#FFFBEB]"
                 />
                 <RightCard
                   article="Art. 20"
                   title="Dreptul la portabilitatea datelor"
                   description="Aveți dreptul de a primi datele furnizate de dumneavoastră într-un format structurat, utilizat curent și care poate fi citit automat (JSON sau CSV) și de a le transmite direct unui alt operator, acolo unde este tehnic posibil. Se aplică numai pentru datele prelucrate pe baza contractului sau a consimțământului."
-                  howTo="Solicitați un export la contact@velos.ro cu subiectul „GDPR — Portabilitate". Vom furniza un fișier JSON/CSV în termen de 30 zile."
+                  howTo={"Solicitați un export la contact@velos.ro cu subiectul „GDPR — Portabilitate”. Vom furniza un fișier JSON/CSV în termen de 30 zile."}
                   color="border-[#DDD6FE] bg-[#F5F3FF]"
                 />
                 <RightCard
                   article="Art. 21"
                   title="Dreptul la opoziție"
                   description="Puteți obiecta în orice moment față de prelucrarea datelor dumneavoastră bazată pe interesul nostru legitim [Art. 6(1)(f)], inclusiv pentru profilare. Vom înceta prelucrarea cu excepția cazului în care demonstrăm motive legitime imperioase. Puteți obiecta oricând față de prelucrarea în scop de marketing direct."
-                  howTo="Trimiteți o opoziție la contact@velos.ro cu subiectul „GDPR — Opoziție". Pentru marketing: link dezabonare din orice email sau setările contului."
+                  howTo={"Trimiteți o opoziție la contact@velos.ro cu subiectul „GDPR — Opoziție”. Pentru marketing: link dezabonare din orice email sau setările contului."}
                   color="border-[#FBCFE8] bg-[#FDF2F8]"
                 />
                 <RightCard
                   article="Art. 22"
                   title="Dreptul de a nu face obiectul deciziilor automate"
                   description="Aveți dreptul de a nu face obiectul unei decizii bazate exclusiv pe prelucrarea automată (inclusiv profilare) care produce efecte juridice sau vă afectează semnificativ în mod similar. SC VOID SFT GAMES SRL nu ia astfel de decizii automate cu privire la utilizatorii platformei."
-                  howTo="Dacă considerați că o decizie automată v-a afectat, contactați-ne la contact@velos.ro cu subiectul „GDPR — Decizie automată"."
+                  howTo={"Dacă considerați că o decizie automată v-a afectat, contactați-ne la contact@velos.ro cu subiectul „GDPR — Decizie automată”."}
                   color="border-[#BAE6FD] bg-[#F0F9FF]"
                 />
                 <RightCard
                   article="Art. 7(3)"
                   title="Retragerea consimțământului"
                   description="Acolo unde prelucrarea se bazează pe consimțământul dumneavoastră, îl puteți retrage oricând, fără a afecta legalitatea prelucrării efectuate anterior retragerii. Retragerea consimțământului nu afectează serviciile bazate pe contract sau obligații legale."
-                  howTo="Retragere din setările contului (secțiunea Notificări) sau prin email la contact@velos.ro cu subiectul „GDPR — Retragere consimțământ"."
+                  howTo={"Retragere din setările contului (secțiunea Notificări) sau prin email la contact@velos.ro cu subiectul „GDPR — Retragere consimțământ”."}
                   color="border-[#A7F3D0] bg-[#ECFDF5]"
                 />
               </div>
@@ -313,7 +313,7 @@ export default function GdprPage() {
                 <ProcessStep
                   step="1"
                   title="Primiți cererea dumneavoastră"
-                  description="Trimiteți un email la contact@velos.ro cu subiectul „GDPR — [dreptul solicitat]". Vă rugăm să precizați clar ce solicitați și să includeți datele de identificare (email cont, nume)."
+                  description={"Trimiteți un email la contact@velos.ro cu subiectul „GDPR — [dreptul solicitat]”. Vă rugăm să precizați clar ce solicitați și să includeți datele de identificare (email cont, nume)."}
                 />
                 <ProcessStep
                   step="2"

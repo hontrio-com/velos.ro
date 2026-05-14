@@ -62,58 +62,58 @@ export default function TermeniPage() {
           <Section id="definitii" title="2. Definiții">
             <p>În înțelesul prezentului document, termenii de mai jos au următoarea semnificație:</p>
             <dl className="mt-4 space-y-3">
-              <DefinitionItem term="„Platforma" / „Velos"">
+              <DefinitionItem term={"„Platforma\" / „Velos\""}>
                 ansamblul serviciilor software de tip SaaS (Software as a Service)
                 disponibile la velos.ro, inclusiv aplicația web, API-urile,
                 funcționalitățile de CRM, programări online, SMS-uri automate și
                 ITP Smart Page.
               </DefinitionItem>
-              <DefinitionItem term="„Furnizorul"">
+              <DefinitionItem term={"„Furnizorul\""}>
                 SC VOID SFT GAMES SRL, societate de drept român, operatorul
                 platformei Velos.
               </DefinitionItem>
-              <DefinitionItem term="„Utilizatorul" / „Clientul"">
+              <DefinitionItem term={"„Utilizatorul\" / „Clientul\""}>
                 orice persoană fizică sau juridică (stație ITP, operator economic)
                 care creează un cont pe platformă și utilizează serviciile Velos în
                 scop profesional sau comercial.
               </DefinitionItem>
-              <DefinitionItem term="„Utilizatorul Final"">
+              <DefinitionItem term={"„Utilizatorul Final\""}>
                 persoana fizică (proprietar de vehicul) care utilizează pagina de
                 programare ITP Smart Page a unui Utilizator pentru a efectua o
                 rezervare.
               </DefinitionItem>
-              <DefinitionItem term="„Contul"">
+              <DefinitionItem term={"„Contul\""}>
                 setul de credențiale (e-mail și parolă) creat de Utilizator pentru
                 accesarea platformei.
               </DefinitionItem>
-              <DefinitionItem term="„Abonamentul"">
+              <DefinitionItem term={"„Abonamentul\""}>
                 planul de servicii ales de Utilizator (Trial, Basic, Pro sau
                 Enterprise), cu dreptul de acces la funcționalitățile corespunzătoare
                 pe durata plătită.
               </DefinitionItem>
-              <DefinitionItem term="„Date cu caracter personal"">
+              <DefinitionItem term={"„Date cu caracter personal\""}>
                 orice informație referitoare la o persoană fizică identificată sau
                 identificabilă, prelucrată în cadrul sau prin intermediul platformei,
                 în sensul Regulamentului (UE) 2016/679 (GDPR).
               </DefinitionItem>
-              <DefinitionItem term="„Operator" (GDPR)">
+              <DefinitionItem term={"„Operator\" (GDPR)"}>
                 Utilizatorul platformei, care determină scopurile și mijloacele de
                 prelucrare a datelor clienților săi finali.
               </DefinitionItem>
-              <DefinitionItem term="„Împuternicit" (GDPR)">
+              <DefinitionItem term={"„Împuternicit\" (GDPR)"}>
                 Furnizorul (SC VOID SFT GAMES SRL), care prelucrează datele cu
                 caracter personal în numele Utilizatorului, conform instrucțiunilor
                 acestuia.
               </DefinitionItem>
-              <DefinitionItem term="„SMS-uri"">
+              <DefinitionItem term={"„SMS-uri\""}>
                 mesajele text transmise prin intermediul platformei Velos către
                 clienții finali ai Utilizatorului, în baza unui consimțământ valid.
               </DefinitionItem>
-              <DefinitionItem term="„Conținut"">
+              <DefinitionItem term={"„Conținut\""}>
                 orice text, imagine, date, informații sau materiale introduse în
                 platformă de Utilizator sau de Utilizatorul Final.
               </DefinitionItem>
-              <DefinitionItem term="„Contractul"">
+              <DefinitionItem term={"„Contractul\""}>
                 acordul format din prezentele Termeni și Condiții, Politica de
                 Confidențialitate, Politica de Cookies și orice alte documente
                 publicate pe platformă, acceptate de Utilizator la momentul
