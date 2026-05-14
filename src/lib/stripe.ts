@@ -2,10 +2,11 @@ import Stripe from "stripe";
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
-export type PlanId = "basic" | "pro" | "enterprise";
-export type BillingCycle = "monthly" | "yearly";
-export type SubscriptionStatus = "trial" | "active" | "past_due" | "canceled" | "trial_expired";
+// Re-export client-safe types and config
+export type { PlanId, BillingCycle, SubscriptionStatus } from "@/lib/stripe-config";
+export { isValidPlan, isValidCycle, getSmsLimitForPlan, getStatiiLimitForPlan } from "@/lib/stripe-config";
 
+// Server-side PLAN_CONFIG includes priceIds (env vars, not exposed to client)
 export const PLAN_CONFIG = {
   basic: {
     name: "Basic",
@@ -37,36 +38,15 @@ export const PLAN_CONFIG = {
       yearly: process.env.STRIPE_PRICE_ENTERPRISE_YEARLY!,
     },
     smsLimit: 1000,
-    statiiLimit: -1, // unlimited
+    statiiLimit: -1,
     color: "#7C3AED",
   },
 } as const;
 
-export function getPlanFromPriceId(priceId: string): { plan: PlanId; cycle: BillingCycle } | null {
+export function getPlanFromPriceId(priceId: string): { plan: import("@/lib/stripe-config").PlanId; cycle: import("@/lib/stripe-config").BillingCycle } | null {
   for (const [planId, config] of Object.entries(PLAN_CONFIG)) {
-    if (config.priceId.monthly === priceId) return { plan: planId as PlanId, cycle: "monthly" };
-    if (config.priceId.yearly === priceId) return { plan: planId as PlanId, cycle: "yearly" };
+    if (config.priceId.monthly === priceId) return { plan: planId as import("@/lib/stripe-config").PlanId, cycle: "monthly" };
+    if (config.priceId.yearly === priceId) return { plan: planId as import("@/lib/stripe-config").PlanId, cycle: "yearly" };
   }
   return null;
-}
-
-export function isValidPlan(plan: string): plan is PlanId {
-  return plan in PLAN_CONFIG;
-}
-
-export function isValidCycle(cycle: string): cycle is BillingCycle {
-  return cycle === "monthly" || cycle === "yearly";
-}
-
-/** SMS limit per month based on plan */
-export function getSmsLimitForPlan(plan: string): number {
-  if (plan === "trial") return 20;
-  return PLAN_CONFIG[plan as PlanId]?.smsLimit ?? 0;
-}
-
-/** Max statii based on plan */
-export function getStatiiLimitForPlan(plan: string): number {
-  if (plan === "trial") return 1;
-  const limit = PLAN_CONFIG[plan as PlanId]?.statiiLimit;
-  return limit === -1 ? Infinity : (limit ?? 1);
 }

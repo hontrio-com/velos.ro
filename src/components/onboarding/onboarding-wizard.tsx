@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, ChevronRight, ChevronLeft, Loader2, Zap, Shield, Building2, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PLAN_CONFIG, type PlanId, type BillingCycle } from "@/lib/stripe";
+import { PLAN_CONFIG, type PlanId, type BillingCycle } from "@/lib/stripe-config";
 import { completeTrialOnboardingAction, startPaidOnboardingAction } from "@/lib/actions/onboarding";
 import type { StatieOnboardingData } from "@/lib/actions/onboarding";
 
