@@ -148,7 +148,7 @@ export function StatiiAdminClient({ statii: initialStatii }: { statii: Statie[] 
                     </td>
                     <td className="px-4 py-3">
                       {statie.booking_activ
-                        ? <Globe className="h-3.5 w-3.5 text-[#1877F2]" title="Booking activ" />
+                        ? <Globe className="h-3.5 w-3.5 text-[#1877F2]" />
                         : <span className="text-xs text-[#9CA3AF]">—</span>}
                     </td>
                     <td className="px-4 py-3 text-xs text-[#9CA3AF]">
