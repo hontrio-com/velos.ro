@@ -51,7 +51,7 @@ export async function registerAction(
     return { error: parsed.error.issues[0].message };
   }
 
-  const { error } = await supabase.auth.signUp({
+  const { error, data } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
@@ -69,7 +69,7 @@ export async function registerAction(
   // Send welcome email (fire and forget)
   sendBunVenitEmail(parsed.data.email, parsed.data.full_name).catch(console.error);
 
-  redirect("/dashboard");
+  redirect("/onboarding");
 }
 
 export async function signInWithGoogleAction() {
@@ -114,9 +114,7 @@ export async function forgotPasswordAction(
 
   const { error } = await supabase.auth.resetPasswordForEmail(
     parsed.data.email,
-    {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`,
-    }
+    { redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password` }
   );
 
   if (error) return { error: error.message };

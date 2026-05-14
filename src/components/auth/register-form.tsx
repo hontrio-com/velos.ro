@@ -29,11 +29,7 @@ function fieldAnim(i: number) {
   };
 }
 
-function getPasswordStrength(password: string): {
-  score: number;
-  label: string;
-  color: string;
-} {
+function getPasswordStrength(password: string): { score: number; label: string; color: string } {
   let score = 0;
   if (password.length >= 8) score++;
   if (/[A-Z]/.test(password)) score++;
@@ -69,9 +65,7 @@ export function RegisterForm() {
   function onSubmit(_data: RegisterInput, e?: React.BaseSyntheticEvent) {
     e?.preventDefault();
     const form = e?.target as HTMLFormElement;
-    startTransition(() => {
-      formAction(new FormData(form));
-    });
+    startTransition(() => formAction(new FormData(form)));
   }
 
   return (
@@ -94,9 +88,7 @@ export function RegisterForm() {
 
       {/* Nume */}
       <motion.div {...fieldAnim(0)}>
-        <label htmlFor="full_name" className={labelClass}>
-          Nume complet
-        </label>
+        <label htmlFor="full_name" className={labelClass}>Nume complet</label>
         <input
           id="full_name"
           type="text"
@@ -115,9 +107,7 @@ export function RegisterForm() {
 
       {/* Email */}
       <motion.div {...fieldAnim(1)}>
-        <label htmlFor="email" className={labelClass}>
-          Email
-        </label>
+        <label htmlFor="email" className={labelClass}>Email</label>
         <input
           id="email"
           type="email"
@@ -134,11 +124,9 @@ export function RegisterForm() {
         )}
       </motion.div>
 
-      {/* Parolă + strength */}
+      {/* Parolă */}
       <motion.div {...fieldAnim(2)}>
-        <label htmlFor="password" className={labelClass}>
-          Parolă
-        </label>
+        <label htmlFor="password" className={labelClass}>Parolă</label>
         <PasswordInput
           id="password"
           placeholder="Minim 8 caractere"
@@ -151,7 +139,6 @@ export function RegisterForm() {
             },
           })}
         />
-        {/* Password strength bar */}
         {passwordValue && strength && (
           <div className="mt-2">
             <div className="flex gap-1 mb-1">
@@ -159,17 +146,12 @@ export function RegisterForm() {
                 <div
                   key={level}
                   className="h-1 flex-1 rounded-full transition-all duration-300"
-                  style={{
-                    backgroundColor:
-                      level <= strength.score ? strength.color : "#E5E7EB",
-                  }}
+                  style={{ backgroundColor: level <= strength.score ? strength.color : "#E5E7EB" }}
                 />
               ))}
             </div>
             {strength.label && (
-              <p className="text-[11px]" style={{ color: strength.color }}>
-                {strength.label}
-              </p>
+              <p className="text-[11px]" style={{ color: strength.color }}>{strength.label}</p>
             )}
           </div>
         )}
@@ -183,17 +165,13 @@ export function RegisterForm() {
 
       {/* Confirmă parola */}
       <motion.div {...fieldAnim(3)}>
-        <label htmlFor="confirm_password" className={labelClass}>
-          Confirmă parola
-        </label>
+        <label htmlFor="confirm_password" className={labelClass}>Confirmă parola</label>
         <PasswordInput
           id="confirm_password"
           placeholder="Repetă parola"
           autoComplete="new-password"
           className={cn(errors.confirm_password && "border-[#DC2626]")}
-          {...register("confirm_password", {
-            onChange: () => clearErrors("confirm_password"),
-          })}
+          {...register("confirm_password", { onChange: () => clearErrors("confirm_password") })}
         />
         {errors.confirm_password && (
           <p className="mt-1.5 flex items-center gap-1 text-[12px] text-[#DC2626]">
@@ -207,20 +185,13 @@ export function RegisterForm() {
       <motion.div {...fieldAnim(4)}>
         <label className="flex items-start gap-2.5 cursor-pointer group">
           <div className="relative mt-0.5 shrink-0">
-            <input
-              type="checkbox"
-              className="sr-only peer"
-              {...register("terms")}
-            />
+            <input type="checkbox" className="sr-only peer" {...register("terms")} />
             <div className="h-4 w-4 rounded border border-[#E5E7EB] bg-white peer-checked:bg-[#1877F2] peer-checked:border-[#1877F2] transition-all duration-150 group-hover:border-[#D1D5DB]" />
             <Check className="absolute inset-0 h-4 w-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity duration-150" />
           </div>
           <span className="text-[13px] text-[#6B7280]">
             Accept{" "}
-            <Link
-              href="/termeni"
-              className="text-[#1877F2] hover:underline"
-            >
+            <Link href="/termeni" className="text-[#1877F2] hover:underline">
               Termenii și Condițiile
             </Link>
           </span>
@@ -241,10 +212,7 @@ export function RegisterForm() {
           className="w-full h-11 flex items-center justify-center gap-2 rounded-lg bg-[#1877F2] hover:bg-[#166FE5] text-white text-sm font-semibold transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:shadow-[0_0_0_3px_rgba(24,119,242,0.3)] active:scale-[0.99]"
         >
           {isPending ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Se creează contul...
-            </>
+            <><Loader2 className="h-4 w-4 animate-spin" /> Se creează contul...</>
           ) : (
             "Creează cont gratuit"
           )}
