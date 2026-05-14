@@ -1350,6 +1350,12 @@ export type CompositeTypes<
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
 
+// ── Convenience type aliases ─────────────────────────────────────
+export type StatieExtinsa = Tables<"statii">
+export type SetariStatie = Tables<"setari_statie">
+export type Profile = Tables<"profiles">
+export type Statie = Tables<"statii">
+
 export const Constants = {
   public: {
     Enums: {
