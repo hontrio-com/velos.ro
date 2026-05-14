@@ -166,7 +166,7 @@ export function UtilizatoriClient({ users: initialUsers }: { users: User[] }) {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         {user.is_admin && (
-                          <Shield className="h-3.5 w-3.5 text-[#1877F2] shrink-0" title="Admin" />
+                          <Shield className="h-3.5 w-3.5 text-[#1877F2] shrink-0" />
                         )}
                         <div className="min-w-0">
                           <p className="font-medium text-[#111318] truncate max-w-[180px]">
