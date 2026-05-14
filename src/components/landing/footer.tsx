@@ -1,33 +1,33 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const LINKS = {
-  Produs: [
-    { label: "Functii", href: "#functii" },
-    { label: "ITP Smart Page", href: "#functii" },
-    { label: "Preturi", href: "#preturi" },
-    { label: "Testimoniale", href: "#testimoniale" },
-    { label: "FAQ", href: "#faq" },
-  ],
-  Companie: [
-    { label: "Despre noi", href: "/despre" },
-    { label: "Blog", href: "/blog" },
-    { label: "Cariere", href: "/cariere" },
-    { label: "Parteneri", href: "/parteneri" },
-  ],
-  Contact: [
-    { label: "contact@itpbase.ro", href: "mailto:contact@itpbase.ro" },
-    { label: "0800 000 000 (gratuit)", href: "tel:0800000000" },
-    { label: "Luni - Vineri, 09:00 - 18:00", href: "#" },
-    { label: "Trimite un mesaj", href: "/contact" },
-  ],
-  Legal: [
-    { label: "Termeni si conditii", href: "/termeni" },
-    { label: "Politica de confidentialitate", href: "/confidentialitate" },
-    { label: "Politica cookies", href: "/cookies" },
-    { label: "GDPR", href: "/gdpr" },
-  ],
-};
+const PRODUS_LINKS = [
+  { label: "Functii", href: "#functii" },
+  { label: "ITP Smart Page", href: "#functii" },
+  { label: "Preturi", href: "#preturi" },
+  { label: "Testimoniale", href: "#testimoniale" },
+  { label: "FAQ", href: "#faq" },
+];
+
+const COMPANIE_INFO = [
+  "SC VOID SFT GAMES SRL",
+  "CUI: 43474393",
+  "Strada Progresului, Nr. 2",
+];
+
+const CONTACT_LINKS = [
+  { label: "contact@velos.ro", href: "mailto:contact@velos.ro" },
+  { label: "0757 941 553", href: "tel:0757941553" },
+  { label: "Luni - Vineri, 09:00 - 18:00", href: "#" },
+  { label: "Trimite un mesaj", href: "/contact" },
+];
+
+const LEGAL_LINKS = [
+  { label: "Termeni si conditii", href: "/termeni" },
+  { label: "Politica de confidentialitate", href: "/confidentialitate" },
+  { label: "Politica cookies", href: "/cookies" },
+  { label: "GDPR", href: "/gdpr" },
+];
 
 export default function LandingFooter() {
   return (
@@ -54,25 +54,59 @@ export default function LandingFooter() {
 
           {/* Link columns — 2 columns on mobile, 4 on desktop */}
           <div className="lg:col-span-4 grid grid-cols-2 md:grid-cols-4 gap-8">
-            {Object.entries(LINKS).map(([title, links]) => (
-              <div key={title}>
-                <h4 className="text-xs font-semibold text-[#111318] uppercase tracking-widest mb-4">
-                  {title}
-                </h4>
-                <ul className="space-y-2.5">
-                  {links.map((l) => (
-                    <li key={l.label}>
-                      <Link
-                        href={l.href}
-                        className="text-sm text-[#6B7280] hover:text-[#111318] transition-colors"
-                      >
-                        {l.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+
+            {/* Produs */}
+            <div>
+              <h4 className="text-xs font-semibold text-[#111318] uppercase tracking-widest mb-4">Produs</h4>
+              <ul className="space-y-2.5">
+                {PRODUS_LINKS.map((l) => (
+                  <li key={l.label}>
+                    <Link href={l.href} className="text-sm text-[#6B7280] hover:text-[#111318] transition-colors">
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Companie */}
+            <div>
+              <h4 className="text-xs font-semibold text-[#111318] uppercase tracking-widest mb-4">Companie</h4>
+              <ul className="space-y-2.5">
+                {COMPANIE_INFO.map((text) => (
+                  <li key={text} className="text-sm text-[#6B7280]">{text}</li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Contact */}
+            <div>
+              <h4 className="text-xs font-semibold text-[#111318] uppercase tracking-widest mb-4">Contact</h4>
+              <ul className="space-y-2.5">
+                {CONTACT_LINKS.map((l) => (
+                  <li key={l.label}>
+                    <Link href={l.href} className="text-sm text-[#6B7280] hover:text-[#111318] transition-colors">
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Legal */}
+            <div>
+              <h4 className="text-xs font-semibold text-[#111318] uppercase tracking-widest mb-4">Legal</h4>
+              <ul className="space-y-2.5">
+                {LEGAL_LINKS.map((l) => (
+                  <li key={l.label}>
+                    <Link href={l.href} className="text-sm text-[#6B7280] hover:text-[#111318] transition-colors">
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
           </div>
         </div>
 

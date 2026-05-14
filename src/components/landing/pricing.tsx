@@ -124,7 +124,7 @@ export default function LandingPricing() {
         </div>
 
         {/* Plans */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 pt-5">
           {PLANS.map((plan) => {
             const price = yearly ? plan.price.yearly : plan.price.monthly;
             return (
