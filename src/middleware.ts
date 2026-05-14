@@ -43,6 +43,7 @@ export async function middleware(request: NextRequest) {
     "/calendar",
     "/smart-page",
     "/admin",
+    "/onboarding",
   ];
 
   const authRoutes = ["/login", "/register", "/forgot-password"];

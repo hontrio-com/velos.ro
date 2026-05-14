@@ -22,7 +22,7 @@ export default async function DashboardLayout({
   const [{ data: profile }, { data: statii }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("full_name, suspended_at, plan, subscription_status, trial_expires_at")
+      .select("full_name, suspended_at, plan, subscription_status, trial_expires_at, onboarding_completed")
       .eq("id", user.id)
       .single(),
     supabase
@@ -33,6 +33,9 @@ export default async function DashboardLayout({
   ]);
 
   if (profile?.suspended_at) redirect("/suspendat");
+
+  // Redirect to onboarding if not completed yet
+  if (!(profile as any)?.onboarding_completed) redirect("/onboarding");
 
   // Subscription gating — check if trial is still valid
   const subscriptionStatus = ((profile as any)?.subscription_status ?? "trial") as SubscriptionStatus;

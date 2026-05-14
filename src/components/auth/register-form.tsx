@@ -46,12 +46,7 @@ function getPasswordStrength(password: string): { score: number; label: string; 
   return { score, ...(levels[score - 1] ?? { label: "", color: "#E5E7EB" }) };
 }
 
-interface RegisterFormProps {
-  plan?: string | null;
-  cycle?: string;
-}
-
-export function RegisterForm({ plan, cycle = "monthly" }: RegisterFormProps) {
+export function RegisterForm() {
   const [state, formAction] = useActionState(registerAction, null);
   const [isPending, startTransition] = useTransition();
   const [passwordValue, setPasswordValue] = useState("");
@@ -73,14 +68,8 @@ export function RegisterForm({ plan, cycle = "monthly" }: RegisterFormProps) {
     startTransition(() => formAction(new FormData(form)));
   }
 
-  const submitLabel = plan ? "Creează cont și continuă la plată" : "Creează cont gratuit";
-
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-      {/* Hidden plan/cycle fields */}
-      {plan && <input type="hidden" name="plan" value={plan} />}
-      {plan && <input type="hidden" name="cycle" value={cycle} />}
-
       {/* Server error */}
       <AnimatePresence>
         {state?.error && (
@@ -223,12 +212,9 @@ export function RegisterForm({ plan, cycle = "monthly" }: RegisterFormProps) {
           className="w-full h-11 flex items-center justify-center gap-2 rounded-lg bg-[#1877F2] hover:bg-[#166FE5] text-white text-sm font-semibold transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:shadow-[0_0_0_3px_rgba(24,119,242,0.3)] active:scale-[0.99]"
         >
           {isPending ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              {plan ? "Se procesează..." : "Se creează contul..."}
-            </>
+            <><Loader2 className="h-4 w-4 animate-spin" /> Se creează contul...</>
           ) : (
-            submitLabel
+            "Creează cont gratuit"
           )}
         </button>
       </motion.div>
