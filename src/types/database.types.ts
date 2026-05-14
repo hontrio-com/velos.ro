@@ -172,6 +172,7 @@ export type Database = {
         Row: {
           id: string;
           statie_id: string;
+          sms_activ: boolean;
           reminder_30_zile: boolean;
           reminder_7_zile: boolean;
           reminder_1_zi: boolean;
@@ -189,6 +190,7 @@ export type Database = {
         Insert: {
           id?: string;
           statie_id: string;
+          sms_activ?: boolean;
           reminder_30_zile?: boolean;
           reminder_7_zile?: boolean;
           reminder_1_zi?: boolean;
@@ -205,6 +207,7 @@ export type Database = {
         };
         Update: {
           statie_id?: string;
+          sms_activ?: boolean;
           reminder_30_zile?: boolean;
           reminder_7_zile?: boolean;
           reminder_1_zi?: boolean;
