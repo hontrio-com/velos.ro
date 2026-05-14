@@ -194,7 +194,7 @@ export function BookingMockup() {
       </div>
 
       {/* Page wrapper */}
-      <div className="relative max-h-[680px] overflow-y-auto">
+      <div className={cn("relative max-h-[680px]", revealed ? "overflow-y-auto" : "overflow-hidden")}>
 
         {/* ── Full ITP Smart Page content ── */}
         <div className={cn("bg-[#F7F8FA]", !revealed && "blur-sm pointer-events-none select-none")}>
