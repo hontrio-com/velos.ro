@@ -1,4 +1,4 @@
-import { MessageSquare, CalendarCheck, Users, BarChart3, Building2, Zap } from "lucide-react";
+import { MessageSquare, CalendarCheck, Users, BarChart3, Building2, Zap, Globe } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -9,8 +9,17 @@ const FEATURES = [
     bg: "#EFF6FF",
     title: "SMS Remindere Automate",
     description:
-      "Platforma genereaza si trimite SMS-uri personalizate cu 30, 15, 7 si 1 zi inainte de expirarea ITP-ului. Niciodata nu uiti un client, niciodata nu trimiți manual.",
+      "Clientul tau nu va uita niciodata ca ITP-ul ii expira. Velos trimite automat un SMS personalizat cu numele lui si numarul de inmatriculare la 30, 15 si 7 zile inainte de expirare. El reactioneaza, se programeaza si revine la tine.",
     tag: "Cel mai folosit",
+  },
+  {
+    icon: Globe,
+    color: "#0891B2",
+    bg: "#ECFEFF",
+    title: "ITP Smart Page",
+    description:
+      "Fiecare statie primeste un mini-site complet, optimizat SEO, cu URL propriu. Contine: calendar de programari sincronizat in timp real cu platforma, galerie foto, lista servicii cu preturi, locatie interactiva cu deschidere directa in Google Maps si Waze, program de lucru si date de contact. Clientii te gasesc pe Google si se programeaza instant.",
+    tag: "Mini-site inclus",
   },
   {
     icon: CalendarCheck,
@@ -18,7 +27,7 @@ const FEATURES = [
     bg: "#ECFDF5",
     title: "Programari Online",
     description:
-      "Fiecare statie primeste o pagina de rezervari cu URL unic. Clientii se programeaza de pe telefon in 30 de secunde, tu primesti notificare instantanee.",
+      "Clientii se programeaza de pe telefon in 30 de secunde, direct din pagina ta Smart Page sau din linkul trimis prin SMS. Tu primesti notificare instantanee si calendarul se actualizeaza automat.",
     tag: "Fara costuri extra",
   },
   {
@@ -27,7 +36,7 @@ const FEATURES = [
     bg: "#F5F3FF",
     title: "CRM Complet",
     description:
-      "Istoricul fiecarui client: vehicule, toate programarile, conversatii SMS, note. Tot ce ai nevoie sa stii despre un client este la un click distanta.",
+      "Istoricul fiecarui client: vehicule, toate programarile, conversatii SMS, note interne. Tot ce ai nevoie sa stii despre un client este la un click distanta, oricand.",
     tag: "Import CSV inclus",
   },
   {
@@ -36,16 +45,16 @@ const FEATURES = [
     bg: "#FFF7ED",
     title: "Rapoarte si Statistici",
     description:
-      "Venituri per angajat, rata de revenire a clientilor, SMS-uri trimise. Decizii de business bazate pe date reale, nu pe estimari.",
+      "Venituri per angajat, rata de revenire a clientilor, SMS-uri trimise. Decizii de business bazate pe date reale, nu pe estimari sau intuitie.",
     tag: "Export PDF si CSV",
   },
   {
     icon: Building2,
-    color: "#0891B2",
-    bg: "#ECFEFF",
+    color: "#6D28D9",
+    bg: "#F5F3FF",
     title: "Gestionare Multi-Statii",
     description:
-      "Ai mai multe locatii? Controlezi toate statiile dintr-un singur cont. Echipe si date separate pentru fiecare locatie, dashboard centralizat pentru tine.",
+      "Ai mai multe locatii? Controlezi toate statiile dintr-un singur cont. Echipe si date separate pentru fiecare locatie, un singur dashboard pentru tine.",
     tag: "Dashboard centralizat",
   },
   {
@@ -54,7 +63,7 @@ const FEATURES = [
     bg: "#FFFBEB",
     title: "Automatizare Totala",
     description:
-      "Configurezi o singura data: template-uri SMS, orele de trimitere, planul de remindere. De atunci, platforma lucreaza autonom. Zero efort zilnic.",
+      "Configurezi o singura data: template-uri SMS, orele de trimitere, planul de remindere. De atunci, platforma lucreaza complet autonom. Zero efort zilnic din partea ta.",
     tag: "Setup o singura data",
   },
 ];

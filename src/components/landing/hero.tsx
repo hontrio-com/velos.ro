@@ -50,14 +50,14 @@ export default function LandingHero() {
 
         {/* CTAs */}
         <div
-          className="animate-fade-in-up flex flex-col sm:flex-row items-center gap-3 mb-20"
+          className="animate-fade-in-up flex flex-col sm:flex-row items-center gap-3 mb-20 w-full sm:w-auto"
           style={{ animationDelay: "0.2s" }}
         >
           <Link
             href="/register"
             className={cn(
               buttonVariants({ size: "lg" }),
-              "gap-2 px-7"
+              "gap-2 px-8 h-12 text-sm w-full sm:w-auto justify-center"
             )}
           >
             Incearca 15 zile gratuit
@@ -67,7 +67,7 @@ export default function LandingHero() {
             href="#functii"
             className={cn(
               buttonVariants({ variant: "outline", size: "lg" }),
-              "px-7"
+              "px-8 h-12 text-sm w-full sm:w-auto justify-center"
             )}
           >
             Cum functioneaza

@@ -33,7 +33,7 @@ const PLANS = [
     description: "Pentru statiile cu un singur punct de lucru.",
     duration: null,
     features: [
-      "200 SMS-uri / luna",
+      "250 SMS-uri / luna",
       "1 statie ITP",
       "Programari online",
       "CRM complet",
@@ -68,7 +68,7 @@ const PLANS = [
     description: "Pentru retele mari cu nevoi specifice.",
     duration: null,
     features: [
-      "SMS-uri nelimitate",
+      "1000 SMS-uri / luna",
       "Statii nelimitate",
       "Programari online",
       "CRM complet",
@@ -77,7 +77,7 @@ const PLANS = [
       "Suport dedicat",
       "Onboarding personalizat",
     ],
-    cta: "Contacteaza-ne",
+    cta: "Alege Enterprise",
     href: "/contact",
     highlight: false,
   },
@@ -193,7 +193,7 @@ export default function LandingPricing() {
         </div>
 
         <p className="text-center text-sm text-[#9CA3AF] mt-8">
-          Toti preturile sunt in lei, fara TVA. Poti anula oricand, fara penalizari.
+          Toate preturile sunt in lei. Poti anula oricand.
         </p>
       </div>
     </section>
