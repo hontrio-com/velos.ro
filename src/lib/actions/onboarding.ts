@@ -40,6 +40,10 @@ async function createStatie(userId: string, data: StatieOnboardingData) {
     .single();
 
   if (error) throw new Error(error.message);
+
+  // Create default station settings row (required by reminders, SMS templates, etc.)
+  await supabase.from("setari_statie").insert({ statie_id: (statie as any).id } as never);
+
   return statie as { id: string; slug: string };
 }
 
@@ -127,7 +131,7 @@ export async function startPaidOnboardingAction(
     },
     metadata: { profile_id: user.id, plan, cycle, type: "subscription" },
     success_url: `${appUrl}/setari/abonament?success=1&plan=${plan}`,
-    cancel_url: `${appUrl}/onboarding?canceled=1`,
+    cancel_url: `${appUrl}/setari/abonament?canceled=1`,
     allow_promotion_codes: true,
     billing_address_collection: "auto",
     tax_id_collection: { enabled: true },
