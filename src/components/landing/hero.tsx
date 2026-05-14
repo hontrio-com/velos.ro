@@ -12,8 +12,14 @@ const STATS = [
 
 export default function LandingHero() {
   return (
-    <section className="bg-white min-h-[88vh] flex flex-col items-center justify-center py-24">
-      <div className="w-full max-w-4xl mx-auto px-6 flex flex-col items-center text-center">
+    <section
+      className="relative bg-white min-h-[88vh] flex flex-col items-center justify-center py-24"
+      style={{
+        backgroundImage: `radial-gradient(circle, #CBD5E1 1px, transparent 1px)`,
+        backgroundSize: "28px 28px",
+      }}
+    >
+      <div className="relative z-10 w-full max-w-4xl mx-auto px-6 flex flex-col items-center text-center">
 
         {/* Badge */}
         <div className="animate-fade-in-up mb-10">
