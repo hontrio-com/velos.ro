@@ -137,7 +137,7 @@ export function OnboardingWizard({ userEmail }: { userEmail: string }) {
                     <Building2 className="h-8 w-8 text-[#1877F2]" />
                   </div>
                   <div>
-                    <h1 className="text-2xl font-bold text-[#111318]">Bun venit în ITP CRM!</h1>
+                    <h1 className="text-2xl font-bold text-[#111318]">Bun venit pe Velos.ro!</h1>
                     <p className="mt-2 text-[#6B7280] text-sm leading-relaxed max-w-md">
                       Platforma completă pentru gestionarea stațiilor ITP. În câțiva pași simpli,
                       îți configurăm contul și ești gata să începi.
