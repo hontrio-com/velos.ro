@@ -105,7 +105,7 @@ export function AbonamentClient({
 
   const statusInfo = STATUS_CONFIG[subscriptionStatus];
   const StatusIcon = statusInfo.icon;
-  const visiblePlans = PLANS.filter((p) => !p.hidden);
+  const visiblePlans = PLANS.filter((p) => !('hidden' in p));
 
   async function handleSelectPlan(planId: string) {
     if (planId === currentPlan && subscriptionStatus === "active") return;
@@ -268,11 +268,11 @@ export function AbonamentClient({
               className={cn(
                 "relative rounded-xl border bg-white p-5 flex flex-col transition-shadow",
                 isCurrent ? "ring-2 shadow-sm" : "hover:shadow-md",
-                plan.popular && !isCurrent && "border-[#1877F2]/40"
+                ('popular' in plan) && !isCurrent && "border-[#1877F2]/40"
               )}
               style={isCurrent ? { borderColor: plan.color } : undefined}
             >
-              {plan.popular && (
+              {'popular' in plan && (
                 <div
                   className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[10px] font-bold text-white whitespace-nowrap"
                   style={{ backgroundColor: plan.color }}

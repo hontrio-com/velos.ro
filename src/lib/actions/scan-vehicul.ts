@@ -34,7 +34,7 @@ export async function scanVehiculAction(input: ScanVehiculInput) {
       model: input.model || null,
       statie_id: input.statieId,
       expirare_itp: input.expirareItp || null,
-    })
+    } as never)
     .select("id")
     .single();
 
