@@ -1,7 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Minus } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const FAQ_ITEMS = [
   {
@@ -42,12 +46,9 @@ const FAQ_ITEMS = [
 ];
 
 export default function LandingFaq() {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
-
   return (
     <section id="faq" className="bg-[#F7F8FA] py-24 scroll-mt-16">
       <div className="max-w-3xl mx-auto px-6">
-        {/* Header */}
         <div className="text-center mb-14">
           <p className="text-sm font-semibold text-[#1877F2] uppercase tracking-widest mb-3">
             Intrebari frecvente
@@ -59,46 +60,25 @@ export default function LandingFaq() {
           </h2>
         </div>
 
-        {/* Items */}
-        <div className="space-y-2">
-          {FAQ_ITEMS.map((item, i) => {
-            const isOpen = openIndex === i;
-            return (
-              <div
-                key={i}
-                className={`bg-white border rounded-xl overflow-hidden transition-all duration-200 ${
-                  isOpen ? "border-[#E5E7EB] shadow-sm" : "border-[#F3F4F6]"
-                }`}
-              >
-                <button
-                  className="w-full text-left flex items-center justify-between gap-4 px-6 py-5"
-                  onClick={() => setOpenIndex(isOpen ? null : i)}
-                >
-                  <span className="text-sm font-semibold text-[#111318] leading-snug">
-                    {item.question}
-                  </span>
-                  <span className="shrink-0 text-[#9CA3AF]">
-                    {isOpen ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-                  </span>
-                </button>
-                {isOpen && (
-                  <div className="px-6 pb-5">
-                    <p className="text-sm text-[#6B7280] leading-relaxed">{item.answer}</p>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+        <div className="bg-white border border-[#E5E7EB] rounded-2xl overflow-hidden divide-y divide-[#F3F4F6]">
+          <Accordion multiple={false}>
+            {FAQ_ITEMS.map((item, i) => (
+              <AccordionItem key={i} value={String(i)} className="border-b-0 px-6">
+                <AccordionTrigger className="py-5 text-sm font-semibold text-[#111318] hover:no-underline">
+                  {item.question}
+                </AccordionTrigger>
+                <AccordionContent className="pb-5 text-sm text-[#6B7280] leading-relaxed">
+                  {item.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </div>
 
-        {/* Bottom CTA */}
-        <div className="text-center mt-12">
+        <div className="text-center mt-10">
           <p className="text-sm text-[#9CA3AF]">
             Nu ai gasit raspunsul?{" "}
-            <a
-              href="mailto:contact@itpbase.ro"
-              className="text-[#1877F2] hover:underline font-medium"
-            >
+            <a href="mailto:contact@itpbase.ro" className="text-[#1877F2] hover:underline font-medium">
               Scrie-ne pe email
             </a>{" "}
             si iti raspundem in maxim 24 de ore.

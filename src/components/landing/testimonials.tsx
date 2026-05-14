@@ -1,3 +1,5 @@
+import { Card, CardContent } from "@/components/ui/card";
+
 const TESTIMONIALS = [
   {
     quote:
@@ -57,7 +59,6 @@ export default function LandingTestimonials() {
   return (
     <section id="testimoniale" className="bg-white py-24 scroll-mt-16">
       <div className="max-w-6xl mx-auto px-6">
-        {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-16">
           <p className="text-sm font-semibold text-[#1877F2] uppercase tracking-widest mb-3">
             Testimoniale
@@ -69,32 +70,30 @@ export default function LandingTestimonials() {
           </h2>
         </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {TESTIMONIALS.map((t, i) => (
-            <div
-              key={i}
-              className="bg-[#F9FAFB] border border-[#F3F4F6] rounded-2xl p-8 flex flex-col"
-            >
-              <Stars />
-              <blockquote className="text-[#374151] text-[15px] leading-relaxed flex-1 mb-6">
-                &ldquo;{t.quote}&rdquo;
-              </blockquote>
-              <div className="flex items-center gap-3 pt-4 border-t border-[#E5E7EB]">
-                <div
-                  className="h-10 w-10 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-                  style={{ backgroundColor: t.color }}
-                >
-                  {t.initials}
+            <Card key={i} className="bg-[#F9FAFB]">
+              <CardContent className="pt-6 flex flex-col h-full">
+                <Stars />
+                <blockquote className="text-[#374151] text-[15px] leading-relaxed flex-1 mb-6">
+                  &ldquo;{t.quote}&rdquo;
+                </blockquote>
+                <div className="flex items-center gap-3 pt-4 border-t border-[#E5E7EB]">
+                  <div
+                    className="h-10 w-10 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+                    style={{ backgroundColor: t.color }}
+                  >
+                    {t.initials}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#111318]">{t.name}</p>
+                    <p className="text-xs text-[#9CA3AF]">
+                      {t.role}, {t.company} &middot; {t.city}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-[#111318]">{t.name}</p>
-                  <p className="text-xs text-[#9CA3AF]">
-                    {t.role}, {t.company} &middot; {t.city}
-                  </p>
-                </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </div>

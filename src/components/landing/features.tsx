@@ -1,11 +1,6 @@
-import {
-  MessageSquare,
-  CalendarCheck,
-  Users,
-  BarChart3,
-  Building2,
-  Zap,
-} from "lucide-react";
+import { MessageSquare, CalendarCheck, Users, BarChart3, Building2, Zap } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 const FEATURES = [
   {
@@ -41,7 +36,7 @@ const FEATURES = [
     bg: "#FFF7ED",
     title: "Rapoarte si Statistici",
     description:
-      "Venituri per angajat, rata de revenire a clientilor, SMS-uri trimise si deschise, programari pe intervale. Decizii de business bazate pe date reale.",
+      "Venituri per angajat, rata de revenire a clientilor, SMS-uri trimise. Decizii de business bazate pe date reale, nu pe estimari.",
     tag: "Export PDF si CSV",
   },
   {
@@ -66,9 +61,8 @@ const FEATURES = [
 
 export default function LandingFeatures() {
   return (
-    <section id="functii" className="bg-white py-24 scroll-mt-16">
+    <section id="functii" className="bg-[#F7F8FA] py-24 scroll-mt-16">
       <div className="max-w-6xl mx-auto px-6">
-        {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-16">
           <p className="text-sm font-semibold text-[#1877F2] uppercase tracking-widest mb-3">
             Functii
@@ -84,39 +78,31 @@ export default function LandingFeatures() {
           </p>
         </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {FEATURES.map((f, i) => {
             const Icon = f.icon;
             return (
-              <div
-                key={i}
-                className="group relative bg-white border border-[#F3F4F6] rounded-2xl p-7 hover:border-[#E5E7EB] hover:shadow-lg hover:shadow-black/[0.04] transition-all duration-200"
-              >
-                {/* Icon */}
-                <div
-                  className="h-11 w-11 rounded-xl flex items-center justify-center mb-5"
-                  style={{ backgroundColor: f.bg }}
-                >
-                  <Icon className="h-5 w-5" style={{ color: f.color }} />
-                </div>
-
-                {/* Content */}
-                <h3 className="text-base font-bold text-[#111318] mb-2.5">
-                  {f.title}
-                </h3>
-                <p className="text-sm text-[#6B7280] leading-relaxed mb-5">
-                  {f.description}
-                </p>
-
-                {/* Tag */}
-                <span
-                  className="inline-flex text-[11px] font-semibold px-2.5 py-1 rounded-full"
-                  style={{ backgroundColor: f.bg, color: f.color }}
-                >
-                  {f.tag}
-                </span>
-              </div>
+              <Card key={i} className="bg-white hover:shadow-md transition-shadow duration-200">
+                <CardContent className="pt-6 flex flex-col gap-4">
+                  <div
+                    className="h-11 w-11 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: f.bg }}
+                  >
+                    <Icon className="h-5 w-5" style={{ color: f.color }} />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-[#111318] mb-2">{f.title}</h3>
+                    <p className="text-sm text-[#6B7280] leading-relaxed">{f.description}</p>
+                  </div>
+                  <Badge
+                    variant="secondary"
+                    className="w-fit text-xs"
+                    style={{ backgroundColor: f.bg, color: f.color }}
+                  >
+                    {f.tag}
+                  </Badge>
+                </CardContent>
+              </Card>
             );
           })}
         </div>

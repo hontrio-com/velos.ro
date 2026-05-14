@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const STATS = [
   { value: "94%", label: "rata de citire SMS" },
@@ -9,15 +12,14 @@ const STATS = [
 
 export default function LandingHero() {
   return (
-    <section className="bg-white min-h-[90vh] flex flex-col items-center justify-center py-24">
+    <section className="bg-white min-h-[88vh] flex flex-col items-center justify-center py-24">
       <div className="w-full max-w-4xl mx-auto px-6 flex flex-col items-center text-center">
 
         {/* Badge */}
-        <div className="animate-fade-in-up inline-flex items-center gap-2 bg-[#EFF6FF] border border-[#BFDBFE] rounded-full px-4 py-1.5 mb-10">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#1877F2] shrink-0" />
-          <span className="text-xs font-semibold text-[#1877F2] tracking-wide">
+        <div className="animate-fade-in-up mb-10">
+          <Badge variant="outline" className="text-[#1877F2] border-[#BFDBFE] bg-[#EFF6FF] px-4 py-1 rounded-full text-xs font-semibold tracking-wide h-auto">
             Platforma CRM pentru statii ITP
-          </span>
+          </Badge>
         </div>
 
         {/* Headline */}
@@ -47,22 +49,28 @@ export default function LandingHero() {
         >
           <Link
             href="/register"
-            className="inline-flex items-center gap-2 bg-[#1877F2] hover:bg-[#1565D8] text-white font-semibold text-sm px-7 py-3.5 rounded-lg transition-colors"
+            className={cn(
+              buttonVariants({ size: "lg" }),
+              "gap-2 px-7"
+            )}
           >
             Incearca 15 zile gratuit
             <ArrowRight className="h-4 w-4" />
           </Link>
-          <a
+          <Link
             href="#functii"
-            className="inline-flex items-center gap-2 text-sm font-medium text-[#6B7280] hover:text-[#111318] border border-[#E5E7EB] hover:border-[#D1D5DB] bg-white px-7 py-3.5 rounded-lg transition-colors"
+            className={cn(
+              buttonVariants({ variant: "outline", size: "lg" }),
+              "px-7"
+            )}
           >
             Cum functioneaza
-          </a>
+          </Link>
         </div>
 
-        {/* Stats */}
+        {/* Stats card */}
         <div
-          className="animate-fade-in-up w-full max-w-lg border border-[#F3F4F6] rounded-2xl bg-[#F9FAFB] px-6 py-6 grid grid-cols-3 gap-4"
+          className="animate-fade-in-up w-full max-w-lg border border-[#E5E7EB] rounded-2xl bg-[#F9FAFB] px-6 py-6 grid grid-cols-3 gap-4"
           style={{ animationDelay: "0.25s" }}
         >
           {STATS.map((s, i) => (
