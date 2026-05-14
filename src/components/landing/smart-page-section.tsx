@@ -6,14 +6,13 @@ import {
   MapPin,
   Wrench,
   Clock,
-  Phone,
-  Star,
   ArrowRight,
   CheckCircle2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { BookingMockup } from "@/components/landing/booking-mockup";
 
 const FEATURES = [
   {
@@ -82,116 +81,11 @@ export default function LandingSmartPage() {
         {/* Main content: mockup + features */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16">
 
-          {/* Browser mockup */}
+          {/* Interactive booking mockup */}
           <div className="order-2 lg:order-1">
-            <div className="rounded-2xl overflow-hidden border border-[#E5E7EB] shadow-xl">
-              {/* Browser chrome */}
-              <div className="bg-[#F9FAFB] border-b border-[#E5E7EB] px-4 py-3 flex items-center gap-2">
-                <span className="h-3 w-3 rounded-full bg-[#FCA5A5]" />
-                <span className="h-3 w-3 rounded-full bg-[#FCD34D]" />
-                <span className="h-3 w-3 rounded-full bg-[#86EFAC]" />
-                <div className="flex-1 mx-3 bg-white border border-[#E5E7EB] rounded-md px-3 py-1.5 text-center">
-                  <span className="text-[11px] text-[#9CA3AF] font-mono">
-                    velos.ro/itp/auto-test-cluj
-                  </span>
-                </div>
-              </div>
-
-              {/* Page content */}
-              <div className="bg-white">
-                {/* Station header */}
-                <div className="bg-[#1877F2] px-5 py-5 text-white">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="text-sm font-bold">Auto Test Cluj</h3>
-                      <p className="text-[11px] text-blue-200 mt-0.5">Statie ITP autorizata RAR</p>
-                      <div className="flex items-center gap-1 mt-2">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <Star key={i} className="h-3 w-3 fill-yellow-300 text-yellow-300" />
-                        ))}
-                        <span className="text-[10px] text-blue-200 ml-1">4.9 (127 recenzii)</span>
-                      </div>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-[10px] text-blue-200">Luni - Vineri</p>
-                      <p className="text-xs font-semibold">08:00 - 18:00</p>
-                      <span className="inline-block mt-1 text-[9px] font-bold bg-green-400 text-green-900 px-1.5 py-0.5 rounded-full">
-                        DESCHIS ACUM
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Nav tabs */}
-                <div className="border-b border-[#F3F4F6] flex text-[11px] font-medium">
-                  {["Programare", "Servicii", "Galerie", "Locatie"].map((tab, i) => (
-                    <button
-                      key={tab}
-                      className={`px-4 py-2.5 transition-colors ${
-                        i === 0
-                          ? "text-[#1877F2] border-b-2 border-[#1877F2]"
-                          : "text-[#9CA3AF]"
-                      }`}
-                    >
-                      {tab}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Booking widget */}
-                <div className="px-5 py-4">
-                  <p className="text-[11px] font-semibold text-[#374151] mb-3">
-                    Alege data si ora dorita
-                  </p>
-                  <div className="grid grid-cols-4 gap-1.5 mb-3">
-                    {["Lun 12", "Mar 13", "Mie 14", "Joi 15"].map((day, i) => (
-                      <button
-                        key={day}
-                        className={`py-2 rounded-lg text-[10px] font-medium border transition-colors ${
-                          i === 1
-                            ? "bg-[#1877F2] border-[#1877F2] text-white"
-                            : "border-[#E5E7EB] text-[#6B7280] hover:border-[#1877F2]"
-                        }`}
-                      >
-                        {day}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-4 gap-1.5 mb-4">
-                    {["08:00", "09:00", "10:30", "14:00"].map((time, i) => (
-                      <button
-                        key={time}
-                        className={`py-1.5 rounded-lg text-[10px] font-medium border transition-colors ${
-                          i === 2
-                            ? "bg-[#1877F2] border-[#1877F2] text-white"
-                            : "border-[#E5E7EB] text-[#6B7280]"
-                        }`}
-                      >
-                        {time}
-                      </button>
-                    ))}
-                  </div>
-                  <button className="w-full bg-[#1877F2] text-white text-[11px] font-semibold py-2.5 rounded-lg">
-                    Confirma programarea
-                  </button>
-                </div>
-
-                {/* Footer info */}
-                <div className="border-t border-[#F3F4F6] px-5 py-3 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <MapPin className="h-3 w-3 text-[#9CA3AF]" />
-                    <span className="text-[10px] text-[#9CA3AF]">Str. Fabricii 12, Cluj-Napoca</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Phone className="h-3 w-3 text-[#9CA3AF]" />
-                    <span className="text-[10px] text-[#9CA3AF]">0740 000 000</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
+            <BookingMockup />
             <p className="text-xs text-center text-[#9CA3AF] mt-3">
-              Pagina ta va arata similar cu aceasta, personalizata cu datele statiei tale.
+              Demo interactiv. Pagina ta va arata similar, personalizata cu datele statiei tale.
             </p>
           </div>
 
