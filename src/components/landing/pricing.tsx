@@ -132,18 +132,17 @@ export default function LandingPricing() {
                 key={plan.name}
                 className={cn(
                   "relative flex flex-col",
-                  plan.highlight && "border-2 border-[#1877F2] scale-[1.02]"
+                  plan.highlight && "border-2 border-[#1877F2] shadow-lg"
                 )}
               >
-                {plan.highlight && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                    <Badge className="px-3 py-1 text-xs font-bold">
-                      Recomandat
-                    </Badge>
-                  </div>
-                )}
-
-                <CardContent className="pt-6 flex flex-col flex-1 gap-5">
+                <CardContent className={cn("flex flex-col flex-1 gap-5", plan.highlight ? "pt-4" : "pt-6")}>
+                  {plan.highlight && (
+                    <div className="flex justify-center">
+                      <Badge className="px-3 py-1 text-xs font-bold">
+                        Recomandat
+                      </Badge>
+                    </div>
+                  )}
                   <div>
                     <h3 className="text-base font-bold text-[#111318] mb-1">{plan.name}</h3>
                     <p className="text-xs text-[#9CA3AF] leading-relaxed">{plan.description}</p>
