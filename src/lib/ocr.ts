@@ -132,20 +132,14 @@ function extractPlateFromText(text: string): string | null {
 }
 
 export async function runLicensePlateOcr(file: File): Promise<PlateOcrResult> {
-  const { createWorker } = await import("tesseract.js");
+  const formData = new FormData();
+  formData.append("image", file);
 
-  const worker = await createWorker("ron+eng", 1, {
-    workerPath: "https://cdn.jsdelivr.net/npm/tesseract.js@7/dist/worker.min.js",
-    langPath: "https://tessdata.projectnaptha.com/4.0.0",
-    corePath: "https://cdn.jsdelivr.net/npm/tesseract.js-core@6/tesseract-core-simd-lstm.wasm.js",
-    logger: () => {},
-  });
+  const res = await fetch("/api/scan-plate", { method: "POST", body: formData });
+  if (!res.ok) return { plate: null, rawText: "" };
 
-  const { data } = await worker.recognize(file);
-  await worker.terminate();
-
-  const plate = extractPlateFromText(data.text);
-  return { plate, rawText: data.text };
+  const json = await res.json();
+  return { plate: json.plate ?? null, rawText: "" };
 }
 
 export async function runOcr(file: File): Promise<OcrResult> {

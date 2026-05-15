@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, X, CalendarDays, Users, Car, ScanText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScanVehiculModal } from "./scan-vehicul-modal";
+import { VehiculFormDialog } from "@/components/vehicule/vehicul-form-dialog";
 
 const NAV_ACTIONS = [
   { icon: CalendarDays, label: "Programare nouă", href: "/programari", color: "bg-[#1877F2]" },
@@ -16,11 +17,16 @@ const NAV_ACTIONS = [
 export function QuickActions({ statieId }: { statieId: string }) {
   const [open, setOpen] = useState(false);
   const [showScan, setShowScan] = useState(false);
+  const [scannedPlate, setScannedPlate] = useState<string | null>(null);
   const router = useRouter();
 
   function handleAction(href: string) {
     setOpen(false);
     router.push(href);
+  }
+
+  function handlePlateScan(plate: string) {
+    setScannedPlate(plate);
   }
 
   return (
@@ -117,8 +123,21 @@ export function QuickActions({ statieId }: { statieId: string }) {
       {/* Scan modal */}
       {showScan && (
         <ScanVehiculModal
-          statieId={statieId}
           onClose={() => setShowScan(false)}
+          onPlateScan={handlePlateScan}
+        />
+      )}
+
+      {/* Vehicle form — opens after scan with plate pre-filled */}
+      {scannedPlate !== null && (
+        <VehiculFormDialog
+          statieId={statieId}
+          prefillNrInmatriculare={scannedPlate}
+          onClose={() => setScannedPlate(null)}
+          onSave={() => {
+            setScannedPlate(null);
+            router.refresh();
+          }}
         />
       )}
     </>

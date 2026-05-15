@@ -31,6 +31,7 @@ interface VehiculInitial {
 interface VehiculFormDialogProps {
   statieId: string;
   initial?: VehiculInitial | null;
+  prefillNrInmatriculare?: string;
   onClose: () => void;
   onSave: () => void;
 }
@@ -38,6 +39,7 @@ interface VehiculFormDialogProps {
 export function VehiculFormDialog({
   statieId,
   initial,
+  prefillNrInmatriculare,
   onClose,
   onSave,
 }: VehiculFormDialogProps) {
@@ -53,7 +55,7 @@ export function VehiculFormDialog({
 
   // Vehicul
   const [nrInmatriculare, setNrInmatriculare] = useState(
-    initial?.nr_inmatriculare ?? ""
+    initial?.nr_inmatriculare ?? prefillNrInmatriculare ?? ""
   );
   const [marca, setMarca] = useState(initial?.marca ?? "");
   const [model, setModel] = useState(initial?.model ?? "");
