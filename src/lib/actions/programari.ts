@@ -65,14 +65,23 @@ export async function createProgramareStaffAction(input: {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Neautentificat" };
 
-  const { data: statie } = await supabase
-    .from("statii")
-    .select("id, nume, adresa, telefon, durata_slot_minute")
-    .eq("id", input.statieId)
-    .eq("owner_id", user.id)
-    .single();
+  const [{ data: statie }, { data: ownerProfile }] = await Promise.all([
+    supabase
+      .from("statii")
+      .select("id, nume, adresa, telefon, durata_slot_minute")
+      .eq("id", input.statieId)
+      .eq("owner_id", user.id)
+      .single(),
+    supabase
+      .from("profiles")
+      .select("email")
+      .eq("id", user.id)
+      .single(),
+  ]);
 
   if (!statie) return { error: "Stație negăsită sau acces interzis" };
+
+  const ownerEmail = ownerProfile?.email ?? user.email;
 
   const durata = statie.durata_slot_minute ?? 30;
   const [h, m] = input.slot.split(":").map(Number);
@@ -123,7 +132,7 @@ export async function createProgramareStaffAction(input: {
     observatii: input.observatii ?? undefined,
   };
 
-  const recipients = [user.email, client?.email].filter((e): e is string => !!e && e.length > 0);
+  const recipients = [ownerEmail, client?.email].filter((e): e is string => !!e && e.length > 0);
   const uniqueRecipients = [...new Set(recipients)];
   await Promise.all(
     uniqueRecipients.map((email) => sendConfirmareProgramareEmail(email, emailParams).catch(console.error))
