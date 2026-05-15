@@ -1,5 +1,5 @@
 "use server";
-import { sendBookingOnlineEmail } from "@/lib/actions/email";
+import { sendBookingOnlineEmail, sendConfirmareProgramareEmail } from "@/lib/actions/email";
 import { createServiceClient } from "@/lib/supabase/server";
 import { parseISO, getDay, format } from "date-fns";
 import { ro } from "date-fns/locale";
@@ -226,21 +226,39 @@ export async function createBookingAction(
       return { success: false, error: "Eroare la crearea programării" };
     }
 
-    // Send booking confirmation email if client provided email
+    // Fetch owner email for notification
+    const { data: ownerProfile } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("id", (statie as any).owner_id)
+      .single();
+
+    const numeClient = `${input.nume} ${input.prenume}`.trim();
+    const bookingEmailParams = {
+      numeClient,
+      nrInmatriculare: input.nrInmatriculare,
+      marcaModel: input.marcaModel,
+      dataFormatata: format(parseISO(input.date), "d MMMM yyyy", { locale: ro }),
+      ora: input.slot,
+      tipServiciu: "ITP",
+      numeStatie: (statie as any).nume ?? "Stație ITP",
+      adresaStatie: (statie as any).adresa ?? undefined,
+      telefonStatie: (statie as any).telefon ?? undefined,
+      observatii: input.observatii,
+    };
+
+    // Send to client (if provided) and always to owner
+    const emails: Promise<unknown>[] = [];
     if (input.email) {
-      await sendBookingOnlineEmail(input.email, {
-        numeClient: `${input.nume} ${input.prenume}`.trim(),
-        nrInmatriculare: input.nrInmatriculare,
-        marcaModel: input.marcaModel,
-        dataFormatata: format(parseISO(input.date), "d MMMM yyyy", { locale: ro }),
-        ora: input.slot,
-        tipServiciu: "ITP",
-        numeStatie: (statie as any).nume ?? "Stație ITP",
-        adresaStatie: (statie as any).adresa ?? undefined,
-        telefonStatie: (statie as any).telefon ?? undefined,
-        observatii: input.observatii,
-      }).catch(console.error);
+      emails.push(sendBookingOnlineEmail(input.email, bookingEmailParams).catch(console.error));
     }
+    if (ownerProfile?.email && ownerProfile.email !== input.email) {
+      emails.push(sendConfirmareProgramareEmail(ownerProfile.email, {
+        ...bookingEmailParams,
+        marcaModel: bookingEmailParams.marcaModel ?? "",
+      }).catch(console.error));
+    }
+    await Promise.all(emails);
 
     return { success: true, programareId: programare.id };
   } catch (err) {

@@ -101,29 +101,33 @@ export async function createProgramareStaffAction(input: {
   revalidatePath("/programari");
   revalidatePath("/dashboard");
 
-  // Send confirmation email if client has email
+  // Send confirmation email to owner + client
   const [{ data: client }, { data: vehicul }] = await Promise.all([
     supabase.from("clienti").select("email, nume, prenume").eq("id", input.clientId).single(),
     supabase.from("vehicule").select("nr_inmatriculare, marca, model").eq("id", input.vehiculId).single(),
   ]);
 
-  if (client?.email) {
-    const numeClient = `${client.nume}${client.prenume ? " " + client.prenume : ""}`;
-    const marcaModel = [vehicul?.marca, vehicul?.model].filter(Boolean).join(" ") || vehicul?.nr_inmatriculare || "";
-    await sendConfirmareProgramareEmail(client.email, {
-      numeClient,
-      nrInmatriculare: vehicul?.nr_inmatriculare ?? "",
-      marcaModel,
-      dataFormatata: format(parseISO(input.date), "d MMMM yyyy", { locale: ro }),
-      ora: input.slot,
-      tipServiciu: input.tipServiciu,
-      numeStatie: statie.nume,
-      adresaStatie: statie.adresa ?? undefined,
-      telefonStatie: statie.telefon ?? undefined,
-      pret: input.pret ? String(input.pret) : undefined,
-      observatii: input.observatii ?? undefined,
-    }).catch(console.error);
-  }
+  const numeClient = `${client?.nume ?? ""}${client?.prenume ? " " + client.prenume : ""}`.trim() || "Client";
+  const marcaModel = [vehicul?.marca, vehicul?.model].filter(Boolean).join(" ") || vehicul?.nr_inmatriculare || "";
+  const emailParams = {
+    numeClient,
+    nrInmatriculare: vehicul?.nr_inmatriculare ?? "",
+    marcaModel,
+    dataFormatata: format(parseISO(input.date), "d MMMM yyyy", { locale: ro }),
+    ora: input.slot,
+    tipServiciu: input.tipServiciu,
+    numeStatie: statie.nume,
+    adresaStatie: statie.adresa ?? undefined,
+    telefonStatie: statie.telefon ?? undefined,
+    pret: input.pret ? String(input.pret) : undefined,
+    observatii: input.observatii ?? undefined,
+  };
+
+  const recipients = [user.email, client?.email].filter((e): e is string => !!e && e.length > 0);
+  const uniqueRecipients = [...new Set(recipients)];
+  await Promise.all(
+    uniqueRecipients.map((email) => sendConfirmareProgramareEmail(email, emailParams).catch(console.error))
+  );
 
   return { success: true, programareId: programare.id };
 }
