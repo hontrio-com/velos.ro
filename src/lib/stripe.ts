@@ -1,6 +1,19 @@
 import Stripe from "stripe";
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+let _stripe: Stripe | null = null;
+
+function getStripeInstance(): Stripe {
+  if (!_stripe) {
+    _stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+  }
+  return _stripe;
+}
+
+export const stripe = new Proxy({} as Stripe, {
+  get(_, prop: string | symbol) {
+    return (getStripeInstance() as any)[prop as string];
+  },
+});
 
 // Re-export client-safe types and config
 export type { PlanId, BillingCycle, SubscriptionStatus } from "@/lib/stripe-config";

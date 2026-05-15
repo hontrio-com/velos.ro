@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type Stripe from "stripe";
 import { stripe, getPlanFromPriceId } from "@/lib/stripe";
+
+export const dynamic = "force-dynamic";
 import { createServiceClient } from "@/lib/supabase/service";
 
 export async function POST(request: NextRequest) {
