@@ -14,7 +14,7 @@ async function getContext() {
 
   const { data: statie } = await supabase
     .from("statii")
-    .select("id, nume, telefon")
+    .select("id, nume, telefon, slug")
     .eq("owner_id", user.id)
     .eq("activa", true)
     .order("created_at")
@@ -82,6 +82,7 @@ export async function trimiteReminderAction(reminderId: string) {
     oraProgramare: programare?.ora_start,
     statieNume: statie.nume,
     statieTelefon: statie.telefon,
+    statieSlug: (statie as any).slug ?? null,
   });
 
   const mesajFinal = interpolateTemplate(templateText, vars);

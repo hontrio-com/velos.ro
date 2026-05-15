@@ -20,7 +20,7 @@ export async function GET(request: Request) {
       client:clienti(id, nume, telefon, sms_optin),
       vehicul:vehicule(nr_inmatriculare, expirare_itp),
       programare:programari(data_programare, ora_start),
-      statie:statii(id, nume, telefon, owner_id)
+      statie:statii(id, nume, telefon, slug, owner_id)
     `)
     .eq("status", "pending")
     .lte("programat_la", now)
@@ -73,6 +73,7 @@ export async function GET(request: Request) {
       oraProgramare: programare?.ora_start,
       statieNume: statie.nume,
       statieTelefon: statie.telefon,
+      statieSlug: (statie as Record<string, unknown>).slug as string | null,
     });
 
     const mesajFinal = interpolateTemplate(templateText, vars);

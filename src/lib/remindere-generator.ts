@@ -28,15 +28,15 @@ export const STATUS_CONFIG: Record<
 
 export const DEFAULT_TEMPLATES: Record<TipReminder, string> = {
   "30_zile":
-    "Buna ziua, {{nume}}! ITP-ul vehiculului {{nr_inmatriculare}} expira pe {{data_expirare}}. Programati-va din timp la {{statie}}. Programari: {{telefon_statie}}",
+    "Buna ziua, {{nume}}! ITP-ul vehiculului {{nr_inmatriculare}} expira pe {{data_expirare}}. Programati-va online: {{link_programare}} sau sunati la {{telefon_statie}}",
   "15_zile":
-    "Buna ziua, {{nume}}! ITP-ul vehiculului {{nr_inmatriculare}} expira pe {{data_expirare}} ({{zile_ramase}} zile). Programati-va la {{statie}}: {{telefon_statie}}",
+    "Buna ziua, {{nume}}! ITP-ul vehiculului {{nr_inmatriculare}} expira pe {{data_expirare}} ({{zile_ramase}} zile). Programati-va: {{link_programare}} | {{telefon_statie}}",
   "7_zile":
-    "URGENT: ITP-ul vehiculului {{nr_inmatriculare}} expira pe {{data_expirare}} ({{zile_ramase}} zile). Programati-va urgent la {{statie}}: {{telefon_statie}}",
+    "URGENT: ITP-ul vehiculului {{nr_inmatriculare}} expira pe {{data_expirare}} ({{zile_ramase}} zile). Programati-va acum: {{link_programare}}",
   "1_zi":
-    "URGENT: ITP-ul vehiculului {{nr_inmatriculare}} expira MAINE! Contactati statia {{statie}}: {{telefon_statie}}",
+    "URGENT: ITP-ul vehiculului {{nr_inmatriculare}} expira MAINE! Programati-va acum: {{link_programare}} sau {{telefon_statie}}",
   "expirat":
-    "ITP-ul vehiculului {{nr_inmatriculare}} a EXPIRAT! Programati-va urgent la {{statie}}: {{telefon_statie}}",
+    "ITP-ul vehiculului {{nr_inmatriculare}} a EXPIRAT! Programati-va urgent: {{link_programare}} sau {{telefon_statie}}",
   "confirmare_programare":
     "Programare confirmata la {{statie}} pentru {{nr_inmatriculare}} pe {{data}} la ora {{ora}}. Anulare: {{telefon_statie}}",
   "ziua_programarii":
@@ -52,6 +52,7 @@ export const PREVIEW_VARS: Record<string, string> = {
   ora: "10:00",
   statie: "Auto Test Cluj",
   telefon_statie: "0712 345 678",
+  link_programare: "https://velos.ro/booking/auto-test-cluj",
 };
 
 export const ALL_VARS = [
@@ -63,6 +64,7 @@ export const ALL_VARS = [
   "{{ora}}",
   "{{statie}}",
   "{{telefon_statie}}",
+  "{{link_programare}}",
 ];
 
 export const ITP_TIPS: TipReminder[] = ["30_zile", "7_zile", "1_zi", "expirat"];

@@ -38,6 +38,16 @@ export function getPrenume(numeComplet: string): string {
   return numeComplet.split(" ")[0] ?? numeComplet;
 }
 
+/**
+ * Construiește URL-ul paginii de programare online (Smart Page / booking).
+ * Acesta este SINGURUL loc unde se definește structura URL-ului.
+ * Dacă se schimbă domeniul sau calea, modifici DOAR această funcție.
+ */
+export function getBookingUrl(slug: string): string {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://velos.ro";
+  return `${appUrl}/booking/${slug}`;
+}
+
 export function buildTemplateVars(params: {
   clientNume: string;
   nrInmatriculare: string;
@@ -46,6 +56,7 @@ export function buildTemplateVars(params: {
   oraProgramare?: string | null;
   statieNume: string;
   statieTelefon?: string | null;
+  statieSlug?: string | null;
 }): Record<string, string> {
   const today = new Date();
   const zileRamase =
@@ -72,5 +83,6 @@ export function buildTemplateVars(params: {
       : "",
     statie: params.statieNume,
     telefon_statie: params.statieTelefon ?? "",
+    link_programare: params.statieSlug ? getBookingUrl(params.statieSlug) : "",
   };
 }
