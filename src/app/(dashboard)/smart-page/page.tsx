@@ -66,7 +66,7 @@ export default async function SmartPageDashboard() {
             <div>
               <p className="text-sm font-semibold text-[#1877F2]">Ce este ITP Smart Page?</p>
               <p className="text-sm text-[#374151] mt-0.5">
-                Un mini-site optimizat SEO pentru fiecare stație, accesibil la <strong>velos.ro/slug-statie</strong>.
+                Un mini-site optimizat SEO pentru fiecare stație, accesibil la <strong>velos.ro/booking/slug-statie</strong>.
                 Include programare online sincronizată, servicii, hartă, chatbot și buton WhatsApp.
               </p>
             </div>
@@ -99,7 +99,7 @@ export default async function SmartPageDashboard() {
                           )}
                         </div>
                         {location && <p className="text-xs text-[#6B7280]">{location}</p>}
-                        <p className="text-xs text-[#9CA3AF] font-mono mt-0.5">velos.ro/{statie.slug}</p>
+                        <p className="text-xs text-[#9CA3AF] font-mono mt-0.5">velos.ro/booking/{statie.slug}</p>
                       </div>
                     </div>
 
@@ -111,7 +111,7 @@ export default async function SmartPageDashboard() {
                         </Button>
                       </Link>
                       {smartActiva && (
-                        <a href={`/${statie.slug}`} target="_blank" rel="noreferrer">
+                        <a href={`/booking/${statie.slug}`} target="_blank" rel="noreferrer">
                           <Button size="sm" variant="outline" className="gap-1.5">
                             <ExternalLink className="h-3.5 w-3.5" />
                             Vezi

@@ -4,13 +4,14 @@ import { redirect } from "next/navigation";
 import { PageTransition } from "@/components/layout/page-transition";
 import { AbonamentClient } from "@/components/setari/abonament/abonament-client";
 import type { SubscriptionStatus } from "@/lib/stripe";
+import { fulfillSmsSessionAction } from "@/lib/actions/billing";
 
 export const metadata: Metadata = { title: "Abonament" };
 
 export default async function AbonamentPage({
   searchParams,
 }: {
-  searchParams: Promise<{ success?: string; canceled?: string; plan?: string; sms_success?: string; cantitate?: string }>;
+  searchParams: Promise<{ success?: string; canceled?: string; plan?: string; sms_success?: string; cantitate?: string; session_id?: string }>;
 }) {
   const supabase = await createClient();
   const {
@@ -18,6 +19,14 @@ export default async function AbonamentPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const { success, canceled, sms_success, cantitate, session_id } = await searchParams;
+
+  // Fallback fulfillment: credit SMS if webhook didn't fire (runs BEFORE profile fetch)
+  if (sms_success && session_id) {
+    await fulfillSmsSessionAction(session_id).catch(console.error);
+  }
+
+  // Fetch profile AFTER fulfillment so sms_credit reflects the updated value
   const { data: profile } = await supabase
     .from("profiles")
     .select(
@@ -25,8 +34,6 @@ export default async function AbonamentPage({
     )
     .eq("id", user.id)
     .single();
-
-  const { success, canceled, sms_success, cantitate } = await searchParams;
 
   const trialEndsAt = (profile as any)?.trial_expires_at as string | null;
   const subscriptionStatus = ((profile as any)?.subscription_status ?? "trial") as SubscriptionStatus;

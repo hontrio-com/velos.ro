@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
       profile_id: user.id,
       cantitate: String(cantitate),
     },
-    success_url: `${appUrl}/setari/abonament?sms_success=1&cantitate=${cantitate}`,
+    success_url: `${appUrl}/setari/abonament?sms_success=1&cantitate=${cantitate}&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${appUrl}/setari/abonament?sms_cancel=1`,
   });
 

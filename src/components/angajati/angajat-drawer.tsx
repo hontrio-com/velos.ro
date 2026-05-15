@@ -98,59 +98,55 @@ export function AngajatDrawer({ open, angajat, onClose, onSuccess }: AngajatDraw
     }
 
     setSaving(true);
-
-    if (isEdit) {
-      // Update basic info
-      const result = await updateAngajatAction(angajat.id, form);
-      if (!result.success) {
-        setSaving(false);
-        toast.error(result.error ?? "Eroare");
-        return;
-      }
-
-      // Update permisiuni (always in edit mode)
-      if (hasCont) {
-        await updateAngajatPermisiuniAction(angajat.id, permisiuni);
-      }
-
-      // Create cont if requested
-      if (createCont && !hasCont) {
-        const contResult = await createAngajatContAction(angajat.id, form.email, parola, permisiuni);
-        if (!contResult.success) {
-          setSaving(false);
-          toast.error(contResult.error ?? "Eroare la crearea contului");
+    try {
+      if (isEdit) {
+        const result = await updateAngajatAction(angajat.id, form);
+        if (!result.success) {
+          toast.error(result.error ?? "Eroare");
           return;
         }
-        toast.success("Angajat actualizat și cont creat");
-      } else {
-        toast.success("Angajat actualizat");
-      }
-    } else {
-      // Create angajat
-      const result = await createAngajatAction(form);
-      if (!result.success || !result.id) {
-        setSaving(false);
-        toast.error(result.error ?? "Eroare");
-        return;
-      }
 
-      // Create cont if requested
-      if (createCont && result.id) {
-        const contResult = await createAngajatContAction(result.id, form.email, parola, permisiuni);
-        if (!contResult.success) {
-          setSaving(false);
-          toast.error(`Angajat creat, dar eroare la cont: ${contResult.error}`);
-          onSuccess();
+        if (hasCont) {
+          await updateAngajatPermisiuniAction(angajat.id, permisiuni);
+        }
+
+        if (createCont && !hasCont) {
+          const contResult = await createAngajatContAction(angajat.id, form.email, parola, permisiuni);
+          if (!contResult.success) {
+            toast.error(contResult.error ?? "Eroare la crearea contului");
+            return;
+          }
+          toast.success("Angajat actualizat și cont creat");
+        } else {
+          toast.success("Angajat actualizat");
+        }
+      } else {
+        const result = await createAngajatAction(form);
+        if (!result.success || !result.id) {
+          toast.error(result.error ?? "Eroare");
           return;
         }
-        toast.success("Angajat adăugat și cont creat. Email de invitație trimis!");
-      } else {
-        toast.success("Angajat adăugat");
+
+        if (createCont && result.id) {
+          const contResult = await createAngajatContAction(result.id, form.email, parola, permisiuni);
+          if (!contResult.success) {
+            toast.error(`Angajat creat, dar eroare la cont: ${contResult.error}`);
+            onSuccess();
+            return;
+          }
+          toast.success("Angajat adăugat și cont creat. Email de invitație trimis!");
+        } else {
+          toast.success("Angajat adăugat");
+        }
       }
+
+      onSuccess();
+    } catch (err) {
+      console.error("handleSubmit error:", err);
+      toast.error("Eroare neașteptată. Încearcă din nou.");
+    } finally {
+      setSaving(false);
     }
-
-    setSaving(false);
-    onSuccess();
   }
 
   async function handleDeleteCont() {
