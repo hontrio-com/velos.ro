@@ -35,6 +35,8 @@ interface NavItem {
   href: string;
   label: string;
   icon: React.ElementType;
+  permission?: string | null; // null = always visible, string = requires this permission key
+  ownerOnly?: boolean;        // only shown to owners (never to employees)
 }
 
 interface NavGroup {
@@ -49,23 +51,23 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "GESTIUNE",
     items: [
-      { href: "/programari", label: "Programări", icon: CalendarDays },
-      { href: "/clienti", label: "Clienți", icon: Users },
-      { href: "/vehicule", label: "Vehicule", icon: Car },
-      { href: "/angajati", label: "Angajați", icon: UserCog },
+      { href: "/programari", label: "Programări", icon: CalendarDays, permission: "programari" },
+      { href: "/clienti", label: "Clienți", icon: Users, permission: "clienti" },
+      { href: "/vehicule", label: "Vehicule", icon: Car, permission: "vehicule" },
+      { href: "/angajati", label: "Angajați", icon: UserCog, ownerOnly: true },
     ],
   },
   {
     label: "AUTOMATIZĂRI",
-    items: [{ href: "/remindere", label: "Remindere", icon: Bell }],
+    items: [{ href: "/remindere", label: "Remindere", icon: Bell, permission: "remindere" }],
   },
   {
     label: "MARKETING",
-    items: [{ href: "/smart-page", label: "ITP Smart Page", icon: Globe }],
+    items: [{ href: "/smart-page", label: "ITP Smart Page", icon: Globe, ownerOnly: true }],
   },
   {
     label: "RAPOARTE",
-    items: [{ href: "/rapoarte", label: "Rapoarte", icon: BarChart3 }],
+    items: [{ href: "/rapoarte", label: "Rapoarte", icon: BarChart3, permission: "rapoarte" }],
   },
 ];
 
@@ -105,16 +107,35 @@ function StatieSwitcher({
   statii,
   selectedId,
   onSelect,
+  isEmployee,
 }: {
   statii: Statie[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  isEmployee: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const current =
     statii.find((s) => s.id === selectedId) ?? statii[0] ?? null;
 
   if (statii.length === 0) return null;
+
+  // Employees see their single station — no switcher
+  if (isEmployee || statii.length === 1) {
+    return (
+      <div className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-[#E5E7EB] bg-white">
+        <span
+          className={cn(
+            "h-2 w-2 rounded-full shrink-0",
+            current?.activa ? "bg-emerald-500" : "bg-red-400"
+          )}
+        />
+        <span className="flex-1 text-sm font-medium text-[#111318] truncate">
+          {current?.nume ?? "Stație"}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -181,11 +202,27 @@ interface SidebarProps {
   statii?: Statie[];
   isOpen?: boolean;
   onClose?: () => void;
+  permisiuni?: Record<string, boolean> | null;
+  role?: "owner" | "angajat";
 }
 
-export function Sidebar({ statii = [], isOpen = false, onClose }: SidebarProps) {
+export function Sidebar({
+  statii = [],
+  isOpen = false,
+  onClose,
+  permisiuni = null,
+  role = "owner",
+}: SidebarProps) {
   const pathname = usePathname();
   const { statieActivaId, setStatieActivaId } = useAppStore();
+  const isEmployee = role === "angajat";
+
+  function isItemVisible(item: NavItem): boolean {
+    if (item.ownerOnly) return !isEmployee;
+    if (!isEmployee) return true; // owners see everything
+    if (!item.permission) return true; // always visible (Dashboard)
+    return permisiuni?.[item.permission] === true;
+  }
 
   return (
     <>
@@ -241,6 +278,7 @@ export function Sidebar({ statii = [], isOpen = false, onClose }: SidebarProps) 
               statii={statii}
               selectedId={statieActivaId}
               onSelect={setStatieActivaId}
+              isEmployee={isEmployee}
             />
           </div>
         )}
@@ -248,6 +286,9 @@ export function Sidebar({ statii = [], isOpen = false, onClose }: SidebarProps) 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-2 px-2">
           {NAV_GROUPS.map((group, gi) => {
+            const visibleItems = group.items.filter(isItemVisible);
+            if (visibleItems.length === 0) return null;
+
             const isActive = (href: string) =>
               pathname === href || pathname.startsWith(href + "/");
 
@@ -259,7 +300,7 @@ export function Sidebar({ statii = [], isOpen = false, onClose }: SidebarProps) 
                   </p>
                 )}
                 <ul className="space-y-0.5">
-                  {group.items.map((item) => (
+                  {visibleItems.map((item) => (
                     <li key={item.href}>
                       <NavItemLink
                         item={item}
@@ -276,12 +317,14 @@ export function Sidebar({ statii = [], isOpen = false, onClose }: SidebarProps) 
 
         {/* Bottom */}
         <div className="border-t border-[#E5E7EB] px-2 py-3 space-y-2 shrink-0">
-          <SmsQuotaWidget />
-          <NavItemLink
-            item={{ href: "/setari", label: "Setări", icon: Settings }}
-            isActive={pathname === "/setari" || pathname.startsWith("/setari/")}
-            onClick={onClose}
-          />
+          {!isEmployee && <SmsQuotaWidget />}
+          {!isEmployee && (
+            <NavItemLink
+              item={{ href: "/setari", label: "Setări", icon: Settings }}
+              isActive={pathname === "/setari" || pathname.startsWith("/setari/")}
+              onClick={onClose}
+            />
+          )}
         </div>
       </aside>
     </>

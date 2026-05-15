@@ -8,6 +8,9 @@ import type { SubscriptionStatus } from "@/lib/stripe";
 // Routes that are accessible even when trial expired / subscription canceled
 const BILLING_EXEMPT = ["/setari/abonament", "/setari/profil", "/suspendat"];
 
+// Routes only accessible by the station owner
+const OWNER_ONLY_ROUTES = ["/angajati", "/setari", "/smart-page", "/rapoarte", "/remindere"];
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -20,35 +23,102 @@ export default async function DashboardLayout({
 
   if (!user) redirect("/login");
 
-  const [{ data: profile }, { data: statii }] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("full_name, suspended_at, plan, subscription_status, trial_expires_at, onboarding_completed")
-      .eq("id", user.id)
-      .single(),
-    supabase
-      .from("statii")
-      .select("id, nume, activa")
-      .eq("owner_id", user.id)
-      .order("created_at"),
-  ]);
+  const { data: profileRaw } = await (supabase as any)
+    .from("profiles")
+    .select("full_name, suspended_at, plan, subscription_status, trial_expires_at, onboarding_completed, role, owner_profile_id")
+    .eq("id", user.id)
+    .single();
+
+  const profile = profileRaw as {
+    full_name: string | null;
+    suspended_at: string | null;
+    plan: string;
+    subscription_status: string;
+    trial_expires_at: string | null;
+    onboarding_completed: boolean;
+    role: "owner" | "angajat";
+    owner_profile_id: string | null;
+  } | null;
 
   if (profile?.suspended_at) redirect("/suspendat");
 
+  const role: "owner" | "angajat" = profile?.role ?? "owner";
+
+  // ── Angajat flow ──────────────────────────────────────────────────────────
+  if (role === "angajat") {
+    // Fetch angajat record for this employee (to get statie + permisiuni)
+    const { data: angajatRaw } = await (supabase as any)
+      .from("angajati")
+      .select("statie_id, permisiuni, statii(id, nume, activa)")
+      .eq("profile_id", user.id)
+      .single();
+
+    const angajat = angajatRaw as { statie_id: string; permisiuni: Record<string, boolean> | null; statii: { id: string; nume: string; activa: boolean } | { id: string; nume: string; activa: boolean }[] | null } | null;
+
+    if (!angajat) redirect("/login");
+
+    const statieRaw = Array.isArray(angajat.statii) ? angajat.statii[0] : angajat.statii;
+    const statii = statieRaw ? [statieRaw as { id: string; nume: string; activa: boolean }] : [];
+    const permisiuni = angajat.permisiuni ?? {};
+
+    // Route-level access control for employees
+    const headersList = await headers();
+    const pathname = headersList.get("x-pathname") ?? "";
+
+    // Check if employee is trying to access an owner-only route
+    const isOwnerOnlyRoute = OWNER_ONLY_ROUTES.some((r) => pathname.startsWith(r));
+    // Check if the specific section is in their permissions
+    const routePermissionMap: Record<string, string> = {
+      "/programari": "programari",
+      "/clienti": "clienti",
+      "/vehicule": "vehicule",
+      "/rapoarte": "rapoarte",
+      "/remindere": "remindere",
+    };
+    const requiredPermission = Object.entries(routePermissionMap).find(([r]) =>
+      pathname.startsWith(r)
+    )?.[1];
+
+    if (
+      (isOwnerOnlyRoute && !requiredPermission) ||
+      (requiredPermission && !permisiuni[requiredPermission])
+    ) {
+      redirect("/dashboard");
+    }
+
+    return (
+      <DashboardShell
+        userEmail={user.email}
+        userName={profile?.full_name ?? undefined}
+        statii={statii}
+        permisiuni={permisiuni}
+        role="angajat"
+      >
+        {children}
+      </DashboardShell>
+    );
+  }
+
+  // ── Owner flow ────────────────────────────────────────────────────────────
+
+  const { data: statii } = await supabase
+    .from("statii")
+    .select("id, nume, activa")
+    .eq("owner_id", user.id)
+    .order("created_at");
+
   // Redirect to onboarding if not completed yet
-  if (!(profile as any)?.onboarding_completed) redirect("/onboarding");
+  if (!profile?.onboarding_completed) redirect("/onboarding");
 
-  // Subscription gating — check if trial is still valid
-  const subscriptionStatus = ((profile as any)?.subscription_status ?? "trial") as SubscriptionStatus;
-  const trialEndsAt = (profile as any)?.trial_expires_at as string | null;
+  // Subscription gating
+  const subscriptionStatus = (profile?.subscription_status ?? "trial") as SubscriptionStatus;
+  const trialEndsAt = profile?.trial_expires_at ?? null;
 
-  // If trial is stored as 'trial' but the date has passed, treat as expired
   const effectiveStatus: SubscriptionStatus =
     subscriptionStatus === "trial" && trialEndsAt && new Date(trialEndsAt) < new Date()
       ? "trial_expired"
       : subscriptionStatus;
 
-  // Gate access for expired trial — redirect to billing page (except exempt routes)
   if (effectiveStatus === "trial_expired") {
     const headersList = await headers();
     const pathname = headersList.get("x-pathname") ?? "";
@@ -61,11 +131,13 @@ export default async function DashboardLayout({
       userEmail={user.email}
       userName={profile?.full_name ?? undefined}
       statii={statii ?? []}
+      permisiuni={null}
+      role="owner"
     >
       <TrialBanner
         subscriptionStatus={effectiveStatus}
         trialEndsAt={trialEndsAt}
-        plan={(profile as any)?.plan ?? "trial"}
+        plan={profile?.plan ?? "trial"}
       />
       {children}
     </DashboardShell>

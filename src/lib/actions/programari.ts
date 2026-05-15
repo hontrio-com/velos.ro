@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { revalidatePath } from "next/cache";
 import { format, parseISO } from "date-fns";
 import { ro } from "date-fns/locale";
@@ -8,43 +9,119 @@ import {
   sendConfirmareProgramareEmail,
   sendProgramareAnulataEmail,
   sendRezultatItpEmail,
+  sendAngajatActivitateEmail,
 } from "@/lib/actions/email";
+import { getOwnerContext } from "@/lib/angajat-context";
+
+// ── Helper: log activitate angajat + email proprietar ────────────────────────
+
+async function logAngajatActivitate(params: {
+  angajatId: string;
+  angajatNume: string;
+  angajatFunctie: string | null;
+  statieId: string;
+  ownerId: string;
+  actiune: string;
+  actiuneLabel: string;
+  detalii: { label: string; value: string }[];
+  numeStatie: string;
+  ownerEmail: string;
+}) {
+  const serviceClient = createServiceClient();
+
+  // Insert audit log (fire-and-forget, don't block)
+  void (serviceClient as any)
+    .from("angajat_activitati")
+    .insert({
+      angajat_id: params.angajatId,
+      statie_id: params.statieId,
+      owner_profile_id: params.ownerId,
+      actiune: params.actiune,
+      detalii: Object.fromEntries(params.detalii.map((d) => [d.label, d.value])),
+    });
+
+  // Send email to owner
+  sendAngajatActivitateEmail(params.ownerEmail, {
+    numeAngajat: params.angajatNume,
+    functieAngajat: params.angajatFunctie ?? undefined,
+    actiune: params.actiuneLabel,
+    detalii: params.detalii,
+    numeStatie: params.numeStatie,
+  }).catch(console.error);
+}
+
+// ── deleteProgramareAction ─────────────────────────────────────────────────────
 
 export async function deleteProgramareAction(
   id: string
 ): Promise<{ success: true } | { error: string }> {
   const supabase = await createClient();
-
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Neautentificat" };
 
-  // Verifică ownership prin statie
+  const ctx = await getOwnerContext(supabase as any, user.id);
+  if (!ctx) return { error: "Neautentificat" };
+
+  // Fetch programare + statie for ownership check and email
   const { data: p } = await supabase
     .from("programari")
-    .select("statie_id")
+    .select(`
+      statie_id, data_programare, ora_start, tip_serviciu,
+      client:clienti(email, nume, prenume),
+      vehicul:vehicule(nr_inmatriculare, marca, model),
+      statie:statii(id, nume, owner_id)
+    `)
     .eq("id", id)
     .single();
 
   if (!p) return { error: "Programarea nu a fost găsită" };
 
-  const { data: statie } = await supabase
-    .from("statii")
-    .select("id")
-    .eq("id", p.statie_id)
-    .eq("owner_id", user.id)
-    .single();
+  const statie = Array.isArray(p.statie) ? p.statie[0] : p.statie as { id: string; nume: string; owner_id: string } | null;
+  if (!statie || statie.owner_id !== ctx.ownerId) return { error: "Acces interzis" };
 
-  if (!statie) return { error: "Acces interzis" };
-
-  const { error } = await supabase
-    .from("programari")
-    .delete()
-    .eq("id", id);
-
+  const { error } = await supabase.from("programari").delete().eq("id", id);
   if (error) return { error: error.message };
 
   revalidatePath("/programari");
   revalidatePath("/dashboard");
+
+  // If angajat: log activity + notify owner
+  if (ctx.role === "angajat" && ctx.angajatId) {
+    const client = Array.isArray(p.client) ? p.client[0] : p.client as { email: string | null; nume: string; prenume: string | null } | null;
+    const vehicul = Array.isArray(p.vehicul) ? p.vehicul[0] : p.vehicul as { nr_inmatriculare: string; marca: string | null; model: string | null } | null;
+
+    const { data: ownerProfile } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("id", ctx.ownerId)
+      .single();
+
+    if (ownerProfile?.email) {
+      const numeClient = `${client?.nume ?? ""} ${client?.prenume ?? ""}`.trim();
+      const marcaModel = [vehicul?.marca, vehicul?.model].filter(Boolean).join(" ") || vehicul?.nr_inmatriculare || "";
+      const dataFormatata = format(parseISO(p.data_programare + "T12:00:00"), "d MMMM yyyy", { locale: ro });
+
+      await logAngajatActivitate({
+        angajatId: ctx.angajatId,
+        angajatNume: ctx.angajatNume!,
+        angajatFunctie: ctx.angajatFunctie,
+        statieId: statie.id,
+        ownerId: ctx.ownerId,
+        actiune: "sters_programare",
+        actiuneLabel: "A șters o programare",
+        detalii: [
+          { label: "Client", value: numeClient || "—" },
+          { label: "Vehicul", value: vehicul?.nr_inmatriculare ?? "—" },
+          { label: "Model", value: marcaModel || "—" },
+          { label: "Data", value: `${dataFormatata}, ora ${p.ora_start.slice(0, 5)}` },
+          { label: "Serviciu", value: p.tip_serviciu ?? "ITP" },
+        ],
+        numeStatie: statie.nume,
+        ownerEmail: ownerProfile.email,
+      });
+    }
+  }
+
   return { success: true };
 }
 
@@ -65,17 +142,20 @@ export async function createProgramareStaffAction(input: {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Neautentificat" };
 
+  const ctx = await getOwnerContext(supabase as any, user.id);
+  if (!ctx) return { error: "Neautentificat" };
+
   const [{ data: statie }, { data: ownerProfile }] = await Promise.all([
     supabase
       .from("statii")
       .select("id, nume, adresa, telefon, durata_slot_minute")
       .eq("id", input.statieId)
-      .eq("owner_id", user.id)
+      .eq("owner_id", ctx.ownerId)
       .single(),
     supabase
       .from("profiles")
       .select("email")
-      .eq("id", user.id)
+      .eq("id", ctx.ownerId)
       .single(),
   ]);
 
@@ -110,7 +190,7 @@ export async function createProgramareStaffAction(input: {
   revalidatePath("/programari");
   revalidatePath("/dashboard");
 
-  // Send confirmation email to owner + client
+  // Fetch client + vehicul for emails
   const [{ data: client }, { data: vehicul }] = await Promise.all([
     supabase.from("clienti").select("email, nume, prenume").eq("id", input.clientId).single(),
     supabase.from("vehicule").select("nr_inmatriculare, marca, model").eq("id", input.vehiculId).single(),
@@ -118,11 +198,13 @@ export async function createProgramareStaffAction(input: {
 
   const numeClient = `${client?.nume ?? ""}${client?.prenume ? " " + client.prenume : ""}`.trim() || "Client";
   const marcaModel = [vehicul?.marca, vehicul?.model].filter(Boolean).join(" ") || vehicul?.nr_inmatriculare || "";
+  const dataFormatata = format(parseISO(input.date), "d MMMM yyyy", { locale: ro });
+
   const emailParams = {
     numeClient,
     nrInmatriculare: vehicul?.nr_inmatriculare ?? "",
     marcaModel,
-    dataFormatata: format(parseISO(input.date), "d MMMM yyyy", { locale: ro }),
+    dataFormatata,
     ora: input.slot,
     tipServiciu: input.tipServiciu,
     numeStatie: statie.nume,
@@ -132,18 +214,35 @@ export async function createProgramareStaffAction(input: {
     observatii: input.observatii ?? undefined,
   };
 
+  // Always send confirmation to owner + client
   const recipients = [ownerEmail, client?.email].filter((e): e is string => !!e && e.length > 0);
   const uniqueRecipients = [...new Set(recipients)];
 
-  console.log("[programare email] ownerEmail:", ownerEmail, "clientEmail:", client?.email, "recipients:", uniqueRecipients);
-
   for (const email of uniqueRecipients) {
-    try {
-      const emailResult = await sendConfirmareProgramareEmail(email, emailParams);
-      console.log("[programare email] result for", email, ":", emailResult);
-    } catch (err) {
-      console.error("[programare email] threw for", email, ":", err);
-    }
+    sendConfirmareProgramareEmail(email, emailParams).catch(console.error);
+  }
+
+  // If angajat: also log the activity
+  if (ctx.role === "angajat" && ctx.angajatId && ownerEmail) {
+    logAngajatActivitate({
+      angajatId: ctx.angajatId,
+      angajatNume: ctx.angajatNume!,
+      angajatFunctie: ctx.angajatFunctie,
+      statieId: input.statieId,
+      ownerId: ctx.ownerId,
+      actiune: "creat_programare",
+      actiuneLabel: "A creat o programare nouă",
+      detalii: [
+        { label: "Client", value: numeClient },
+        { label: "Vehicul", value: vehicul?.nr_inmatriculare ?? "—" },
+        { label: "Model", value: marcaModel || "—" },
+        { label: "Data", value: `${dataFormatata}, ora ${input.slot}` },
+        { label: "Serviciu", value: input.tipServiciu },
+        ...(input.pret ? [{ label: "Preț", value: `${input.pret} RON` }] : []),
+      ],
+      numeStatie: statie.nume,
+      ownerEmail,
+    }).catch(console.error);
   }
 
   return { success: true, programareId: programare.id };
@@ -153,6 +252,14 @@ export async function createProgramareStaffAction(input: {
 
 type ProgramareStatus = "programat" | "in_lucru" | "finalizat" | "anulat" | "neprezent";
 
+const STATUS_LABELS: Record<ProgramareStatus, string> = {
+  programat: "Programat",
+  in_lucru: "În lucru",
+  finalizat: "Finalizat",
+  anulat: "Anulat",
+  neprezent: "Neprezent",
+};
+
 export async function updateProgramareStatusAction(
   programareId: string,
   newStatus: ProgramareStatus
@@ -161,21 +268,24 @@ export async function updateProgramareStatusAction(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Neautentificat" };
 
+  const ctx = await getOwnerContext(supabase as any, user.id);
+  if (!ctx) return { error: "Neautentificat" };
+
   const { data: p } = await supabase
     .from("programari")
     .select(`
       statie_id, data_programare, ora_start, tip_serviciu,
       client:clienti(email, nume, prenume),
       vehicul:vehicule(nr_inmatriculare, marca, model),
-      statie:statii(nume, telefon, owner_id)
+      statie:statii(id, nume, telefon, owner_id)
     `)
     .eq("id", programareId)
     .single();
 
   if (!p) return { error: "Programarea nu a fost găsită" };
 
-  const statie = Array.isArray(p.statie) ? p.statie[0] : p.statie as { nume: string; telefon: string | null; owner_id: string } | null;
-  if (!statie || statie.owner_id !== user.id) return { error: "Acces interzis" };
+  const statie = Array.isArray(p.statie) ? p.statie[0] : p.statie as { id: string; nume: string; telefon: string | null; owner_id: string } | null;
+  if (!statie || statie.owner_id !== ctx.ownerId) return { error: "Acces interzis" };
 
   const { error } = await supabase
     .from("programari")
@@ -187,22 +297,51 @@ export async function updateProgramareStatusAction(
   revalidatePath("/programari");
   revalidatePath("/dashboard");
 
-  // Send email on cancellation
-  if (newStatus === "anulat") {
-    const client = Array.isArray(p.client) ? p.client[0] : p.client as { email: string | null; nume: string; prenume: string | null } | null;
-    const vehicul = Array.isArray(p.vehicul) ? p.vehicul[0] : p.vehicul as { nr_inmatriculare: string; marca: string | null; model: string | null } | null;
+  const client = Array.isArray(p.client) ? p.client[0] : p.client as { email: string | null; nume: string; prenume: string | null } | null;
+  const vehicul = Array.isArray(p.vehicul) ? p.vehicul[0] : p.vehicul as { nr_inmatriculare: string; marca: string | null; model: string | null } | null;
+  const dataFormatata = format(parseISO(p.data_programare + "T12:00:00"), "d MMMM yyyy", { locale: ro });
 
-    if (client?.email) {
-      const numeClient = `${client.nume}${client.prenume ? " " + client.prenume : ""}`;
-      await sendProgramareAnulataEmail(client.email, {
-        numeClient,
-        nrInmatriculare: vehicul?.nr_inmatriculare ?? "",
-        dataFormatata: format(parseISO(p.data_programare + "T12:00:00"), "d MMMM yyyy", { locale: ro }),
-        ora: p.ora_start.slice(0, 5),
-        tipServiciu: p.tip_serviciu ?? "ITP",
+  // Send anulare email to client
+  if (newStatus === "anulat" && client?.email) {
+    const numeClient = `${client.nume}${client.prenume ? " " + client.prenume : ""}`;
+    sendProgramareAnulataEmail(client.email, {
+      numeClient,
+      nrInmatriculare: vehicul?.nr_inmatriculare ?? "",
+      dataFormatata,
+      ora: p.ora_start.slice(0, 5),
+      tipServiciu: p.tip_serviciu ?? "ITP",
+      numeStatie: statie.nume,
+      telefonStatie: statie.telefon ?? undefined,
+    }).catch(console.error);
+  }
+
+  // If angajat: log activity + notify owner
+  if (ctx.role === "angajat" && ctx.angajatId) {
+    const { data: ownerProfile } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("id", ctx.ownerId)
+      .single();
+
+    if (ownerProfile?.email) {
+      const numeClient = `${client?.nume ?? ""} ${client?.prenume ?? ""}`.trim();
+      await logAngajatActivitate({
+        angajatId: ctx.angajatId,
+        angajatNume: ctx.angajatNume!,
+        angajatFunctie: ctx.angajatFunctie,
+        statieId: statie.id,
+        ownerId: ctx.ownerId,
+        actiune: "actualizat_status",
+        actiuneLabel: `A actualizat statusul → ${STATUS_LABELS[newStatus]}`,
+        detalii: [
+          { label: "Client", value: numeClient || "—" },
+          { label: "Vehicul", value: vehicul?.nr_inmatriculare ?? "—" },
+          { label: "Data", value: `${dataFormatata}, ora ${p.ora_start.slice(0, 5)}` },
+          { label: "Status nou", value: STATUS_LABELS[newStatus] },
+        ],
         numeStatie: statie.nume,
-        telefonStatie: statie.telefon ?? undefined,
-      }).catch(console.error);
+        ownerEmail: ownerProfile.email,
+      });
     }
   }
 
@@ -224,21 +363,24 @@ export async function saveRezultatItpAction(input: {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Neautentificat" };
 
+  const ctx = await getOwnerContext(supabase as any, user.id);
+  if (!ctx) return { error: "Neautentificat" };
+
   const { data: p } = await supabase
     .from("programari")
     .select(`
       statie_id, data_programare, tip_serviciu,
       client:clienti(email, nume, prenume),
       vehicul:vehicule(nr_inmatriculare, marca, model),
-      statie:statii(nume, telefon, owner_id)
+      statie:statii(id, nume, telefon, owner_id)
     `)
     .eq("id", input.programareId)
     .single();
 
   if (!p) return { error: "Programarea nu a fost găsită" };
 
-  const statie = Array.isArray(p.statie) ? p.statie[0] : p.statie as { nume: string; telefon: string | null; owner_id: string } | null;
-  if (!statie || statie.owner_id !== user.id) return { error: "Acces interzis" };
+  const statie = Array.isArray(p.statie) ? p.statie[0] : p.statie as { id: string; nume: string; telefon: string | null; owner_id: string } | null;
+  if (!statie || statie.owner_id !== ctx.ownerId) return { error: "Acces interzis" };
 
   const { error } = await supabase
     .from("rezultate_itp")
@@ -266,14 +408,14 @@ export async function saveRezultatItpAction(input: {
   revalidatePath("/programari");
   revalidatePath("/vehicule");
 
-  // Send rezultat email to client
   const client = Array.isArray(p.client) ? p.client[0] : p.client as { email: string | null; nume: string; prenume: string | null } | null;
   const vehicul = Array.isArray(p.vehicul) ? p.vehicul[0] : p.vehicul as { nr_inmatriculare: string; marca: string | null; model: string | null } | null;
 
+  // Send result email to client
   if (client?.email) {
     const numeClient = `${client.nume}${client.prenume ? " " + client.prenume : ""}`;
     const marcaModel = [vehicul?.marca, vehicul?.model].filter(Boolean).join(" ") || vehicul?.nr_inmatriculare || "";
-    await sendRezultatItpEmail(client.email, {
+    sendRezultatItpEmail(client.email, {
       numeClient,
       nrInmatriculare: vehicul?.nr_inmatriculare ?? "",
       marcaModel,
@@ -287,6 +429,39 @@ export async function saveRezultatItpAction(input: {
       telefonStatie: statie.telefon ?? undefined,
       observatiiTehnice: input.observatiiTehnice || undefined,
     }).catch(console.error);
+  }
+
+  // If angajat: log activity + notify owner
+  if (ctx.role === "angajat" && ctx.angajatId) {
+    const { data: ownerProfile } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("id", ctx.ownerId)
+      .single();
+
+    if (ownerProfile?.email) {
+      const REZULTAT_LABELS = { admis: "Admis ✓", respins: "Respins ✗", readmis: "Readmis" };
+      const numeClient = `${client?.nume ?? ""} ${client?.prenume ?? ""}`.trim();
+      await logAngajatActivitate({
+        angajatId: ctx.angajatId,
+        angajatNume: ctx.angajatNume!,
+        angajatFunctie: ctx.angajatFunctie,
+        statieId: statie.id,
+        ownerId: ctx.ownerId,
+        actiune: "salvat_rezultat_itp",
+        actiuneLabel: `A salvat rezultatul ITP — ${REZULTAT_LABELS[input.rezultat]}`,
+        detalii: [
+          { label: "Client", value: numeClient || "—" },
+          { label: "Vehicul", value: vehicul?.nr_inmatriculare ?? "—" },
+          { label: "Rezultat", value: REZULTAT_LABELS[input.rezultat] },
+          { label: "Data inspecție", value: format(parseISO(input.dataInspectie + "T12:00:00"), "d MMMM yyyy", { locale: ro }) },
+          ...(input.expirareNoua ? [{ label: "Expiră la", value: format(parseISO(input.expirareNoua + "T12:00:00"), "d MMMM yyyy", { locale: ro }) }] : []),
+          ...(input.inspector ? [{ label: "Inspector", value: input.inspector }] : []),
+        ],
+        numeStatie: statie.nume,
+        ownerEmail: ownerProfile.email,
+      });
+    }
   }
 
   return { success: true };

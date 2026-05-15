@@ -1,0 +1,20 @@
+61:           {/* 2. Definiții */}
+62:           <Section id="definitii" title="2. Definiții">
+63:             <p>În înțelesul prezentului document, termenii de mai jos au următoarea semnificație:</p>
+64:             <dl className="mt-4 space-y-3">
+65:               <DefinitionItem term='„Platforma' / „Velos"">
+66:                 ansamblul serviciilor software de tip SaaS (Software as a Service)
+67:                 disponibile la velos.ro, inclusiv aplicația web, API-urile,
+68:                 funcționalitățile de CRM, programări online, SMS-uri automate și
+69:                 ITP Smart Page.
+70:               </DefinitionItem>
+71:               <DefinitionItem term='„Furnizorul'">
+72:                 SC VOID SFT GAMES SRL, societate de drept român, operatorul
+73:                 platformei Velos.
+74:               </DefinitionItem>
+75:               <DefinitionItem term='„Utilizatorul' / „Clientul"">
+76:                 orice persoană fizică sau juridică (stație ITP, operator economic)
+77:                 care creează un cont pe platformă și utilizează serviciile Velos în
+78:                 scop profesional sau comercial.
+79:               </DefinitionItem>
+80:               <DefinitionItem term='„Utilizatorul Final'">

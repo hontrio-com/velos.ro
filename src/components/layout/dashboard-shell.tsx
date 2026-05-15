@@ -15,6 +15,8 @@ interface DashboardShellProps {
   userEmail?: string;
   userName?: string;
   statii?: Statie[];
+  permisiuni?: Record<string, boolean> | null;
+  role?: "owner" | "angajat";
   children: React.ReactNode;
 }
 
@@ -22,6 +24,8 @@ export function DashboardShell({
   userEmail,
   userName,
   statii = [],
+  permisiuni = null,
+  role = "owner",
   children,
 }: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -56,6 +60,8 @@ export function DashboardShell({
         statii={statii}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        permisiuni={permisiuni}
+        role={role}
       />
 
       <Header

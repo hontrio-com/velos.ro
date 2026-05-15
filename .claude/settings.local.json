@@ -37,7 +37,18 @@
       "Bash(sed -i 's/VELOS CRM/Velos.ro/g' src/app/manifest.ts)",
       "Bash(cp public/favicon.ico src/app/favicon.ico)",
       "Bash(cp public/favicon-32x32.png src/app/icon.png)",
-      "Bash(cp public/icons/icon-192.png src/app/apple-icon.png)"
+      "Bash(cp public/icons/icon-192.png src/app/apple-icon.png)",
+      "Bash(node -e \"const l = require\\(''lucide-react''\\); console.log\\(''ImageIcon:'', !!l.ImageIcon, ''Navigation:'', !!l.Navigation\\)\")",
+      "Bash(node --input-type=module:*)",
+      "WebSearch",
+      "Bash(python3 -c \":*)",
+      "Bash(node -e \"const p = require\\(''./package.json''\\); console.log\\(p.dependencies.stripe, p.dependencies[''stripe'']\\)\")",
+      "Bash(grep -v \"supabase/\\\\|database.types\"\"$\")",
+      "Bash(grep -v \"email.ts$\")",
+      "Bash(npm info:*)",
+      "Bash(rm src/app/api/test-email/route.ts)",
+      "Bash(rmdir src/app/api/test-email)",
+      "mcp__ide__getDiagnostics"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import { Plus, Users, UserCheck, UserX, Pencil, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
+import { Plus, Users, UserCheck, UserX, Pencil, Trash2, ToggleLeft, ToggleRight, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getAvatarStyle, getInitials } from "@/lib/avatar";
@@ -14,11 +14,13 @@ import { deleteAngajatAction, toggleAngajatActivAction } from "@/lib/actions/ang
 export interface Angajat {
   id: string;
   statie_id: string;
+  profile_id: string | null;
   nume: string;
   functie: string | null;
   telefon: string | null;
   email: string | null;
   activ: boolean;
+  permisiuni: Record<string, boolean> | null;
   created_at: string;
 }
 
@@ -38,13 +40,13 @@ export function AngajatiClient({ statieId, statieNume }: AngajatiClientProps) {
   const { data: angajati = [], isLoading } = useQuery<Angajat[]>({
     queryKey: ["angajati", statieId],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("angajati")
-        .select("id, statie_id, nume, functie, telefon, email, activ, created_at")
+        .select("id, statie_id, profile_id, nume, functie, telefon, email, activ, permisiuni, created_at")
         .eq("statie_id", statieId)
         .order("activ", { ascending: false })
         .order("nume");
-      return (data ?? []) as Angajat[];
+      return ((data as unknown) ?? []) as Angajat[];
     },
   });
 
@@ -176,12 +178,20 @@ export function AngajatiClient({ statieId, statieNume }: AngajatiClientProps) {
                     <p className="text-sm font-semibold text-[#111318] truncate">{a.nume}</p>
                     {a.functie && <p className="text-xs text-[#6B7280] mt-0.5">{a.functie}</p>}
                   </div>
-                  <span className={cn(
-                    "px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0",
-                    a.activ ? "bg-[#DCFCE7] text-[#15803D]" : "bg-[#F7F8FA] text-[#9CA3AF]"
-                  )}>
-                    {a.activ ? "Activ" : "Inactiv"}
-                  </span>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className={cn(
+                      "px-2 py-0.5 rounded-full text-[10px] font-semibold",
+                      a.activ ? "bg-[#DCFCE7] text-[#15803D]" : "bg-[#F7F8FA] text-[#9CA3AF]"
+                    )}>
+                      {a.activ ? "Activ" : "Inactiv"}
+                    </span>
+                    {a.profile_id && (
+                      <span className="flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#EFF6FF] text-[#1877F2]">
+                        <KeyRound className="h-2.5 w-2.5" />
+                        Cont
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Contact info */}

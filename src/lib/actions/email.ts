@@ -12,6 +12,8 @@ import { StatieNouaEmail } from "@/emails/statie-noua";
 import { RezultatItpEmail } from "@/emails/rezultat-itp";
 import { ContSuspendatEmail } from "@/emails/cont-suspendat";
 import { ContReactivatEmail } from "@/emails/cont-reactivat";
+import { AngajatActivitateEmail } from "@/emails/angajat-activitate";
+import { AngajatInvitatieEmail } from "@/emails/angajat-invitatie";
 import * as React from "react";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://velos.ro";
@@ -202,6 +204,42 @@ export async function sendContReactivatEmail(
     to,
     subject: "Contul tău Velos.ro a fost reactivat ✅",
     react: React.createElement(ContReactivatEmail, { ...params, appUrl: APP_URL }),
+  });
+}
+
+// ── Angajați ──────────────────────────────────────────────────────────────────
+
+export async function sendAngajatActivitateEmail(
+  to: string,
+  params: {
+    numeAngajat: string;
+    functieAngajat?: string;
+    actiune: string;
+    detalii: { label: string; value: string }[];
+    numeStatie: string;
+  }
+) {
+  return sendEmail({
+    to,
+    subject: `${params.numeAngajat} — ${params.actiune}`,
+    react: React.createElement(AngajatActivitateEmail, params),
+  });
+}
+
+export async function sendAngajatInvitatieEmail(
+  to: string,
+  params: {
+    numeAngajat: string;
+    numeStatie: string;
+    email: string;
+    parola: string;
+    permisiuni: string[];
+  }
+) {
+  return sendEmail({
+    to,
+    subject: `Cont creat pe Velos.ro — ${params.numeStatie}`,
+    react: React.createElement(AngajatInvitatieEmail, { ...params, appUrl: APP_URL }),
   });
 }
 
