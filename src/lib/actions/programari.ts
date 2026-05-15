@@ -134,9 +134,17 @@ export async function createProgramareStaffAction(input: {
 
   const recipients = [ownerEmail, client?.email].filter((e): e is string => !!e && e.length > 0);
   const uniqueRecipients = [...new Set(recipients)];
-  await Promise.all(
-    uniqueRecipients.map((email) => sendConfirmareProgramareEmail(email, emailParams).catch(console.error))
-  );
+
+  console.log("[programare email] ownerEmail:", ownerEmail, "clientEmail:", client?.email, "recipients:", uniqueRecipients);
+
+  for (const email of uniqueRecipients) {
+    try {
+      const emailResult = await sendConfirmareProgramareEmail(email, emailParams);
+      console.log("[programare email] result for", email, ":", emailResult);
+    } catch (err) {
+      console.error("[programare email] threw for", email, ":", err);
+    }
+  }
 
   return { success: true, programareId: programare.id };
 }
