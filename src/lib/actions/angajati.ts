@@ -181,100 +181,105 @@ export async function createAngajatContAction(
   parola: string,
   permisiuni: Permisiuni
 ): Promise<AngajatActionResult> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: "Neautentificat" };
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Neautentificat" };
 
-  // Verify ownership
-  const { data: angajat } = await supabase
-    .from("angajati")
-    .select("id, nume, functie, email, profile_id, statie_id, statii!inner(id, nume, owner_id)")
-    .eq("id", angajatId)
-    .single();
+    // Verify ownership
+    const { data: angajat } = await supabase
+      .from("angajati")
+      .select("id, nume, functie, email, profile_id, statie_id, statii!inner(id, nume, owner_id)")
+      .eq("id", angajatId)
+      .single();
 
-  const statie = Array.isArray(angajat?.statii) ? angajat.statii[0] : angajat?.statii as { id: string; nume: string; owner_id: string } | null;
-  if (!angajat || statie?.owner_id !== user.id) {
-    return { success: false, error: "Acces interzis" };
-  }
+    const statie = Array.isArray(angajat?.statii) ? angajat.statii[0] : angajat?.statii as { id: string; nume: string; owner_id: string } | null;
+    if (!angajat || statie?.owner_id !== user.id) {
+      return { success: false, error: "Acces interzis" };
+    }
 
-  if ((angajat as any).profile_id) {
-    return { success: false, error: "Angajatul are deja un cont activ" };
-  }
+    if ((angajat as any).profile_id) {
+      return { success: false, error: "Angajatul are deja un cont activ" };
+    }
 
-  const serviceClient = createServiceClient();
+    const serviceClient = createServiceClient();
 
-  // Create auth user (auto-confirmed)
-  const { data: newUser, error: authError } = await serviceClient.auth.admin.createUser({
-    email: email.trim(),
-    password: parola,
-    email_confirm: true,
-  });
-
-  if (authError || !newUser.user) {
-    return { success: false, error: authError?.message ?? "Eroare la crearea contului" };
-  }
-
-  const newUserId = newUser.user.id;
-
-  // Upsert profile with role='angajat'
-  const { error: profileError } = await serviceClient
-    .from("profiles" as any)
-    .upsert({
-      id: newUserId,
+    // Create auth user (auto-confirmed)
+    const { data: newUser, error: authError } = await serviceClient.auth.admin.createUser({
       email: email.trim(),
-      full_name: (angajat as any).nume,
-      role: "angajat",
-      owner_profile_id: user.id,
-      onboarding_completed: true,
-      plan: "owner",
-      subscription_status: "active",
-      trial_expires_at: new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000).toISOString(),
-    }, { onConflict: "id" });
+      password: parola,
+      email_confirm: true,
+    });
 
-  if (profileError) {
-    await serviceClient.auth.admin.deleteUser(newUserId).catch(console.error);
-    return { success: false, error: profileError.message };
-  }
+    if (authError || !newUser.user) {
+      return { success: false, error: authError?.message ?? "Eroare la crearea contului" };
+    }
 
-  // Link angajat.profile_id and update email + permisiuni
-  const { error: linkError } = await serviceClient
-    .from("angajati" as any)
-    .update({
-      profile_id: newUserId,
+    const newUserId = newUser.user.id;
+
+    // Upsert profile with role='angajat'
+    const { error: profileError } = await serviceClient
+      .from("profiles" as any)
+      .upsert({
+        id: newUserId,
+        email: email.trim(),
+        full_name: (angajat as any).nume,
+        role: "angajat",
+        owner_profile_id: user.id,
+        onboarding_completed: true,
+        plan: "owner",
+        subscription_status: "active",
+        trial_expires_at: new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000).toISOString(),
+      }, { onConflict: "id" });
+
+    if (profileError) {
+      await serviceClient.auth.admin.deleteUser(newUserId).catch(console.error);
+      return { success: false, error: profileError.message };
+    }
+
+    // Link angajat.profile_id and update email + permisiuni
+    const { error: linkError } = await serviceClient
+      .from("angajati" as any)
+      .update({
+        profile_id: newUserId,
+        email: email.trim(),
+        permisiuni: permisiuni as any,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", angajatId);
+
+    if (linkError) {
+      await serviceClient.auth.admin.deleteUser(newUserId).catch(console.error);
+      return { success: false, error: linkError.message };
+    }
+
+    // Send invitation email (fire-and-forget)
+    const permisiuniLabel: Record<keyof Permisiuni, string> = {
+      programari: "Programări",
+      clienti: "Clienți",
+      vehicule: "Vehicule",
+      rapoarte: "Rapoarte",
+      remindere: "Remindere",
+    };
+
+    const permisiuniActive = (Object.keys(permisiuni) as (keyof Permisiuni)[])
+      .filter((k) => permisiuni[k])
+      .map((k) => permisiuniLabel[k]);
+
+    sendAngajatInvitatieEmail(email.trim(), {
+      numeAngajat: (angajat as any).nume,
+      numeStatie: statie?.nume ?? "",
       email: email.trim(),
-      permisiuni: permisiuni as any,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", angajatId);
+      parola,
+      permisiuni: permisiuniActive,
+    }).catch(console.error);
 
-  if (linkError) {
-    await serviceClient.auth.admin.deleteUser(newUserId).catch(console.error);
-    return { success: false, error: linkError.message };
+    revalidatePath("/angajati");
+    return { success: true };
+  } catch (err) {
+    console.error("[createAngajatContAction]", err);
+    return { success: false, error: "Eroare neașteptată. Încearcă din nou." };
   }
-
-  // Send invitation email
-  const permisiuniLabel: Record<keyof Permisiuni, string> = {
-    programari: "Programări",
-    clienti: "Clienți",
-    vehicule: "Vehicule",
-    rapoarte: "Rapoarte",
-    remindere: "Remindere",
-  };
-
-  const permisiuniActive = (Object.keys(permisiuni) as (keyof Permisiuni)[])
-    .filter((k) => permisiuni[k])
-    .map((k) => permisiuniLabel[k]);
-
-  sendAngajatInvitatieEmail(email.trim(), {
-    numeAngajat: (angajat as any).nume,
-    numeStatie: statie?.nume ?? "",
-    email: email.trim(),
-    parola,
-    permisiuni: permisiuniActive,
-  }).catch(console.error);
-
-  revalidatePath("/angajati");
-  return { success: true };
 }
 
 export async function deleteAngajatContAction(
