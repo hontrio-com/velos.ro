@@ -77,7 +77,7 @@ export async function createStatieAction(data: {
       .select("full_name")
       .eq("id", user.id)
       .single();
-    sendStatieNouaEmail(user.email, {
+    await sendStatieNouaEmail(user.email, {
       numeProprietar: profile?.full_name ?? user.email,
       numeStatie: data.nume,
       slugStatie: statie.slug,

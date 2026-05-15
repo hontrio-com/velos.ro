@@ -53,8 +53,7 @@ async function createStatie(
   // Create default station settings row (required by reminders, SMS templates, etc.)
   await supabase.from("setari_statie").insert({ statie_id: statieId } as never);
 
-  // Send station created email (fire and forget)
-  sendStatieNouaEmail(ownerEmail, {
+  await sendStatieNouaEmail(ownerEmail, {
     numeProprietar: ownerName,
     numeStatie: data.nume,
     slugStatie: statieSlug,

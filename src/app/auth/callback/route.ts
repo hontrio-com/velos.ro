@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
         const isNewUser = Math.abs(lastSignIn - createdAt) < 5000;
         if (isNewUser) {
           const name = user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email;
-          sendBunVenitEmail(user.email, name).catch(() => null);
+          await sendBunVenitEmail(user.email, name).catch(() => null);
         }
       }
       return response;

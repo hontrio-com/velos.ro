@@ -228,7 +228,7 @@ export async function createBookingAction(
 
     // Send booking confirmation email if client provided email
     if (input.email) {
-      sendBookingOnlineEmail(input.email, {
+      await sendBookingOnlineEmail(input.email, {
         numeClient: `${input.nume} ${input.prenume}`.trim(),
         nrInmatriculare: input.nrInmatriculare,
         marcaModel: input.marcaModel,

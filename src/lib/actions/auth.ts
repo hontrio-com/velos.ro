@@ -67,8 +67,7 @@ export async function registerAction(
     return { error: error.message };
   }
 
-  // Send welcome email (fire and forget)
-  sendBunVenitEmail(parsed.data.email, parsed.data.full_name).catch(console.error);
+  await sendBunVenitEmail(parsed.data.email, parsed.data.full_name).catch(console.error);
 
   redirect("/onboarding");
 }
