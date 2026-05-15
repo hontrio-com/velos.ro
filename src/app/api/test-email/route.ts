@@ -2,11 +2,6 @@ import { NextResponse, type NextRequest } from "next/server";
 import { Resend } from "resend";
 
 export async function GET(request: NextRequest) {
-  const secret = request.nextUrl.searchParams.get("secret");
-  if (secret !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: "RESEND_API_KEY lipseste din env" }, { status: 500 });
