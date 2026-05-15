@@ -1,6 +1,6 @@
 "use server";
 import { sendBookingOnlineEmail, sendConfirmareProgramareEmail } from "@/lib/actions/email";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { parseISO, getDay, format } from "date-fns";
 import { ro } from "date-fns/locale";
 
@@ -31,7 +31,7 @@ export async function getBookingAvailabilityAction(
   date: string
 ): Promise<BookingAvailabilityResult> {
   try {
-    const supabase = await createServiceClient();
+    const supabase = createServiceClient();
 
     const [{ data: statie }, { data: rawProgramari }] = await Promise.all([
       supabase
@@ -116,7 +116,7 @@ export async function createBookingAction(
   input: CreateBookingInput
 ): Promise<CreateBookingResult> {
   try {
-    const supabase = await createServiceClient();
+    const supabase = createServiceClient();
 
     // Fetch station to get durata_slot_minute + verify it exists
     const { data: statie } = await supabase
