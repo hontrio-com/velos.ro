@@ -50,12 +50,12 @@ export default async function SmartPageEditPage({ params }: Props) {
             <div>
               <h1 className="text-xl font-semibold text-[#111318]">{statie.nume}</h1>
               <p className="text-sm text-[#6B7280]">
-                Smart Page · velos.ro/booking/<span className="font-mono">{statie.slug}</span>
+                Smart Page · velos.ro/<span className="font-mono">{statie.slug}</span>
               </p>
             </div>
           </div>
           {smartPage?.activa && (
-            <a href={`/booking/${statie.slug}`} target="_blank" rel="noreferrer">
+            <a href={`/${statie.slug}`} target="_blank" rel="noreferrer">
               <Button size="sm" variant="outline" className="gap-1.5">
                 <ExternalLink className="h-3.5 w-3.5" />
                 Deschide pagina

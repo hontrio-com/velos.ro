@@ -45,7 +45,7 @@ export function getPrenume(numeComplet: string): string {
  */
 export function getBookingUrl(slug: string): string {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://velos.ro";
-  return `${appUrl}/booking/${slug}`;
+  return `${appUrl}/${slug}`;
 }
 
 export function buildTemplateVars(params: {
