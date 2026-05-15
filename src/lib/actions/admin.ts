@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { sendContSuspendatEmail, sendContReactivatEmail } from "@/lib/actions/email";
 
 interface AdminUser { id: string; email: string }
 
@@ -93,25 +94,38 @@ export async function toggleAdminRole(profileId: string, isAdmin: boolean) {
 export async function suspendUser(profileId: string, reason: string) {
   const admin = await requireAdmin();
   const supabase = createServiceClient();
-  const { data } = await supabase.from("profiles").select("email").eq("id", profileId).single();
+  const { data } = await supabase.from("profiles").select("email, full_name").eq("id", profileId).single();
   await supabase.from("profiles").update({
     suspended_at: new Date().toISOString(),
     suspend_reason: reason,
   }).eq("id", profileId);
   await logAudit(admin, "suspend_user", "user", profileId, data?.email ?? profileId, { reason });
   revalidatePath("/admin/utilizatori");
+
+  if (data?.email) {
+    await sendContSuspendatEmail(data.email, {
+      numeComplet: (data as any).full_name ?? data.email,
+      motiv: reason || undefined,
+    }).catch(console.error);
+  }
 }
 
 export async function unsuspendUser(profileId: string) {
   const admin = await requireAdmin();
   const supabase = createServiceClient();
-  const { data } = await supabase.from("profiles").select("email").eq("id", profileId).single();
+  const { data } = await supabase.from("profiles").select("email, full_name").eq("id", profileId).single();
   await supabase.from("profiles").update({
     suspended_at: null,
     suspend_reason: null,
   }).eq("id", profileId);
   await logAudit(admin, "unsuspend_user", "user", profileId, data?.email ?? profileId);
   revalidatePath("/admin/utilizatori");
+
+  if (data?.email) {
+    await sendContReactivatEmail(data.email, {
+      numeComplet: (data as any).full_name ?? data.email,
+    }).catch(console.error);
+  }
 }
 
 // ── Stații ──────────────────────────────────────────────────────

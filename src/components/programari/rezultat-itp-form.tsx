@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { saveRezultatItpAction } from "@/lib/actions/programari";
 import { cn } from "@/lib/utils";
 
 type Rezultat = "admis" | "respins" | "readmis";
@@ -59,7 +59,6 @@ export function RezultatItpForm({
   initialRezultat,
   onSave,
 }: RezultatItpFormProps) {
-  const supabase = createClient();
   const [isPending, startTransition] = useTransition();
 
   const [rezultat, setRezultat] = useState<Rezultat | null>(
@@ -95,29 +94,19 @@ export function RezultatItpForm({
     }
 
     startTransition(async () => {
-      const payload = {
-        programare_id: programareId,
+      const result = await saveRezultatItpAction({
+        programareId,
+        vehiculId,
         rezultat,
-        data_inspectie: dataInspectie,
-        expirare_noua: expirareNoua || null,
+        dataInspectie,
+        expirareNoua: expirareNoua || null,
         inspector: inspector || null,
-        observatii_tehnice: observatii || null,
-      };
+        observatiiTehnice: observatii || null,
+      });
 
-      const { error } = await supabase
-        .from("rezultate_itp")
-        .upsert(payload, { onConflict: "programare_id" });
-
-      if (error) {
-        toast.error(`Eroare la salvarea rezultatului: ${error.message}`);
+      if ("error" in result) {
+        toast.error(`Eroare la salvarea rezultatului: ${result.error}`);
         return;
-      }
-
-      if ((rezultat === "admis" || rezultat === "readmis") && expirareNoua) {
-        await supabase
-          .from("vehicule")
-          .update({ expirare_itp: expirareNoua })
-          .eq("id", vehiculId);
       }
 
       toast.success("Rezultat ITP salvat!");

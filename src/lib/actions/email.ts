@@ -10,6 +10,8 @@ import { ReminderItpEmail } from "@/emails/reminder-itp";
 import { BookingOnlineEmail } from "@/emails/booking-online";
 import { StatieNouaEmail } from "@/emails/statie-noua";
 import { RezultatItpEmail } from "@/emails/rezultat-itp";
+import { ContSuspendatEmail } from "@/emails/cont-suspendat";
+import { ContReactivatEmail } from "@/emails/cont-reactivat";
 import * as React from "react";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://velos.ro";
@@ -176,6 +178,30 @@ export async function sendBookingOnlineEmail(
     to,
     subject: `Rezervare online confirmată: ${params.tipServiciu} — ${params.dataFormatata}`,
     react: React.createElement(BookingOnlineEmail, params),
+  });
+}
+
+// ── Cont ──────────────────────────────────────────────────────────────────────
+
+export async function sendContSuspendatEmail(
+  to: string,
+  params: { numeComplet: string; motiv?: string }
+) {
+  return sendEmail({
+    to,
+    subject: "Contul tău Velos.ro a fost suspendat",
+    react: React.createElement(ContSuspendatEmail, params),
+  });
+}
+
+export async function sendContReactivatEmail(
+  to: string,
+  params: { numeComplet: string }
+) {
+  return sendEmail({
+    to,
+    subject: "Contul tău Velos.ro a fost reactivat ✅",
+    react: React.createElement(ContReactivatEmail, { ...params, appUrl: APP_URL }),
   });
 }
 

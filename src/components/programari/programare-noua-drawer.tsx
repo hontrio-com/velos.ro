@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { SlotPicker } from "./slot-picker";
 import { DayNavigator } from "./day-navigator";
 import { cn } from "@/lib/utils";
+import { createProgramareStaffAction } from "@/lib/actions/programari";
 
 interface VehiculFound {
   id: string;
@@ -202,44 +203,26 @@ export function ProgramareNouaDrawer({
       return;
     }
     setIsSaving(true);
-    try {
-      const { data: statie } = await supabase
-        .from("statii")
-        .select("durata_slot_minute")
-        .eq("id", statieId)
-        .single();
-
-      const durata = statie?.durata_slot_minute ?? 30;
-      const [h, m] = selectedSlot.split(":").map(Number);
-      const endMin = h * 60 + m + durata;
-      const oraEnd = `${String(Math.floor(endMin / 60)).padStart(2, "0")}:${String(endMin % 60).padStart(2, "0")}`;
-
-      const { error } = await supabase.from("programari").insert({
-        statie_id: statieId,
-        client_id: selectedVehicul.client.id,
-        vehicul_id: selectedVehicul.id,
-        data_programare: selectedDate,
-        ora_start: selectedSlot + ":00",
-        ora_sfarsit: oraEnd + ":00",
-        tip_serviciu: tipServiciu || "ITP",
-        pret: pret ? parseFloat(pret) : null,
-        observatii: observatii || null,
-        angajat_id: angajatId || null,
-      });
-
-      setIsSaving(false);
-      if (error) {
-        toast.error(`Eroare la salvare: ${error.message}`);
-      } else {
-        toast.success("Programare adăugată!");
-        queryClient.invalidateQueries({ queryKey: ["programari"] });
-        queryClient.invalidateQueries({ queryKey: ["programari-stats"] });
-        queryClient.invalidateQueries({ queryKey: ["slots"] });
-        onSuccess(selectedDate);
-      }
-    } catch {
-      setIsSaving(false);
-      toast.error("Eroare neașteptată");
+    const result = await createProgramareStaffAction({
+      statieId,
+      clientId: selectedVehicul.client.id,
+      vehiculId: selectedVehicul.id,
+      date: selectedDate,
+      slot: selectedSlot,
+      tipServiciu: tipServiciu || "ITP",
+      pret: pret ? parseFloat(pret) : null,
+      observatii: observatii || null,
+      angajatId: angajatId || null,
+    });
+    setIsSaving(false);
+    if ("error" in result) {
+      toast.error(`Eroare la salvare: ${result.error}`);
+    } else {
+      toast.success("Programare adăugată!");
+      queryClient.invalidateQueries({ queryKey: ["programari"] });
+      queryClient.invalidateQueries({ queryKey: ["programari-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["slots"] });
+      onSuccess(selectedDate);
     }
   }
 

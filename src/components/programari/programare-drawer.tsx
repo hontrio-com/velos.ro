@@ -28,7 +28,7 @@ import { toast } from "sonner";
 import { statusConfig } from "./programari-client";
 import { RezultatItpForm } from "./rezultat-itp-form";
 import { trimiteRecenzieAction } from "@/lib/actions/recenzii";
-import { deleteProgramareAction } from "@/lib/actions/programari";
+import { deleteProgramareAction, updateProgramareStatusAction } from "@/lib/actions/programari";
 
 type Status = "programat" | "in_lucru" | "finalizat" | "anulat" | "neprezent";
 
@@ -147,19 +147,15 @@ export function ProgramareDrawer({
   async function updateStatus(newStatus: Status) {
     if (!programareId) return;
     setUpdatingStatus(true);
-    const { error } = await supabase
-      .from("programari")
-      .update({ status: newStatus })
-      .eq("id", programareId);
+    const result = await updateProgramareStatusAction(programareId, newStatus);
 
-    if (error) {
+    if ("error" in result) {
       toast.error("Eroare la actualizarea statusului");
     } else {
       toast.success(`Status: ${statusConfig[newStatus].label}`);
       invalidate();
       if (newStatus === "finalizat") {
         setShowRezultatForm(true);
-        // Trimite SMS recenzie dacă e activat pentru stație
         trimiteRecenzieAction(programareId).catch(() => null);
       }
     }
