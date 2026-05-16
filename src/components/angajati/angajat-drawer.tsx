@@ -131,9 +131,7 @@ export function AngajatDrawer({
   }
 
   // ── Submit ─────────────────────────────────────────────────────────────────
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-
+  async function handleSubmit() {
     // Validate basic fields
     if (!form.nume.trim()) {
       toast.error("Numele este obligatoriu");
@@ -310,11 +308,7 @@ export function AngajatDrawer({
         </div>
 
         {/* Scrollable form body */}
-        <form
-          id="angajat-form"
-          onSubmit={handleSubmit}
-          className="flex-1 overflow-y-auto p-5 space-y-6"
-        >
+        <div className="flex-1 overflow-y-auto p-5 space-y-6">
           {/* ── Date personale ── */}
           <section className="space-y-4">
             <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">
@@ -538,12 +532,11 @@ export function AngajatDrawer({
               )}
             </div>
           </section>
-        </form>
+        </div>
 
         {/* Footer */}
         <div className="border-t border-[#E5E7EB] p-4 flex gap-3 shrink-0">
           <Button
-            type="button"
             variant="outline"
             className="flex-1"
             onClick={onClose}
@@ -552,9 +545,8 @@ export function AngajatDrawer({
             Anulează
           </Button>
           <Button
-            type="submit"
-            form="angajat-form"
             className="flex-1 bg-[#1877F2] hover:bg-[#1565D8]"
+            onClick={handleSubmit}
             disabled={saving || !form.nume.trim()}
           >
             {saving ? (
