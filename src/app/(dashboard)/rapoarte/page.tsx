@@ -27,7 +27,7 @@ export default async function RapoartePage() {
         <RapoarteClient
           statieId={statie.id}
           statieNume={statie.nume}
-          statieSlug={statie.slug}
+          statieSlug={statie.slug ?? ""}
           profileId={user.id}
         />
       </div>
