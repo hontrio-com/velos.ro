@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { getStatieForUser } from "@/lib/get-user-statie";
 import { redirect } from "next/navigation";
 import { PageTransition } from "@/components/layout/page-transition";
 import { RapoarteClient } from "@/components/rapoarte/rapoarte-client";
@@ -13,16 +14,9 @@ export default async function RapoartePage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: statie } = await supabase
-    .from("statii")
-    .select("id, nume, slug")
-    .eq("owner_id", user.id)
-    .eq("activa", true)
-    .order("created_at")
-    .limit(1)
-    .single();
+  const statie = await getStatieForUser();
 
-  if (!statie) redirect("/setari");
+  if (!statie) redirect("/dashboard");
 
   return (
     <PageTransition>

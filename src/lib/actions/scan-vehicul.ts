@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getStatieForUser } from "@/lib/get-user-statie";
 import { revalidatePath } from "next/cache";
 import { subDays } from "date-fns";
 
@@ -17,13 +18,8 @@ export async function scanVehiculAction(input: ScanVehiculInput) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false as const, error: "Neautentificat" };
 
-  const { data: statie } = await supabase
-    .from("statii")
-    .select("id, owner_id")
-    .eq("id", input.statieId)
-    .single();
-
-  if (!statie || statie.owner_id !== user.id)
+  const statie = await getStatieForUser();
+  if (!statie || statie.id !== input.statieId)
     return { success: false as const, error: "Stație negăsită" };
 
   const { data: vehicul, error: vErr } = await supabase

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getStatieForUser } from "@/lib/get-user-statie";
 import { ClientProfilHeader } from "@/components/clienti/profil/client-profil-header";
 import { ClientProfilTabs } from "@/components/clienti/profil/client-profil-tabs";
 
@@ -30,15 +31,8 @@ export default async function ClientProfilPage({ params }: Props) {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: statie } = await supabase
-    .from("statii")
-    .select("id")
-    .eq("owner_id", user.id)
-    .eq("activa", true)
-    .order("created_at")
-    .limit(1)
-    .single();
-  if (!statie) redirect("/setari");
+  const statie = await getStatieForUser();
+  if (!statie) redirect("/dashboard");
 
   // Client
   const { data: client } = await supabase

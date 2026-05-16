@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getStatieForUser } from "@/lib/get-user-statie";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -11,15 +12,7 @@ async function getContext() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: statie } = await supabase
-    .from("statii")
-    .select("id")
-    .eq("owner_id", user.id)
-    .eq("activa", true)
-    .order("created_at")
-    .limit(1)
-    .single();
-
+  const statie = await getStatieForUser();
   return { supabase, user, statieId: statie?.id ?? null };
 }
 

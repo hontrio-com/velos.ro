@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { getStatieForUser } from "@/lib/get-user-statie";
 import { redirect } from "next/navigation";
 import { ClientiTable } from "@/components/clienti/clienti-table";
 import type { ClientRow } from "@/components/clienti/clienti-columns";
@@ -12,16 +13,9 @@ export default async function ClientiPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: statie } = await supabase
-    .from("statii")
-    .select("id, nume")
-    .eq("owner_id", user.id)
-    .eq("activa", true)
-    .order("created_at")
-    .limit(1)
-    .single();
+  const statie = await getStatieForUser();
 
-  if (!statie) redirect("/setari");
+  if (!statie) redirect("/dashboard");
 
   // Fetch clients with aggregate data
   const { data: clientiRaw } = await supabase

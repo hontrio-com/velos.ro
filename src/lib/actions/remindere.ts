@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getStatieForUser } from "@/lib/get-user-statie";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { sendSms, buildTemplateVars, interpolateTemplate } from "@/lib/sms";
@@ -12,15 +13,7 @@ async function getContext() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: statie } = await supabase
-    .from("statii")
-    .select("id, nume, telefon, slug")
-    .eq("owner_id", user.id)
-    .eq("activa", true)
-    .order("created_at")
-    .limit(1)
-    .single();
-
+  const statie = await getStatieForUser();
   return { supabase, statie, profileId: user.id };
 }
 
@@ -82,7 +75,7 @@ export async function trimiteReminderAction(reminderId: string) {
     oraProgramare: programare?.ora_start,
     statieNume: statie.nume,
     statieTelefon: statie.telefon,
-    statieSlug: (statie as any).slug ?? null,
+    statieSlug: statie.slug ?? null,
   });
 
   const mesajFinal = interpolateTemplate(templateText, vars);
