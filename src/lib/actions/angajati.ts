@@ -6,10 +6,6 @@ import { revalidatePath } from "next/cache";
 import { sendAngajatInvitatieEmail } from "@/lib/actions/email";
 import type { Angajat, Permisiuni, ActionResult } from "@/lib/actions/angajati-types";
 
-// Re-export for backwards-compatibility with existing imports
-export type { Angajat, Permisiuni, ActionResult } from "@/lib/actions/angajati-types";
-export { DEFAULT_PERMISIUNI } from "@/lib/actions/angajati-types";
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers (private)
 // ─────────────────────────────────────────────────────────────────────────────
