@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { X, Loader2, UserPlus, Pencil, KeyRound, Shield, ShieldOff } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/client";
 import {
+  createAngajatAction,
+  updateAngajatAction,
   createAngajatContAction,
   deleteAngajatContAction,
   DEFAULT_PERMISIUNI,
@@ -42,7 +43,6 @@ const PERMISIUNI_LIST: { key: keyof Permisiuni; label: string; desc: string }[] 
 const EMPTY: FormState = { nume: "", functie: "", telefon: "", email: "", activ: true };
 
 export function AngajatDrawer({ open, angajat, statieId, statieNume, onClose, onSuccess }: AngajatDrawerProps) {
-  const supabase = createClient();
   const [form, setForm] = useState<FormState>(EMPTY);
   const [permisiuni, setPermisiuni] = useState<Permisiuni>(DEFAULT_PERMISIUNI);
   const [createCont, setCreateCont] = useState(false);
@@ -101,29 +101,17 @@ export function AngajatDrawer({ open, angajat, statieId, statieNume, onClose, on
     setSaving(true);
     try {
       if (isEdit) {
-        // Update angajat row client-side
-        const updatePayload: Record<string, unknown> = {
+        const result = await updateAngajatAction(angajat.id, statieId, {
           nume: form.nume.trim(),
           functie: form.functie.trim() || null,
           telefon: form.telefon.trim() || null,
           email: form.email.trim() || null,
           activ: form.activ,
-          updated_at: new Date().toISOString(),
-        };
+          ...(hasCont ? { permisiuni } : {}),
+        });
 
-        // Include permisiuni if has account
-        if (hasCont) {
-          updatePayload.permisiuni = permisiuni;
-        }
-
-        const { error: updateError } = await (supabase as any)
-          .from("angajati")
-          .update(updatePayload)
-          .eq("id", angajat.id)
-          .eq("statie_id", statieId);
-
-        if (updateError) {
-          toast.error(updateError.message ?? "Eroare la actualizare");
+        if (!result.success) {
+          toast.error(result.error ?? "Eroare la actualizare");
           return;
         }
 
@@ -146,28 +134,23 @@ export function AngajatDrawer({ open, angajat, statieId, statieNume, onClose, on
           toast.success("Angajat actualizat");
         }
       } else {
-        // Insert new angajat client-side
-        const { data: newAngajat, error: insertError } = await (supabase as any)
-          .from("angajati")
-          .insert({
-            statie_id: statieId,
-            nume: form.nume.trim(),
-            functie: form.functie.trim() || null,
-            telefon: form.telefon.trim() || null,
-            email: form.email.trim() || null,
-            activ: form.activ,
-          })
-          .select("id")
-          .single();
+        const result = await createAngajatAction(
+          statieId,
+          form.nume.trim(),
+          form.functie.trim() || null,
+          form.telefon.trim() || null,
+          form.email.trim() || null,
+          form.activ
+        );
 
-        if (insertError || !newAngajat) {
-          toast.error(insertError?.message ?? "Eroare la adăugare");
+        if (!result.success || !result.id) {
+          toast.error(result.error ?? "Eroare la adăugare");
           return;
         }
 
         if (createCont) {
           const contResult = await createAngajatContAction(
-            newAngajat.id,
+            result.id,
             statieId,
             statieNume,
             form.nume.trim(),

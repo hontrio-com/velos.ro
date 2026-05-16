@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getAvatarStyle, getInitials } from "@/lib/avatar";
 import { AngajatDrawer } from "./angajat-drawer";
-import { deleteAngajatContAction } from "@/lib/actions/angajati";
+import { deleteAngajatContAction, deleteAngajatAction, toggleAngajatActivAction } from "@/lib/actions/angajati";
 
 export interface Angajat {
   id: string;
@@ -71,25 +71,17 @@ export function AngajatiClient({ statieId, statieNume }: AngajatiClientProps) {
     if (!confirm(`Ștergi angajatul "${a.nume}"? Programările atribuite vor rămâne neschimbate.`)) return;
     setDeletingId(a.id);
     try {
-      // If has auth account, delete it first via server action
       if (a.profile_id) {
         const result = await deleteAngajatContAction(a.profile_id);
         if (!result.success) {
           toast.error(result.error ?? "Eroare la ștergerea contului");
-          setDeletingId(null);
           return;
         }
       }
 
-      // Delete the angajat row client-side
-      const { error } = await (supabase as any)
-        .from("angajati")
-        .delete()
-        .eq("id", a.id)
-        .eq("statie_id", statieId);
-
-      if (error) {
-        toast.error(error.message ?? "Eroare la ștergere");
+      const result = await deleteAngajatAction(a.id, statieId);
+      if (!result.success) {
+        toast.error(result.error ?? "Eroare la ștergere");
       } else {
         toast.success("Angajat șters");
         invalidate();
@@ -105,14 +97,9 @@ export function AngajatiClient({ statieId, statieNume }: AngajatiClientProps) {
   async function handleToggle(a: Angajat) {
     setTogglingId(a.id);
     try {
-      const { error } = await (supabase as any)
-        .from("angajati")
-        .update({ activ: !a.activ, updated_at: new Date().toISOString() })
-        .eq("id", a.id)
-        .eq("statie_id", statieId);
-
-      if (error) {
-        toast.error(error.message ?? "Eroare");
+      const result = await toggleAngajatActivAction(a.id, statieId, !a.activ);
+      if (!result.success) {
+        toast.error(result.error ?? "Eroare");
       } else {
         toast.success(a.activ ? `${a.nume} dezactivat` : `${a.nume} activat`);
         invalidate();
