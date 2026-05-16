@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { stripe, PLAN_CONFIG, isValidPlan, isValidCycle, type PlanId, type BillingCycle } from "@/lib/stripe";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { sendStatieNouaEmail } from "@/lib/actions/email";
 
 export interface StatieOnboardingData {
@@ -94,6 +95,7 @@ export async function completeTrialOnboardingAction(
     return { error: e instanceof Error ? e.message : "Eroare necunoscută" };
   }
 
+  revalidatePath("/", "layout");
   redirect("/dashboard");
 }
 
