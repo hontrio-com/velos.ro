@@ -54,6 +54,7 @@ export default async function DashboardLayout({
       .from("angajati")
       .select("statie_id, permisiuni, statii(id, nume, activa)")
       .eq("profile_id", user.id)
+      .eq("activ", true)
       .maybeSingle();
 
     const angajat = angajatRaw as { statie_id: string; permisiuni: Record<string, boolean> | null; statii: { id: string; nume: string; activa: boolean } | { id: string; nume: string; activa: boolean }[] | null } | null;

@@ -14,7 +14,9 @@ async function getContext() {
   if (!user) redirect("/login");
 
   const statie = await getStatieForUser();
-  return { supabase, statie, profileId: user.id };
+  // Always bill SMS against the station owner, not the employee
+  const profileId = statie?.owner_profile_id ?? user.id;
+  return { supabase, statie, profileId };
 }
 
 export async function genereazaRemindereAction() {

@@ -90,7 +90,8 @@ export async function deleteProgramareAction(
     const client = Array.isArray(p.client) ? p.client[0] : p.client as { email: string | null; nume: string; prenume: string | null } | null;
     const vehicul = Array.isArray(p.vehicul) ? p.vehicul[0] : p.vehicul as { nr_inmatriculare: string; marca: string | null; model: string | null } | null;
 
-    const { data: ownerProfile } = await supabase
+    const serviceClient = createServiceClient();
+    const { data: ownerProfile } = await serviceClient
       .from("profiles")
       .select("email")
       .eq("id", ctx.ownerId)
@@ -317,7 +318,8 @@ export async function updateProgramareStatusAction(
 
   // If angajat: log activity + notify owner
   if (ctx.role === "angajat" && ctx.angajatId) {
-    const { data: ownerProfile } = await supabase
+    const serviceClient = createServiceClient();
+    const { data: ownerProfile } = await serviceClient
       .from("profiles")
       .select("email")
       .eq("id", ctx.ownerId)
@@ -433,7 +435,8 @@ export async function saveRezultatItpAction(input: {
 
   // If angajat: log activity + notify owner
   if (ctx.role === "angajat" && ctx.angajatId) {
-    const { data: ownerProfile } = await supabase
+    const serviceClient = createServiceClient();
+    const { data: ownerProfile } = await serviceClient
       .from("profiles")
       .select("email")
       .eq("id", ctx.ownerId)

@@ -13,7 +13,9 @@ async function getContext() {
   if (!user) redirect("/login");
 
   const statie = await getStatieForUser();
-  return { supabase, user, statieId: statie?.id ?? null };
+  // Always bill SMS against the station owner, not the employee
+  const profileId = statie?.owner_profile_id ?? user.id;
+  return { supabase, user, statieId: statie?.id ?? null, profileId };
 }
 
 const sendSchema = z.object({
@@ -28,7 +30,7 @@ export async function sendMesajAction(formData: unknown) {
     return { error: parsed.error.issues[0]?.message ?? "Date invalide" };
   }
 
-  const { user, statieId } = await getContext();
+  const { statieId, profileId } = await getContext();
   if (!statieId) return { error: "Stație negăsită" };
 
   const { client_id, telefon, mesaj } = parsed.data;
@@ -36,7 +38,7 @@ export async function sendMesajAction(formData: unknown) {
   const result = await sendSms({
     telefon,
     mesaj,
-    profileId: user.id,
+    profileId,
     statieId,
     clientId: client_id,
   });

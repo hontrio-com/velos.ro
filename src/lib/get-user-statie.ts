@@ -6,6 +6,8 @@ export interface UserStatie {
   nume: string;
   slug: string | null;
   telefon: string | null;
+  /** Always the station owner's profile ID — used for SMS quota billing */
+  owner_profile_id: string;
 }
 
 /**
@@ -30,7 +32,9 @@ export async function getStatieForUser(): Promise<UserStatie | null> {
     .limit(1)
     .maybeSingle();
 
-  if (ownerStatie) return ownerStatie as UserStatie;
+  if (ownerStatie) {
+    return { ...(ownerStatie as Omit<UserStatie, "owner_profile_id">), owner_profile_id: user.id };
+  }
 
   // Employee path — service client bypasses RLS
   const db = createServiceClient();
@@ -45,9 +49,17 @@ export async function getStatieForUser(): Promise<UserStatie | null> {
 
   const { data: statie } = await db
     .from("statii")
-    .select("id, nume, slug, telefon")
+    .select("id, nume, slug, telefon, owner_id")
     .eq("id", angajat.statie_id)
     .maybeSingle();
 
-  return (statie as UserStatie) ?? null;
+  if (!statie) return null;
+
+  return {
+    id: (statie as any).id,
+    nume: (statie as any).nume,
+    slug: (statie as any).slug ?? null,
+    telefon: (statie as any).telefon ?? null,
+    owner_profile_id: (statie as any).owner_id,
+  };
 }

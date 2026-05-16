@@ -28,7 +28,7 @@ export default async function RapoartePage() {
           statieId={statie.id}
           statieNume={statie.nume}
           statieSlug={statie.slug ?? ""}
-          profileId={user.id}
+          profileId={statie.owner_profile_id}
         />
       </div>
     </PageTransition>

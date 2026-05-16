@@ -47,15 +47,20 @@ export default async function DashboardPage() {
 
   if (!user) return null;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name")
-    .eq("id", user.id)
-    .single();
+  const [profileResult, statie] = await Promise.all([
+    (supabase as any).from("profiles").select("full_name, role").eq("id", user.id).single(),
+    getStatieForUser(),
+  ]);
+  const profile = profileResult?.data as { full_name: string | null; role: string } | null;
 
-  const statie = await getStatieForUser();
-
-  if (!statie) redirect("/setari/statii/noua");
+  if (!statie) {
+    // Employees without a station should be signed out (deactivated/removed)
+    if ((profile as any)?.role === "angajat") {
+      await supabase.auth.signOut();
+      redirect("/login");
+    }
+    redirect("/setari/statii/noua");
+  }
 
   const azi = format(new Date(), "yyyy-MM-dd");
   const ieri = format(new Date(Date.now() - 86400000), "yyyy-MM-dd");
