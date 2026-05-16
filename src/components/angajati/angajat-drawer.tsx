@@ -19,6 +19,8 @@ import {
   type Angajat,
   type Permisiuni,
   DEFAULT_PERMISIUNI,
+} from "@/lib/actions/angajati-types";
+import {
   createAngajatAction,
   updateAngajatAction,
   createContAngajatAction,
@@ -132,6 +134,7 @@ export function AngajatDrawer({
 
   // ── Submit ─────────────────────────────────────────────────────────────────
   async function handleSubmit() {
+    console.log("[AngajatDrawer] handleSubmit called, form:", form);
     // Validate basic fields
     if (!form.nume.trim()) {
       toast.error("Numele este obligatoriu");
@@ -236,6 +239,11 @@ export function AngajatDrawer({
       }
 
       onSuccess();
+    } catch (err) {
+      console.error("[AngajatDrawer] handleSubmit error:", err);
+      toast.error(
+        err instanceof Error ? err.message : "Eroare neașteptată. Verifică consola."
+      );
     } finally {
       setSaving(false);
     }

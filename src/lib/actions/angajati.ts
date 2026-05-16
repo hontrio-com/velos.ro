@@ -4,43 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { revalidatePath } from "next/cache";
 import { sendAngajatInvitatieEmail } from "@/lib/actions/email";
+import type { Angajat, Permisiuni, ActionResult } from "@/lib/actions/angajati-types";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────────────────────────────────────
-
-export interface Angajat {
-  id: string;
-  statie_id: string;
-  profile_id: string | null;
-  nume: string;
-  functie: string | null;
-  telefon: string | null;
-  email: string | null;
-  activ: boolean;
-  permisiuni: Permisiuni | null;
-  created_at: string;
-}
-
-export type Permisiuni = {
-  programari: boolean;
-  clienti: boolean;
-  vehicule: boolean;
-  rapoarte: boolean;
-  remindere: boolean;
-};
-
-export const DEFAULT_PERMISIUNI: Permisiuni = {
-  programari: true,
-  clienti: true,
-  vehicule: false,
-  rapoarte: false,
-  remindere: false,
-};
-
-export type ActionResult<T = undefined> =
-  | (T extends undefined ? { success: true } : { success: true; data: T })
-  | { success: false; error: string };
+// Re-export for backwards-compatibility with existing imports
+export type { Angajat, Permisiuni, ActionResult } from "@/lib/actions/angajati-types";
+export { DEFAULT_PERMISIUNI } from "@/lib/actions/angajati-types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers (private)

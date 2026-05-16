@@ -17,8 +17,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getAvatarStyle, getInitials } from "@/lib/avatar";
+import { type Angajat } from "@/lib/actions/angajati-types";
 import {
-  type Angajat,
   getAngajatiAction,
   deleteAngajatAction,
   deleteContAngajatAction,
@@ -55,6 +55,7 @@ export function AngajatiClient({ statieId, statieNume }: Props) {
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   function handleAdd() {
+    console.log("[AngajatiClient] handleAdd called, opening drawer");
     setEditingAngajat(null);
     setDrawerOpen(true);
   }
