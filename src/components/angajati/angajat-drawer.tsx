@@ -1,23 +1,37 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Loader2, UserPlus, Pencil, KeyRound, Shield, ShieldOff } from "lucide-react";
+import {
+  X,
+  Loader2,
+  UserPlus,
+  Pencil,
+  KeyRound,
+  Shield,
+  ShieldOff,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
+  type Angajat,
+  type Permisiuni,
+  DEFAULT_PERMISIUNI,
   createAngajatAction,
   updateAngajatAction,
-  createAngajatContAction,
-  deleteAngajatContAction,
-  DEFAULT_PERMISIUNI,
-  type Permisiuni,
+  createContAngajatAction,
+  deleteContAngajatAction,
 } from "@/lib/actions/angajati";
-import type { Angajat } from "./angajati-client";
-import { cn } from "@/lib/utils";
 
-interface AngajatDrawerProps {
+// ─────────────────────────────────────────────────────────────────────────────
+// Types & constants
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface Props {
   open: boolean;
-  angajat: Angajat | null;
+  angajat: Angajat | null; // null = adăugare nouă, non-null = editare
   statieId: string;
   statieNume: string;
   onClose: () => void;
@@ -32,186 +46,257 @@ interface FormState {
   activ: boolean;
 }
 
-const PERMISIUNI_LIST: { key: keyof Permisiuni; label: string; desc: string }[] = [
-  { key: "programari", label: "Programări", desc: "Creează și gestionează programări" },
-  { key: "clienti", label: "Clienți", desc: "Vizualizează profilurile clienților" },
-  { key: "vehicule", label: "Vehicule", desc: "Vizualizează vehiculele" },
-  { key: "rapoarte", label: "Rapoarte", desc: "Accesează rapoartele" },
+const EMPTY_FORM: FormState = {
+  nume: "",
+  functie: "",
+  telefon: "",
+  email: "",
+  activ: true,
+};
+
+const PERMISIUNI_CONFIG: {
+  key: keyof Permisiuni;
+  label: string;
+  desc: string;
+}[] = [
+  { key: "programari", label: "Programări", desc: "Crează și gestionează programări" },
+  { key: "clienti", label: "Clienți", desc: "Vizualizează și editează profiluri clienți" },
+  { key: "vehicule", label: "Vehicule", desc: "Vizualizează și editează vehicule" },
+  { key: "rapoarte", label: "Rapoarte", desc: "Accesează rapoartele stației" },
   { key: "remindere", label: "Remindere", desc: "Gestionează reminderele SMS" },
 ];
 
-const EMPTY: FormState = { nume: "", functie: "", telefon: "", email: "", activ: true };
+// ─────────────────────────────────────────────────────────────────────────────
+// Component
+// ─────────────────────────────────────────────────────────────────────────────
 
-export function AngajatDrawer({ open, angajat, statieId, statieNume, onClose, onSuccess }: AngajatDrawerProps) {
-  const [form, setForm] = useState<FormState>(EMPTY);
-  const [permisiuni, setPermisiuni] = useState<Permisiuni>(DEFAULT_PERMISIUNI);
-  const [createCont, setCreateCont] = useState(false);
-  const [parola, setParola] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [deletingCont, setDeletingCont] = useState(false);
-
+export function AngajatDrawer({
+  open,
+  angajat,
+  statieId,
+  statieNume,
+  onClose,
+  onSuccess,
+}: Props) {
   const isEdit = !!angajat;
   const hasCont = !!angajat?.profile_id;
 
+  // ── Form state ─────────────────────────────────────────────────────────────
+  const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [permisiuni, setPermisiuni] = useState<Permisiuni>(DEFAULT_PERMISIUNI);
+
+  // Cont creation (only for new angajat or existing without cont)
+  const [vreauCont, setVreauCont] = useState(false);
+  const [contEmail, setContEmail] = useState("");
+  const [contParola, setContParola] = useState("");
+  const [showParola, setShowParola] = useState(false);
+
+  // Loading states
+  const [saving, setSaving] = useState(false);
+  const [deletingCont, setDeletingCont] = useState(false);
+
+  // ── Sync form when angajat changes ─────────────────────────────────────────
   useEffect(() => {
-    if (open) {
-      setForm(
-        angajat
-          ? {
-              nume: angajat.nume,
-              functie: angajat.functie ?? "",
-              telefon: angajat.telefon ?? "",
-              email: angajat.email ?? "",
-              activ: angajat.activ,
-            }
-          : EMPTY
+    if (!open) return;
+
+    if (angajat) {
+      setForm({
+        nume: angajat.nume,
+        functie: angajat.functie ?? "",
+        telefon: angajat.telefon ?? "",
+        email: angajat.email ?? "",
+        activ: angajat.activ,
+      });
+      setPermisiuni(
+        (angajat.permisiuni as Permisiuni | null) ?? DEFAULT_PERMISIUNI
       );
-      setPermisiuni((angajat?.permisiuni as Permisiuni) ?? DEFAULT_PERMISIUNI);
-      setCreateCont(false);
-      setParola("");
+    } else {
+      setForm(EMPTY_FORM);
+      setPermisiuni(DEFAULT_PERMISIUNI);
     }
+
+    setVreauCont(false);
+    setContEmail("");
+    setContParola("");
+    setShowParola(false);
   }, [open, angajat]);
 
-  function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }));
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function setField<K extends keyof FormState>(k: K, v: FormState[K]) {
+    setForm((prev) => ({ ...prev, [k]: v }));
   }
 
-  function togglePermisiune(key: keyof Permisiuni) {
-    setPermisiuni((prev) => ({ ...prev, [key]: !prev[key] }));
+  function togglePerm(k: keyof Permisiuni) {
+    setPermisiuni((prev) => ({ ...prev, [k]: !prev[k] }));
   }
 
+  // ── Submit ─────────────────────────────────────────────────────────────────
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    // Validate basic fields
     if (!form.nume.trim()) {
       toast.error("Numele este obligatoriu");
       return;
     }
 
-    if (createCont) {
-      if (!form.email.trim()) {
-        toast.error("Email-ul este obligatoriu pentru cont");
+    // Validate cont creation fields
+    if (vreauCont && !hasCont) {
+      const emailPentruCont = contEmail.trim() || form.email.trim();
+      if (!emailPentruCont) {
+        toast.error("Email-ul este obligatoriu pentru crearea contului");
         return;
       }
-      if (parola.length < 8) {
-        toast.error("Parola trebuie să aibă minim 8 caractere");
+      if (contParola.length < 8) {
+        toast.error("Parola trebuie să aibă cel puțin 8 caractere");
         return;
       }
     }
 
     setSaving(true);
     try {
-      if (isEdit) {
+      if (isEdit && angajat) {
+        // ── EDITARE ──────────────────────────────────────────────────────────
         const result = await updateAngajatAction(angajat.id, statieId, {
           nume: form.nume.trim(),
           functie: form.functie.trim() || null,
           telefon: form.telefon.trim() || null,
           email: form.email.trim() || null,
           activ: form.activ,
+          // Actualizează permisiunile dacă angajatul are cont
           ...(hasCont ? { permisiuni } : {}),
         });
 
         if (!result.success) {
-          toast.error(result.error ?? "Eroare la actualizare");
+          toast.error(result.error);
           return;
         }
 
-        if (createCont && !hasCont) {
-          const contResult = await createAngajatContAction(
+        // Creează cont dacă e solicitat și nu există deja
+        if (vreauCont && !hasCont) {
+          const emailPentruCont = contEmail.trim() || form.email.trim();
+          const contResult = await createContAngajatAction(
             angajat.id,
             statieId,
             statieNume,
             form.nume.trim(),
-            form.email.trim(),
-            parola,
+            emailPentruCont,
+            contParola,
             permisiuni
           );
           if (!contResult.success) {
-            toast.error(contResult.error ?? "Eroare la crearea contului");
+            toast.error(
+              `Angajat actualizat, dar eroare la cont: ${contResult.error}`
+            );
+            onSuccess();
             return;
           }
-          toast.success("Angajat actualizat și cont creat");
+          toast.success("Angajat actualizat și cont creat!");
         } else {
           toast.success("Angajat actualizat");
         }
       } else {
-        const result = await createAngajatAction(
-          statieId,
-          form.nume.trim(),
-          form.functie.trim() || null,
-          form.telefon.trim() || null,
-          form.email.trim() || null,
-          form.activ
-        );
+        // ── CREARE NOUĂ ──────────────────────────────────────────────────────
+        const result = await createAngajatAction(statieId, {
+          nume: form.nume.trim(),
+          functie: form.functie.trim() || null,
+          telefon: form.telefon.trim() || null,
+          email: form.email.trim() || null,
+          activ: form.activ,
+        });
 
-        if (!result.success || !result.id) {
-          toast.error(result.error ?? "Eroare la adăugare");
+        if (!result.success) {
+          toast.error(result.error);
           return;
         }
 
-        if (createCont) {
-          const contResult = await createAngajatContAction(
-            result.id,
+        const angajatId = result.data.id;
+
+        // Creează cont dacă e solicitat
+        if (vreauCont) {
+          const emailPentruCont = contEmail.trim() || form.email.trim();
+          const contResult = await createContAngajatAction(
+            angajatId,
             statieId,
             statieNume,
             form.nume.trim(),
-            form.email.trim(),
-            parola,
+            emailPentruCont,
+            contParola,
             permisiuni
           );
           if (!contResult.success) {
-            toast.error(`Angajat creat, dar eroare la cont: ${contResult.error}`);
+            toast.error(
+              `Angajat adăugat, dar eroare la cont: ${contResult.error}`
+            );
             onSuccess();
             return;
           }
-          toast.success("Angajat adăugat și cont creat. Email de invitație trimis!");
+          toast.success("Angajat adăugat cu cont de acces! Email trimis.");
         } else {
           toast.success("Angajat adăugat");
         }
       }
 
       onSuccess();
-    } catch (err) {
-      console.error("handleSubmit error:", err);
-      toast.error("Eroare neașteptată. Încearcă din nou.");
     } finally {
       setSaving(false);
     }
   }
 
+  // ── Delete cont ────────────────────────────────────────────────────────────
   async function handleDeleteCont() {
-    if (!angajat || !hasCont || !angajat.profile_id) return;
-    if (!confirm("Ștergi contul de acces? Angajatul nu va mai putea intra în platformă.")) return;
+    if (!angajat?.profile_id) return;
+    if (
+      !confirm(
+        "Revocare acces platformă?\nAngajatul nu va mai putea intra în cont. Datele din platformă rămân."
+      )
+    )
+      return;
 
     setDeletingCont(true);
-    const result = await deleteAngajatContAction(angajat.profile_id);
+    const result = await deleteContAngajatAction(angajat.profile_id, statieId);
     setDeletingCont(false);
 
     if (result.success) {
-      toast.success("Cont șters");
+      toast.success("Acces revocat");
       onSuccess();
     } else {
-      toast.error(result.error ?? "Eroare");
+      toast.error(result.error);
     }
   }
 
+  // ── Render guard ───────────────────────────────────────────────────────────
   if (!open) return null;
+
+  const emailPentruCont = contEmail.trim() || form.email.trim();
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[1px]" onClick={onClose} />
-      <div className="fixed right-0 top-0 z-50 h-full w-full max-w-[440px] border-l border-[#E5E7EB] bg-white shadow-2xl flex flex-col">
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[1px]"
+        onClick={onClose}
+        aria-hidden
+      />
+
+      {/* Panel */}
+      <div className="fixed right-0 top-0 z-50 h-full w-full max-w-[460px] border-l border-[#E5E7EB] bg-white shadow-2xl flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#E5E7EB] shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#EFF6FF]">
-              {isEdit ? <Pencil className="h-4 w-4 text-[#1877F2]" /> : <UserPlus className="h-4 w-4 text-[#1877F2]" />}
+              {isEdit ? (
+                <Pencil className="h-4 w-4 text-[#1877F2]" />
+              ) : (
+                <UserPlus className="h-4 w-4 text-[#1877F2]" />
+              )}
             </div>
             <div>
               <p className="font-semibold text-[#111318] text-sm">
                 {isEdit ? "Editează angajat" : "Angajat nou"}
               </p>
               <p className="text-xs text-[#9CA3AF]">
-                {isEdit ? angajat.nume : "Completează datele"}
+                {isEdit ? angajat!.nume : statieNume}
               </p>
             </div>
           </div>
@@ -224,10 +309,18 @@ export function AngajatDrawer({ open, angajat, statieId, statieNume, onClose, on
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-5">
-          {/* ── Date de bază ── */}
-          <div className="space-y-4">
+        {/* Scrollable form body */}
+        <form
+          id="angajat-form"
+          onSubmit={handleSubmit}
+          className="flex-1 overflow-y-auto p-5 space-y-6"
+        >
+          {/* ── Date personale ── */}
+          <section className="space-y-4">
+            <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">
+              Date personale
+            </p>
+
             <div>
               <label className="block text-xs font-medium text-[#374151] mb-1.5">
                 Nume complet <span className="text-red-500">*</span>
@@ -237,72 +330,78 @@ export function AngajatDrawer({ open, angajat, statieId, statieNume, onClose, on
                 value={form.nume}
                 onChange={(e) => setField("nume", e.target.value)}
                 placeholder="ex: Ion Popescu"
-                className="w-full text-sm rounded-lg border border-[#E5E7EB] px-3 py-2 outline-none focus:border-[#1877F2] focus:ring-2 focus:ring-[#1877F2]/20"
-                required
+                autoComplete="off"
+                className="w-full text-sm rounded-lg border border-[#E5E7EB] px-3 py-2 outline-none focus:border-[#1877F2] focus:ring-2 focus:ring-[#1877F2]/20 transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-[#374151] mb-1.5">Funcție</label>
+              <label className="block text-xs font-medium text-[#374151] mb-1.5">
+                Funcție / Rol
+              </label>
               <input
                 type="text"
                 value={form.functie}
                 onChange={(e) => setField("functie", e.target.value)}
                 placeholder="ex: Inspector ITP, Mecanic"
-                className="w-full text-sm rounded-lg border border-[#E5E7EB] px-3 py-2 outline-none focus:border-[#1877F2] focus:ring-2 focus:ring-[#1877F2]/20"
+                autoComplete="off"
+                className="w-full text-sm rounded-lg border border-[#E5E7EB] px-3 py-2 outline-none focus:border-[#1877F2] focus:ring-2 focus:ring-[#1877F2]/20 transition-all"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-[#374151] mb-1.5">Telefon</label>
+                <label className="block text-xs font-medium text-[#374151] mb-1.5">
+                  Telefon
+                </label>
                 <input
                   type="tel"
                   value={form.telefon}
                   onChange={(e) => setField("telefon", e.target.value)}
                   placeholder="07xx xxx xxx"
-                  className="w-full text-sm rounded-lg border border-[#E5E7EB] px-3 py-2 outline-none focus:border-[#1877F2] focus:ring-2 focus:ring-[#1877F2]/20"
+                  autoComplete="off"
+                  className="w-full text-sm rounded-lg border border-[#E5E7EB] px-3 py-2 outline-none focus:border-[#1877F2] focus:ring-2 focus:ring-[#1877F2]/20 transition-all"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-[#374151] mb-1.5">Email</label>
+                <label className="block text-xs font-medium text-[#374151] mb-1.5">
+                  Email
+                </label>
                 <input
                   type="email"
                   value={form.email}
                   onChange={(e) => setField("email", e.target.value)}
                   placeholder="ion@statie.ro"
-                  className="w-full text-sm rounded-lg border border-[#E5E7EB] px-3 py-2 outline-none focus:border-[#1877F2] focus:ring-2 focus:ring-[#1877F2]/20"
+                  autoComplete="off"
+                  className="w-full text-sm rounded-lg border border-[#E5E7EB] px-3 py-2 outline-none focus:border-[#1877F2] focus:ring-2 focus:ring-[#1877F2]/20 transition-all"
                 />
               </div>
             </div>
 
-            {/* Activ toggle */}
+            {/* Toggle activ */}
             <div className="flex items-center justify-between py-3 px-4 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB]">
               <div>
-                <p className="text-sm font-medium text-[#111318]">Angajat activ</p>
-                <p className="text-xs text-[#9CA3AF] mt-0.5">Poate fi atribuit la programări</p>
+                <p className="text-sm font-medium text-[#111318]">
+                  Angajat activ
+                </p>
+                <p className="text-xs text-[#9CA3AF] mt-0.5">
+                  Poate fi atribuit la programări
+                </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setField("activ", !form.activ)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  form.activ ? "bg-[#1877F2]" : "bg-[#E5E7EB]"
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
-                    form.activ ? "translate-x-6" : "translate-x-1"
-                  }`}
-                />
-              </button>
+              <Toggle
+                checked={form.activ}
+                onChange={(v) => setField("activ", v)}
+              />
             </div>
-          </div>
+          </section>
 
           {/* ── Cont de acces ── */}
-          <div className="border border-[#E5E7EB] rounded-xl overflow-hidden">
+          <section className="border border-[#E5E7EB] rounded-xl overflow-hidden">
             <div className="px-4 py-3 bg-[#F9FAFB] border-b border-[#E5E7EB] flex items-center gap-2">
               <KeyRound className="h-4 w-4 text-[#6B7280]" />
-              <p className="text-sm font-semibold text-[#111318]">Cont de acces platformă</p>
+              <p className="text-sm font-semibold text-[#111318]">
+                Cont de acces platformă
+              </p>
               {hasCont && (
                 <span className="ml-auto px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-semibold rounded-full border border-emerald-200">
                   Activ
@@ -312,42 +411,19 @@ export function AngajatDrawer({ open, angajat, statieId, statieNume, onClose, on
 
             <div className="p-4 space-y-4">
               {hasCont ? (
-                // Angajatul are deja cont — arată permisiunile
-                <div className="space-y-3">
+                // ── Angajat cu cont existent ──────────────────────────────
+                <div className="space-y-4">
                   <p className="text-xs text-[#6B7280]">
-                    Angajatul se poate loga cu emailul <strong>{angajat?.email}</strong>.
-                    Editează permisiunile de mai jos.
+                    Angajatul se poate autentifica cu{" "}
+                    <strong className="text-[#111318]">{angajat!.email}</strong>
+                    . Modifică permisiunile de mai jos.
                   </p>
 
-                  {/* Permisiuni */}
-                  <div className="space-y-2">
-                    {PERMISIUNI_LIST.map(({ key, label, desc }) => (
-                      <label
-                        key={key}
-                        className={cn(
-                          "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
-                          permisiuni[key]
-                            ? "bg-[#EFF6FF] border-[#BFDBFE]"
-                            : "bg-[#F9FAFB] border-[#E5E7EB] hover:bg-[#F3F4F6]"
-                        )}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={permisiuni[key]}
-                          onChange={() => togglePermisiune(key)}
-                          className="h-4 w-4 rounded accent-[#1877F2]"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className={cn("text-sm font-medium", permisiuni[key] ? "text-[#1877F2]" : "text-[#374151]")}>
-                            {label}
-                          </p>
-                          <p className="text-xs text-[#9CA3AF]">{desc}</p>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
+                  <PermisiuniEditor
+                    permisiuni={permisiuni}
+                    onToggle={togglePerm}
+                  />
 
-                  {/* Șterge cont */}
                   <button
                     type="button"
                     onClick={handleDeleteCont}
@@ -355,64 +431,93 @@ export function AngajatDrawer({ open, angajat, statieId, statieNume, onClose, on
                     className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
                   >
                     <ShieldOff className="h-3.5 w-3.5" />
-                    {deletingCont ? "Se șterge..." : "Revocă accesul la platformă"}
+                    {deletingCont
+                      ? "Se revocă accesul..."
+                      : "Revocă accesul la platformă"}
                   </button>
                 </div>
               ) : (
-                // Fără cont — toggle creare
+                // ── Angajat fără cont (creare nouă sau editare) ──────────
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-[#111318]">Creează cont de acces</p>
+                      <p className="text-sm font-medium text-[#111318]">
+                        Creează cont de acces
+                      </p>
                       <p className="text-xs text-[#9CA3AF] mt-0.5">
                         Angajatul va putea intra în platformă
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setCreateCont((v) => !v)}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        createCont ? "bg-[#1877F2]" : "bg-[#E5E7EB]"
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
-                          createCont ? "translate-x-6" : "translate-x-1"
-                        }`}
-                      />
-                    </button>
+                    <Toggle
+                      checked={vreauCont}
+                      onChange={setVreauCont}
+                    />
                   </div>
 
-                  {createCont && (
+                  {vreauCont && (
                     <div className="space-y-3 pt-1">
-                      {/* Email (pre-filled) */}
+                      {/* Email cont */}
                       <div>
                         <label className="block text-xs font-medium text-[#374151] mb-1.5">
-                          Email cont <span className="text-red-500">*</span>
+                          Email cont{" "}
+                          <span className="text-red-500">*</span>
+                          {form.email && !contEmail && (
+                            <span className="ml-1 text-[#9CA3AF]">
+                              (preluat din câmpul de mai sus)
+                            </span>
+                          )}
                         </label>
                         <input
                           type="email"
-                          value={form.email}
-                          onChange={(e) => setField("email", e.target.value)}
-                          placeholder="ion@statie.ro"
-                          className="w-full text-sm rounded-lg border border-[#E5E7EB] px-3 py-2 outline-none focus:border-[#1877F2] focus:ring-2 focus:ring-[#1877F2]/20"
+                          value={contEmail}
+                          onChange={(e) => setContEmail(e.target.value)}
+                          placeholder={
+                            form.email || "email@angajat.ro"
+                          }
+                          autoComplete="new-password"
+                          className="w-full text-sm rounded-lg border border-[#E5E7EB] px-3 py-2 outline-none focus:border-[#1877F2] focus:ring-2 focus:ring-[#1877F2]/20 transition-all"
                         />
+                        {!emailPentruCont && (
+                          <p className="text-[11px] text-red-400 mt-1">
+                            Completează email-ul angajatului sau câmpul Email de mai sus.
+                          </p>
+                        )}
                       </div>
 
                       {/* Parolă */}
                       <div>
                         <label className="block text-xs font-medium text-[#374151] mb-1.5">
-                          Parolă inițială <span className="text-red-500">*</span>
+                          Parolă inițială{" "}
+                          <span className="text-red-500">*</span>
                         </label>
-                        <input
-                          type="text"
-                          value={parola}
-                          onChange={(e) => setParola(e.target.value)}
-                          placeholder="minim 8 caractere"
-                          className="w-full text-sm rounded-lg border border-[#E5E7EB] px-3 py-2 outline-none focus:border-[#1877F2] focus:ring-2 focus:ring-[#1877F2]/20 font-mono"
-                        />
+                        <div className="relative">
+                          <input
+                            type={showParola ? "text" : "password"}
+                            value={contParola}
+                            onChange={(e) => setContParola(e.target.value)}
+                            placeholder="minim 8 caractere"
+                            autoComplete="new-password"
+                            className="w-full text-sm rounded-lg border border-[#E5E7EB] px-3 py-2 pr-9 outline-none focus:border-[#1877F2] focus:ring-2 focus:ring-[#1877F2]/20 transition-all font-mono"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowParola((v) => !v)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#6B7280]"
+                          >
+                            {showParola ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                        {contParola && contParola.length < 8 && (
+                          <p className="text-[11px] text-amber-500 mt-1">
+                            Parola trebuie să aibă minim 8 caractere ({contParola.length}/8)
+                          </p>
+                        )}
                         <p className="text-[11px] text-[#9CA3AF] mt-1">
-                          Va fi trimisă prin email angajatului
+                          Va fi trimisă prin email angajatului.
                         </p>
                       </div>
 
@@ -420,51 +525,36 @@ export function AngajatDrawer({ open, angajat, statieId, statieNume, onClose, on
                       <div>
                         <p className="text-xs font-medium text-[#374151] mb-2 flex items-center gap-1.5">
                           <Shield className="h-3.5 w-3.5" />
-                          Permisiuni acces
+                          Permisiuni de acces
                         </p>
-                        <div className="space-y-2">
-                          {PERMISIUNI_LIST.map(({ key, label, desc }) => (
-                            <label
-                              key={key}
-                              className={cn(
-                                "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
-                                permisiuni[key]
-                                  ? "bg-[#EFF6FF] border-[#BFDBFE]"
-                                  : "bg-[#F9FAFB] border-[#E5E7EB] hover:bg-[#F3F4F6]"
-                              )}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={permisiuni[key]}
-                                onChange={() => togglePermisiune(key)}
-                                className="h-4 w-4 rounded accent-[#1877F2]"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <p className={cn("text-sm font-medium", permisiuni[key] ? "text-[#1877F2]" : "text-[#374151]")}>
-                                  {label}
-                                </p>
-                                <p className="text-xs text-[#9CA3AF]">{desc}</p>
-                              </div>
-                            </label>
-                          ))}
-                        </div>
+                        <PermisiuniEditor
+                          permisiuni={permisiuni}
+                          onToggle={togglePerm}
+                        />
                       </div>
                     </div>
                   )}
                 </div>
               )}
             </div>
-          </div>
+          </section>
         </form>
 
         {/* Footer */}
         <div className="border-t border-[#E5E7EB] p-4 flex gap-3 shrink-0">
-          <Button variant="outline" className="flex-1" onClick={onClose} disabled={saving}>
+          <Button
+            type="button"
+            variant="outline"
+            className="flex-1"
+            onClick={onClose}
+            disabled={saving}
+          >
             Anulează
           </Button>
           <Button
+            type="submit"
+            form="angajat-form"
             className="flex-1 bg-[#1877F2] hover:bg-[#1565D8]"
-            onClick={handleSubmit as unknown as React.MouseEventHandler}
             disabled={saving || !form.nume.trim()}
           >
             {saving ? (
@@ -473,7 +563,7 @@ export function AngajatDrawer({ open, angajat, statieId, statieNume, onClose, on
                 Se salvează...
               </>
             ) : isEdit ? (
-              "Salvează"
+              "Salvează modificările"
             ) : (
               "Adaugă angajat"
             )}
@@ -481,5 +571,79 @@ export function AngajatDrawer({ open, angajat, statieId, statieNume, onClose, on
         </div>
       </div>
     </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sub-components
+// ─────────────────────────────────────────────────────────────────────────────
+
+function Toggle({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1877F2]/40",
+        checked ? "bg-[#1877F2]" : "bg-[#E5E7EB]"
+      )}
+    >
+      <span
+        className={cn(
+          "inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform",
+          checked ? "translate-x-6" : "translate-x-1"
+        )}
+      />
+    </button>
+  );
+}
+
+function PermisiuniEditor({
+  permisiuni,
+  onToggle,
+}: {
+  permisiuni: Permisiuni;
+  onToggle: (k: keyof Permisiuni) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      {PERMISIUNI_CONFIG.map(({ key, label, desc }) => (
+        <label
+          key={key}
+          className={cn(
+            "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
+            permisiuni[key]
+              ? "bg-[#EFF6FF] border-[#BFDBFE]"
+              : "bg-[#F9FAFB] border-[#E5E7EB] hover:bg-[#F3F4F6]"
+          )}
+        >
+          <input
+            type="checkbox"
+            checked={permisiuni[key]}
+            onChange={() => onToggle(key)}
+            className="h-4 w-4 rounded accent-[#1877F2] shrink-0"
+          />
+          <div className="flex-1 min-w-0">
+            <p
+              className={cn(
+                "text-sm font-medium",
+                permisiuni[key] ? "text-[#1877F2]" : "text-[#374151]"
+              )}
+            >
+              {label}
+            </p>
+            <p className="text-xs text-[#9CA3AF]">{desc}</p>
+          </div>
+        </label>
+      ))}
+    </div>
   );
 }

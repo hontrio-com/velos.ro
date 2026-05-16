@@ -8,7 +8,10 @@ export const metadata: Metadata = { title: "Angajați" };
 
 export default async function AngajatiPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
   const { data: statie } = await supabase
@@ -18,7 +21,7 @@ export default async function AngajatiPage() {
     .eq("activa", true)
     .order("created_at")
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (!statie) redirect("/setari");
 

@@ -1,13 +1,25 @@
 "use server";
 
-import { createServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { revalidatePath } from "next/cache";
 import { sendAngajatInvitatieEmail } from "@/lib/actions/email";
 
-export interface AngajatActionResult {
-  success: boolean;
-  error?: string;
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface Angajat {
+  id: string;
+  statie_id: string;
+  profile_id: string | null;
+  nume: string;
+  functie: string | null;
+  telefon: string | null;
+  email: string | null;
+  activ: boolean;
+  permisiuni: Permisiuni | null;
+  created_at: string;
 }
 
 export type Permisiuni = {
@@ -26,9 +38,256 @@ export const DEFAULT_PERMISIUNI: Permisiuni = {
   remindere: false,
 };
 
-// ── CREATE CONT (needs auth.admin → server action) ───────────────────────────
+export type ActionResult<T = undefined> =
+  | (T extends undefined ? { success: true } : { success: true; data: T })
+  | { success: false; error: string };
 
-export async function createAngajatContAction(
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers (private)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Returns the authenticated user or null */
+async function getUser() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+  if (error || !user) return null;
+  return user;
+}
+
+/**
+ * Verifies that `userId` is the owner of `statieId`.
+ * Uses service client to bypass RLS — purely a logic check.
+ */
+async function assertOwnsStatie(
+  userId: string,
+  statieId: string
+): Promise<boolean> {
+  const db = createServiceClient();
+  const { data, error } = await db
+    .from("statii")
+    .select("id")
+    .eq("id", statieId)
+    .eq("owner_id", userId)
+    .maybeSingle();
+  return !error && !!data;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// READ
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function getAngajatiAction(statieId: string): Promise<Angajat[]> {
+  try {
+    const user = await getUser();
+    if (!user) return [];
+
+    const owns = await assertOwnsStatie(user.id, statieId);
+    if (!owns) return [];
+
+    const db = createServiceClient();
+    const { data, error } = await db
+      .from("angajati")
+      .select(
+        "id, statie_id, profile_id, nume, functie, telefon, email, activ, permisiuni, created_at"
+      )
+      .eq("statie_id", statieId)
+      .order("activ", { ascending: false })
+      .order("nume");
+
+    if (error) {
+      console.error("[getAngajatiAction]", error.message);
+      return [];
+    }
+
+    return (data ?? []) as unknown as Angajat[];
+  } catch (err) {
+    console.error("[getAngajatiAction] catch:", err);
+    return [];
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CREATE
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function createAngajatAction(
+  statieId: string,
+  payload: {
+    nume: string;
+    functie: string | null;
+    telefon: string | null;
+    email: string | null;
+    activ: boolean;
+  }
+): Promise<ActionResult<{ id: string }>> {
+  try {
+    const user = await getUser();
+    if (!user) return { success: false, error: "Neautentificat" };
+
+    const owns = await assertOwnsStatie(user.id, statieId);
+    if (!owns) return { success: false, error: "Acces interzis" };
+
+    const db = createServiceClient();
+    const { data, error } = await db
+      .from("angajati")
+      .insert({
+        statie_id: statieId,
+        nume: payload.nume,
+        functie: payload.functie,
+        telefon: payload.telefon,
+        email: payload.email,
+        activ: payload.activ,
+      } as never)
+      .select("id")
+      .single();
+
+    if (error) return { success: false, error: error.message };
+
+    revalidatePath("/angajati");
+    return { success: true, data: { id: (data as any).id } };
+  } catch (err) {
+    console.error("[createAngajatAction] catch:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Eroare neașteptată",
+    };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UPDATE
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function updateAngajatAction(
+  angajatId: string,
+  statieId: string,
+  payload: {
+    nume: string;
+    functie: string | null;
+    telefon: string | null;
+    email: string | null;
+    activ: boolean;
+    permisiuni?: Permisiuni;
+  }
+): Promise<ActionResult> {
+  try {
+    const user = await getUser();
+    if (!user) return { success: false, error: "Neautentificat" };
+
+    const owns = await assertOwnsStatie(user.id, statieId);
+    if (!owns) return { success: false, error: "Acces interzis" };
+
+    const db = createServiceClient();
+    const updateData: Record<string, unknown> = {
+      nume: payload.nume,
+      functie: payload.functie,
+      telefon: payload.telefon,
+      email: payload.email,
+      activ: payload.activ,
+      updated_at: new Date().toISOString(),
+    };
+    if (payload.permisiuni !== undefined) {
+      updateData.permisiuni = payload.permisiuni;
+    }
+
+    const { error } = await db
+      .from("angajati")
+      .update(updateData as never)
+      .eq("id", angajatId)
+      .eq("statie_id", statieId);
+
+    if (error) return { success: false, error: error.message };
+
+    revalidatePath("/angajati");
+    return { success: true };
+  } catch (err) {
+    console.error("[updateAngajatAction] catch:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Eroare neașteptată",
+    };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TOGGLE ACTIV
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function toggleAngajatActivAction(
+  angajatId: string,
+  statieId: string,
+  activ: boolean
+): Promise<ActionResult> {
+  try {
+    const user = await getUser();
+    if (!user) return { success: false, error: "Neautentificat" };
+
+    const owns = await assertOwnsStatie(user.id, statieId);
+    if (!owns) return { success: false, error: "Acces interzis" };
+
+    const db = createServiceClient();
+    const { error } = await db
+      .from("angajati")
+      .update({ activ, updated_at: new Date().toISOString() } as never)
+      .eq("id", angajatId)
+      .eq("statie_id", statieId);
+
+    if (error) return { success: false, error: error.message };
+
+    revalidatePath("/angajati");
+    return { success: true };
+  } catch (err) {
+    console.error("[toggleAngajatActivAction] catch:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Eroare neașteptată",
+    };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DELETE ANGAJAT ROW
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function deleteAngajatAction(
+  angajatId: string,
+  statieId: string
+): Promise<ActionResult> {
+  try {
+    const user = await getUser();
+    if (!user) return { success: false, error: "Neautentificat" };
+
+    const owns = await assertOwnsStatie(user.id, statieId);
+    if (!owns) return { success: false, error: "Acces interzis" };
+
+    const db = createServiceClient();
+    const { error } = await db
+      .from("angajati")
+      .delete()
+      .eq("id", angajatId)
+      .eq("statie_id", statieId);
+
+    if (error) return { success: false, error: error.message };
+
+    revalidatePath("/angajati");
+    return { success: true };
+  } catch (err) {
+    console.error("[deleteAngajatAction] catch:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Eroare neașteptată",
+    };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CREATE CONT (auth.admin — creează user în auth + linkuiește cu angajat)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function createContAngajatAction(
   angajatId: string,
   statieId: string,
   statieNume: string,
@@ -36,53 +295,68 @@ export async function createAngajatContAction(
   email: string,
   parola: string,
   permisiuni: Permisiuni
-): Promise<AngajatActionResult> {
+): Promise<ActionResult> {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
     if (!user) return { success: false, error: "Neautentificat" };
+
+    const owns = await assertOwnsStatie(user.id, statieId);
+    if (!owns) return { success: false, error: "Acces interzis" };
 
     const adminDb = createServiceClient();
 
-    const { data: newUser, error: authError } = await adminDb.auth.admin.createUser({
-      email: email.trim(),
-      password: parola,
-      email_confirm: true,
-    });
+    // 1. Crează contul în auth.users
+    const { data: newAuthUser, error: authError } =
+      await adminDb.auth.admin.createUser({
+        email: email.trim(),
+        password: parola,
+        email_confirm: true,
+      });
 
-    if (authError || !newUser.user) {
-      return { success: false, error: authError?.message ?? "Eroare la crearea contului" };
+    if (authError || !newAuthUser.user) {
+      return {
+        success: false,
+        error: authError?.message ?? "Eroare la crearea contului",
+      };
     }
 
-    const newUserId = newUser.user.id;
+    const newUserId = newAuthUser.user.id;
 
-    const { error: profileError } = await (adminDb as any)
+    // 2. Crează profilul (sau actualizează dacă există deja)
+    const { error: profileError } = await adminDb
       .from("profiles")
-      .upsert({
-        id: newUserId,
-        email: email.trim(),
-        full_name: numeAngajat,
-        role: "angajat",
-        owner_profile_id: user.id,
-        onboarding_completed: true,
-        plan: "owner",
-        subscription_status: "active",
-        trial_expires_at: new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000).toISOString(),
-      }, { onConflict: "id" });
+      .upsert(
+        {
+          id: newUserId,
+          email: email.trim(),
+          full_name: numeAngajat,
+          role: "angajat",
+          owner_profile_id: user.id,
+          onboarding_completed: true,
+          plan: "owner",
+          subscription_status: "active",
+          trial_expires_at: new Date(
+            Date.now() + 10 * 365 * 24 * 60 * 60 * 1000
+          ).toISOString(),
+        } as never,
+        { onConflict: "id" }
+      );
 
     if (profileError) {
+      // Rollback: șterge userul creat
       await adminDb.auth.admin.deleteUser(newUserId).catch(console.error);
       return { success: false, error: profileError.message };
     }
 
-    const { error: linkError } = await (adminDb as any)
+    // 3. Linkuiește angajatul cu noul cont
+    const { error: linkError } = await adminDb
       .from("angajati")
       .update({
         profile_id: newUserId,
         email: email.trim(),
         permisiuni,
         updated_at: new Date().toISOString(),
-      })
+      } as never)
       .eq("id", angajatId)
       .eq("statie_id", statieId);
 
@@ -91,6 +365,7 @@ export async function createAngajatContAction(
       return { success: false, error: linkError.message };
     }
 
+    // 4. Trimite email de invitație (fire-and-forget)
     const permisiuniLabel: Record<keyof Permisiuni, string> = {
       programari: "Programări",
       clienti: "Clienți",
@@ -113,142 +388,57 @@ export async function createAngajatContAction(
     revalidatePath("/angajati");
     return { success: true };
   } catch (err) {
-    console.error("[createAngajatContAction]", err);
-    return { success: false, error: "Eroare neașteptată la crearea contului" };
+    console.error("[createContAngajatAction] catch:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Eroare neașteptată",
+    };
   }
 }
 
-// ── CREATE ANGAJAT ROW ───────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// DELETE CONT (auth.admin — șterge userul din auth)
+// ─────────────────────────────────────────────────────────────────────────────
 
-export async function createAngajatAction(
-  statieId: string,
-  nume: string,
-  functie: string | null,
-  telefon: string | null,
-  email: string | null,
-  activ: boolean
-): Promise<AngajatActionResult & { id?: string }> {
-  try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: "Neautentificat" };
-
-    const { data, error } = await (supabase as any)
-      .from("angajati")
-      .insert({ statie_id: statieId, nume, functie, telefon, email, activ })
-      .select("id")
-      .single();
-
-    if (error) return { success: false, error: error.message };
-    return { success: true, id: (data as any).id };
-  } catch (err) {
-    console.error("[createAngajatAction]", err);
-    return { success: false, error: err instanceof Error ? err.message : "Eroare neașteptată" };
-  }
-}
-
-// ── UPDATE ANGAJAT ROW ───────────────────────────────────────────────────────
-
-export async function updateAngajatAction(
-  angajatId: string,
-  statieId: string,
-  payload: {
-    nume: string;
-    functie: string | null;
-    telefon: string | null;
-    email: string | null;
-    activ: boolean;
-    permisiuni?: Permisiuni;
-  }
-): Promise<AngajatActionResult> {
-  try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: "Neautentificat" };
-
-    const { error } = await (supabase as any)
-      .from("angajati")
-      .update({ ...payload, updated_at: new Date().toISOString() })
-      .eq("id", angajatId)
-      .eq("statie_id", statieId);
-
-    if (error) return { success: false, error: error.message };
-    return { success: true };
-  } catch (err) {
-    console.error("[updateAngajatAction]", err);
-    return { success: false, error: err instanceof Error ? err.message : "Eroare neașteptată" };
-  }
-}
-
-// ── TOGGLE ACTIV ─────────────────────────────────────────────────────────────
-
-export async function toggleAngajatActivAction(
-  angajatId: string,
-  statieId: string,
-  activ: boolean
-): Promise<AngajatActionResult> {
-  try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: "Neautentificat" };
-
-    const { error } = await (supabase as any)
-      .from("angajati")
-      .update({ activ, updated_at: new Date().toISOString() })
-      .eq("id", angajatId)
-      .eq("statie_id", statieId);
-
-    if (error) return { success: false, error: error.message };
-    revalidatePath("/angajati");
-    return { success: true };
-  } catch (err) {
-    console.error("[toggleAngajatActivAction]", err);
-    return { success: false, error: err instanceof Error ? err.message : "Eroare neașteptată" };
-  }
-}
-
-// ── DELETE ANGAJAT ROW ───────────────────────────────────────────────────────
-
-export async function deleteAngajatAction(
-  angajatId: string,
+export async function deleteContAngajatAction(
+  profileId: string,
   statieId: string
-): Promise<AngajatActionResult> {
+): Promise<ActionResult> {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
     if (!user) return { success: false, error: "Neautentificat" };
 
-    const { error } = await (supabase as any)
-      .from("angajati")
-      .delete()
-      .eq("id", angajatId)
-      .eq("statie_id", statieId);
-
-    if (error) return { success: false, error: error.message };
-    revalidatePath("/angajati");
-    return { success: true };
-  } catch (err) {
-    console.error("[deleteAngajatAction]", err);
-    return { success: false, error: err instanceof Error ? err.message : "Eroare neașteptată" };
-  }
-}
-
-// ── DELETE CONT (needs auth.admin → server action) ───────────────────────────
-
-export async function deleteAngajatContAction(profileId: string): Promise<AngajatActionResult> {
-  try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: "Neautentificat" };
+    const owns = await assertOwnsStatie(user.id, statieId);
+    if (!owns) return { success: false, error: "Acces interzis" };
 
     const adminDb = createServiceClient();
+
+    // Șterge din auth (profilul se șterge prin CASCADE din trigger)
     const { error: authErr } = await adminDb.auth.admin.deleteUser(profileId);
     if (authErr) return { success: false, error: authErr.message };
 
+    // Delinkeaza angajatul
+    const { error: unlinkErr } = await adminDb
+      .from("angajati")
+      .update({
+        profile_id: null,
+        permisiuni: null,
+        updated_at: new Date().toISOString(),
+      } as never)
+      .eq("profile_id", profileId);
+
+    if (unlinkErr) {
+      console.error("[deleteContAngajatAction] unlink error:", unlinkErr.message);
+      // Nu e fatal — userul e deja șters din auth
+    }
+
     revalidatePath("/angajati");
     return { success: true };
   } catch (err) {
-    console.error("[deleteAngajatContAction]", err);
-    return { success: false, error: "Eroare neașteptată la ștergerea contului" };
+    console.error("[deleteContAngajatAction] catch:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Eroare neașteptată",
+    };
   }
 }
