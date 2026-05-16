@@ -297,7 +297,7 @@ export async function createContAngajatAction(
           role: "angajat",
           owner_profile_id: user.id,
           onboarding_completed: true,
-          plan: "owner",
+          plan: "trial",
           subscription_status: "active",
           trial_expires_at: new Date(
             Date.now() + 10 * 365 * 24 * 60 * 60 * 1000
