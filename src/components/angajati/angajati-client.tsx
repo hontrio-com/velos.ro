@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getAvatarStyle, getInitials } from "@/lib/avatar";
 import { AngajatDrawer } from "./angajat-drawer";
-import { deleteAngajatAction, toggleAngajatActivAction } from "@/lib/actions/angajati";
+import { deleteAngajatContAction } from "@/lib/actions/angajati";
 
 export interface Angajat {
   id: string;
@@ -70,25 +70,58 @@ export function AngajatiClient({ statieId, statieNume }: AngajatiClientProps) {
   async function handleDelete(a: Angajat) {
     if (!confirm(`Ștergi angajatul "${a.nume}"? Programările atribuite vor rămâne neschimbate.`)) return;
     setDeletingId(a.id);
-    const result = await deleteAngajatAction(a.id);
-    setDeletingId(null);
-    if (result.success) {
-      toast.success("Angajat șters");
-      invalidate();
-    } else {
-      toast.error(result.error ?? "Eroare la ștergere");
+    try {
+      // If has auth account, delete it first via server action
+      if (a.profile_id) {
+        const result = await deleteAngajatContAction(a.profile_id);
+        if (!result.success) {
+          toast.error(result.error ?? "Eroare la ștergerea contului");
+          setDeletingId(null);
+          return;
+        }
+      }
+
+      // Delete the angajat row client-side
+      const { error } = await (supabase as any)
+        .from("angajati")
+        .delete()
+        .eq("id", a.id)
+        .eq("statie_id", statieId);
+
+      if (error) {
+        toast.error(error.message ?? "Eroare la ștergere");
+      } else {
+        toast.success("Angajat șters");
+        invalidate();
+      }
+    } catch (err) {
+      console.error("handleDelete error:", err);
+      toast.error("Eroare la ștergere");
+    } finally {
+      setDeletingId(null);
     }
   }
 
   async function handleToggle(a: Angajat) {
     setTogglingId(a.id);
-    const result = await toggleAngajatActivAction(a.id, !a.activ);
-    setTogglingId(null);
-    if (result.success) {
-      toast.success(a.activ ? `${a.nume} dezactivat` : `${a.nume} activat`);
-      invalidate();
-    } else {
-      toast.error(result.error ?? "Eroare");
+    try {
+      const { error } = await (supabase as any)
+        .from("angajati")
+        .update({ activ: !a.activ, updated_at: new Date().toISOString() })
+        .eq("id", a.id)
+        .eq("statie_id", statieId);
+
+      if (error) {
+        toast.error(error.message ?? "Eroare");
+      } else {
+        toast.success(a.activ ? `${a.nume} dezactivat` : `${a.nume} activat`);
+        invalidate();
+      }
+    } catch (err) {
+      console.error("handleToggle error:", err);
+      toast.error("Eroare");
+    } finally {
+      setTogglingId(null);
     }
   }
 
@@ -251,6 +284,8 @@ export function AngajatiClient({ statieId, statieNume }: AngajatiClientProps) {
       <AngajatDrawer
         open={drawerOpen}
         angajat={editingAngajat}
+        statieId={statieId}
+        statieNume={statieNume}
         onClose={() => setDrawerOpen(false)}
         onSuccess={() => {
           setDrawerOpen(false);

@@ -4,12 +4,10 @@ import { useEffect, useState } from "react";
 import { X, Loader2, UserPlus, Pencil, KeyRound, Shield, ShieldOff } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/client";
 import {
-  createAngajatAction,
-  updateAngajatAction,
   createAngajatContAction,
   deleteAngajatContAction,
-  updateAngajatPermisiuniAction,
   DEFAULT_PERMISIUNI,
   type Permisiuni,
 } from "@/lib/actions/angajati";
@@ -19,6 +17,8 @@ import { cn } from "@/lib/utils";
 interface AngajatDrawerProps {
   open: boolean;
   angajat: Angajat | null;
+  statieId: string;
+  statieNume: string;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -41,7 +41,8 @@ const PERMISIUNI_LIST: { key: keyof Permisiuni; label: string; desc: string }[] 
 
 const EMPTY: FormState = { nume: "", functie: "", telefon: "", email: "", activ: true };
 
-export function AngajatDrawer({ open, angajat, onClose, onSuccess }: AngajatDrawerProps) {
+export function AngajatDrawer({ open, angajat, statieId, statieNume, onClose, onSuccess }: AngajatDrawerProps) {
+  const supabase = createClient();
   const [form, setForm] = useState<FormState>(EMPTY);
   const [permisiuni, setPermisiuni] = useState<Permisiuni>(DEFAULT_PERMISIUNI);
   const [createCont, setCreateCont] = useState(false);
@@ -100,18 +101,42 @@ export function AngajatDrawer({ open, angajat, onClose, onSuccess }: AngajatDraw
     setSaving(true);
     try {
       if (isEdit) {
-        const result = await updateAngajatAction(angajat.id, form);
-        if (!result.success) {
-          toast.error(result.error ?? "Eroare");
+        // Update angajat row client-side
+        const updatePayload: Record<string, unknown> = {
+          nume: form.nume.trim(),
+          functie: form.functie.trim() || null,
+          telefon: form.telefon.trim() || null,
+          email: form.email.trim() || null,
+          activ: form.activ,
+          updated_at: new Date().toISOString(),
+        };
+
+        // Include permisiuni if has account
+        if (hasCont) {
+          updatePayload.permisiuni = permisiuni;
+        }
+
+        const { error: updateError } = await (supabase as any)
+          .from("angajati")
+          .update(updatePayload)
+          .eq("id", angajat.id)
+          .eq("statie_id", statieId);
+
+        if (updateError) {
+          toast.error(updateError.message ?? "Eroare la actualizare");
           return;
         }
 
-        if (hasCont) {
-          await updateAngajatPermisiuniAction(angajat.id, permisiuni);
-        }
-
         if (createCont && !hasCont) {
-          const contResult = await createAngajatContAction(angajat.id, form.email, parola, permisiuni);
+          const contResult = await createAngajatContAction(
+            angajat.id,
+            statieId,
+            statieNume,
+            form.nume.trim(),
+            form.email.trim(),
+            parola,
+            permisiuni
+          );
           if (!contResult.success) {
             toast.error(contResult.error ?? "Eroare la crearea contului");
             return;
@@ -121,14 +146,35 @@ export function AngajatDrawer({ open, angajat, onClose, onSuccess }: AngajatDraw
           toast.success("Angajat actualizat");
         }
       } else {
-        const result = await createAngajatAction(form);
-        if (!result.success || !result.id) {
-          toast.error(result.error ?? "Eroare");
+        // Insert new angajat client-side
+        const { data: newAngajat, error: insertError } = await (supabase as any)
+          .from("angajati")
+          .insert({
+            statie_id: statieId,
+            nume: form.nume.trim(),
+            functie: form.functie.trim() || null,
+            telefon: form.telefon.trim() || null,
+            email: form.email.trim() || null,
+            activ: form.activ,
+          })
+          .select("id")
+          .single();
+
+        if (insertError || !newAngajat) {
+          toast.error(insertError?.message ?? "Eroare la adăugare");
           return;
         }
 
-        if (createCont && result.id) {
-          const contResult = await createAngajatContAction(result.id, form.email, parola, permisiuni);
+        if (createCont) {
+          const contResult = await createAngajatContAction(
+            newAngajat.id,
+            statieId,
+            statieNume,
+            form.nume.trim(),
+            form.email.trim(),
+            parola,
+            permisiuni
+          );
           if (!contResult.success) {
             toast.error(`Angajat creat, dar eroare la cont: ${contResult.error}`);
             onSuccess();
@@ -150,11 +196,11 @@ export function AngajatDrawer({ open, angajat, onClose, onSuccess }: AngajatDraw
   }
 
   async function handleDeleteCont() {
-    if (!angajat || !hasCont) return;
+    if (!angajat || !hasCont || !angajat.profile_id) return;
     if (!confirm("Ștergi contul de acces? Angajatul nu va mai putea intra în platformă.")) return;
 
     setDeletingCont(true);
-    const result = await deleteAngajatContAction(angajat.id);
+    const result = await deleteAngajatContAction(angajat.profile_id);
     setDeletingCont(false);
 
     if (result.success) {
