@@ -33,9 +33,11 @@ interface HeaderProps {
   userEmail?: string;
   userName?: string;
   onMenuToggle?: () => void;
+  role?: "owner" | "angajat";
 }
 
-export function Header({ userEmail, userName, onMenuToggle }: HeaderProps) {
+export function Header({ userEmail, userName, onMenuToggle, role = "owner" }: HeaderProps) {
+  const isEmployee = role === "angajat";
   const router = useRouter();
   const supabase = createClient();
   const [searchOpen, setSearchOpen] = useState(false);
@@ -105,15 +107,17 @@ export function Header({ userEmail, userName, onMenuToggle }: HeaderProps) {
 
         {/* Right: buy SMS + bell + user */}
         <div className="flex items-center gap-1.5">
-          {/* Cumpără SMS-uri */}
-          <button
-            type="button"
-            onClick={() => setSmsModalOpen(true)}
-            className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-lg bg-[#EFF6FF] hover:bg-[#DBEAFE] text-[#1877F2] text-[13px] font-medium transition-colors"
-          >
-            <MessageSquare className="h-3.5 w-3.5" />
-            <span>Cumpără SMS-uri</span>
-          </button>
+          {/* Cumpără SMS-uri — owners only */}
+          {!isEmployee && (
+            <button
+              type="button"
+              onClick={() => setSmsModalOpen(true)}
+              className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-lg bg-[#EFF6FF] hover:bg-[#DBEAFE] text-[#1877F2] text-[13px] font-medium transition-colors"
+            >
+              <MessageSquare className="h-3.5 w-3.5" />
+              <span>Cumpără SMS-uri</span>
+            </button>
+          )}
 
           {/* Bell */}
           <NotificationsBell />
@@ -139,22 +143,26 @@ export function Header({ userEmail, userName, onMenuToggle }: HeaderProps) {
                 <DropdownMenuLabel className="text-xs text-muted-foreground font-normal truncate">
                   {userEmail}
                 </DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => router.push("/setari/profil")}>
-                  <User className="h-4 w-4" />
-                  Profilul meu
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push("/setari/statii")}>
-                  <Building2 className="h-4 w-4" />
-                  Stațiile mele
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push("/setari/abonament")}>
-                  <CreditCard className="h-4 w-4" />
-                  Abonament
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push("/setari")}>
-                  <Settings className="h-4 w-4" />
-                  Setări
-                </DropdownMenuItem>
+                {!isEmployee && (
+                  <>
+                    <DropdownMenuItem onClick={() => router.push("/setari/profil")}>
+                      <User className="h-4 w-4" />
+                      Profilul meu
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push("/setari/statii")}>
+                      <Building2 className="h-4 w-4" />
+                      Stațiile mele
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push("/setari/abonament")}>
+                      <CreditCard className="h-4 w-4" />
+                      Abonament
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push("/setari")}>
+                      <Settings className="h-4 w-4" />
+                      Setări
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem variant="destructive" onClick={handleLogout}>

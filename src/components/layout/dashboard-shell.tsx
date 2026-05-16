@@ -68,6 +68,7 @@ export function DashboardShell({
         userEmail={userEmail}
         userName={userName}
         onMenuToggle={() => setSidebarOpen((v) => !v)}
+        role={role}
       />
 
       <main className="lg:ml-[220px] pt-14 min-h-screen">
