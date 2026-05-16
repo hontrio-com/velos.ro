@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { TrialBanner } from "@/components/dashboard/trial-banner";
 import type { SubscriptionStatus } from "@/lib/stripe";
@@ -46,16 +47,22 @@ export default async function DashboardLayout({
 
   // ── Angajat flow ──────────────────────────────────────────────────────────
   if (role === "angajat") {
-    // Fetch angajat record for this employee (to get statie + permisiuni)
-    const { data: angajatRaw } = await (supabase as any)
+    // Use service client to bypass RLS — angajati policy only allows owners,
+    // so the regular client would return null for the employee's own record.
+    const db = createServiceClient();
+    const { data: angajatRaw } = await db
       .from("angajati")
       .select("statie_id, permisiuni, statii(id, nume, activa)")
       .eq("profile_id", user.id)
-      .single();
+      .maybeSingle();
 
     const angajat = angajatRaw as { statie_id: string; permisiuni: Record<string, boolean> | null; statii: { id: string; nume: string; activa: boolean } | { id: string; nume: string; activa: boolean }[] | null } | null;
 
-    if (!angajat) redirect("/login");
+    // Sign out and redirect to login — avoids redirect loop since we sign out first
+    if (!angajat) {
+      await supabase.auth.signOut();
+      redirect("/login");
+    }
 
     const statieRaw = Array.isArray(angajat.statii) ? angajat.statii[0] : angajat.statii;
     const statii = statieRaw ? [statieRaw as { id: string; nume: string; activa: boolean }] : [];
