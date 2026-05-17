@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, Building2, CreditCard, MessageSquare,
-  ArrowLeft, Shield, Settings, Send, ClipboardList,
+  ArrowLeft, Shield, Settings, Send, ClipboardList, FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,7 @@ const NAV = [
   { href: "/admin/utilizatori", label: "Utilizatori", icon: Users },
   { href: "/admin/statii", label: "Stații", icon: Building2 },
   { href: "/admin/plati", label: "Plăți SMS", icon: CreditCard },
+  { href: "/admin/facturi", label: "Facturi SmartBill", icon: FileText },
   { href: "/admin/sms", label: "SMS Quota", icon: MessageSquare },
   { href: "/admin/broadcast", label: "Broadcast", icon: Send },
   { href: "/admin/setari", label: "Setări", icon: Settings },

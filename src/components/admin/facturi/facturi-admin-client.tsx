@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { retryFacturaAction } from "@/lib/actions/admin-facturi";
-import type { FacturaRow } from "@/app/(dashboard)/admin/facturi/page";
+import type { FacturaRow } from "@/app/(admin)/admin/facturi/page";
 
 const TIP_CONFIG = {
   sms_purchase:       { label: "SMS",           bg: "#FEF9C3", color: "#A16207" },

@@ -48,7 +48,16 @@
       "Bash(npm info:*)",
       "Bash(rm src/app/api/test-email/route.ts)",
       "Bash(rmdir src/app/api/test-email)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(\"C:\\\\Users\\\\iorda\\\\Desktop\\\\ITPBASE.RO\\\\Platforma\\\\crm-itp\\\\.env.local\")",
+      "Bash(cat src/app/\\\\\\(dashboard\\\\\\)/angajati/page.tsx)",
+      "Bash(node -e \"console.log\\(require\\(''./node_modules/next/package.json''\\).version\\)\")",
+      "Bash(grep -r cookies C:UsersiordaDesktopITPBASE.ROPlatformacrm-itpnode_modulesnextdistdocs --include=*.md -l)",
+      "Bash(head -30 \"src/app/\\(dashboard\\)/layout.tsx\")",
+      "WebFetch(domain:api.smartbill.ro)",
+      "Bash(taskkill /PID 23192 /F)",
+      "Bash(npm --prefix \"C:\\\\Users\\\\iorda\\\\Desktop\\\\ITPBASE.RO\\\\Platforma\\\\crm-itp\" run dev)",
+      "Bash(taskkill:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

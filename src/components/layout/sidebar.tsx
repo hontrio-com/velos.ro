@@ -20,7 +20,6 @@ import {
   Plus,
   UserCog,
   Globe,
-  ShieldCheck,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAppStore } from "@/stores/app-store";
@@ -205,7 +204,6 @@ interface SidebarProps {
   onClose?: () => void;
   permisiuni?: Record<string, boolean> | null;
   role?: "owner" | "angajat";
-  isAdmin?: boolean;
 }
 
 export function Sidebar({
@@ -214,7 +212,6 @@ export function Sidebar({
   onClose,
   permisiuni = null,
   role = "owner",
-  isAdmin = false,
 }: SidebarProps) {
   const pathname = usePathname();
   const { statieActivaId, setStatieActivaId } = useAppStore();
@@ -321,13 +318,6 @@ export function Sidebar({
         {/* Bottom */}
         <div className="border-t border-[#E5E7EB] px-2 py-3 space-y-2 shrink-0">
           {!isEmployee && <SmsQuotaWidget />}
-          {isAdmin && (
-            <NavItemLink
-              item={{ href: "/admin/facturi", label: "Admin", icon: ShieldCheck }}
-              isActive={pathname.startsWith("/admin")}
-              onClick={onClose}
-            />
-          )}
           {!isEmployee && (
             <NavItemLink
               item={{ href: "/setari", label: "Setări", icon: Settings }}
