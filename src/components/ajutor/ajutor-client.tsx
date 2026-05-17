@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 import {
   createTichetAction, addMesajAction, getTichetDetailAction,
 } from "@/lib/actions/ajutor";
@@ -169,6 +170,24 @@ function TichetThread({
   const [reply, setReply] = useState("");
   const [isPending, startTransition] = useTransition();
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Realtime subscription — mesaje noi apar instant
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`tichet-user-${tichet.id}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "tichete_mesaje", filter: `tichet_id=eq.${tichet.id}` },
+        (payload) => {
+          const msg = payload.new as TichetMesaj;
+          setMesaje((prev) => prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]);
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [tichet.id]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
