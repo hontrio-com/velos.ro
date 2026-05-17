@@ -5,7 +5,7 @@ import { format, parseISO } from "date-fns";
 import { ro } from "date-fns/locale";
 import {
   ArrowLeft, Plus, Send, Loader2, HelpCircle, Bug, Lightbulb,
-  MoreHorizontal, CheckCircle2, Clock, AlertCircle, XCircle, Sparkles,
+  MoreHorizontal, CheckCircle2, Clock, AlertCircle, XCircle, Sparkles, Wifi,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -171,11 +171,11 @@ function TichetThread({
   const [isPending, startTransition] = useTransition();
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Realtime subscription — mesaje noi apar instant
+  // Realtime: mesaje noi în threadul deschis
   useEffect(() => {
     const supabase = createClient();
     const channel = supabase
-      .channel(`tichet-user-${tichet.id}`)
+      .channel(`tichet-user-thread-${tichet.id}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "tichete_mesaje", filter: `tichet_id=eq.${tichet.id}` },
@@ -197,7 +197,6 @@ function TichetThread({
     if (!reply.trim() || tichet.status === "inchis") return;
     const text = reply.trim();
     setReply("");
-    // Optimistic update
     const optimistic: TichetMesaj = {
       id: crypto.randomUUID(),
       tichet_id: tichet.id,
@@ -247,14 +246,12 @@ function TichetThread({
       <div className="flex-1 space-y-3 overflow-y-auto pr-1 pb-2">
         {mesaje.map((m) => (
           <div key={m.id} className={cn("flex gap-2.5", m.is_admin ? "flex-row" : "flex-row-reverse")}>
-            {/* Avatar */}
             <div className={cn(
               "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white",
               m.is_admin ? "bg-[#1877F2]" : "bg-[#6B7280]"
             )}>
               {m.is_admin ? "S" : userName.slice(0, 1).toUpperCase()}
             </div>
-            {/* Bubble */}
             <div className={cn(
               "max-w-[80%] space-y-1",
               m.is_admin ? "items-start" : "items-end flex flex-col"
@@ -291,7 +288,7 @@ function TichetThread({
           <Textarea
             value={reply}
             onChange={(e) => setReply(e.target.value)}
-            placeholder="Scrie un mesaj..."
+            placeholder="Scrie un mesaj... (Ctrl+Enter pentru trimite)"
             rows={2}
             className="flex-1 resize-none"
             onKeyDown={(e) => {
@@ -324,18 +321,79 @@ export function AjutorClient({
   const [view, setView] = useState<"list" | "new" | "detail">("list");
   const [detail, setDetail] = useState<{ tichet: Tichet; mesaje: TichetMesaj[] } | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [unreadIds, setUnreadIds] = useState<Set<string>>(new Set());
+  const [isLive, setIsLive] = useState(false);
+
+  // Ref to track currently viewed ticket (avoids stale closure in realtime callbacks)
+  const viewingIdRef = useRef<string | null>(null);
+
+  // ── Realtime: actualizări status tichete ──────────────────────────────────
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("user-tichete-updates")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "tichete" },
+        (payload) => {
+          const t = payload.new as Tichet;
+          setTichete((prev) => prev.map((x) => x.id === t.id ? { ...x, ...t } : x));
+          // Sync open detail if viewing this ticket
+          setDetail((prev) =>
+            prev && prev.tichet.id === t.id
+              ? { ...prev, tichet: { ...prev.tichet, ...t } }
+              : prev
+          );
+        }
+      )
+      .subscribe((status) => {
+        setIsLive(status === "SUBSCRIBED");
+      });
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  // ── Realtime: mesaje admin noi → indicator unread ─────────────────────────
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("user-mesaje-unread")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "tichete_mesaje" },
+        (payload) => {
+          const msg = payload.new as TichetMesaj;
+          // Mark unread only if: message is from admin AND not the ticket currently open
+          if (msg.is_admin && msg.tichet_id !== viewingIdRef.current) {
+            setUnreadIds((prev) => new Set([...prev, msg.tichet_id]));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   async function openTichet(id: string) {
+    viewingIdRef.current = id;
+    // Clear unread indicator for this ticket
+    setUnreadIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
     setLoadingDetail(true);
     const res = await getTichetDetailAction(id);
     setLoadingDetail(false);
     if (res) { setDetail(res); setView("detail"); }
   }
 
+  function handleBack() {
+    viewingIdRef.current = null;
+    setView("list");
+  }
+
   function handleTichetCreated(id: string) {
     getTichetDetailAction(id).then((res) => {
       if (res) {
         setTichete((prev) => [res.tichet, ...prev]);
+        viewingIdRef.current = id;
         setDetail(res);
         setView("detail");
       }
@@ -351,14 +409,24 @@ export function AjutorClient({
             <h1 className="text-xl font-bold text-[#111318]">Ajutor & Suport</h1>
             <p className="text-sm text-[#9CA3AF] mt-0.5">Trimite un tichet și îți răspundem în cel mai scurt timp</p>
           </div>
-          <Button
-            onClick={() => setView("new")}
-            className="bg-[#1877F2] hover:bg-[#1565D8] gap-1.5"
-            size="sm"
-          >
-            <Plus className="h-4 w-4" />
-            Tichet nou
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* LIVE indicator */}
+            <div className={cn(
+              "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-colors",
+              isLive ? "bg-emerald-50 text-emerald-600" : "bg-[#F3F4F6] text-[#9CA3AF]"
+            )}>
+              <Wifi className="h-3 w-3" />
+              {isLive ? "LIVE" : "..."}
+            </div>
+            <Button
+              onClick={() => setView("new")}
+              className="bg-[#1877F2] hover:bg-[#1565D8] gap-1.5"
+              size="sm"
+            >
+              <Plus className="h-4 w-4" />
+              Tichet nou
+            </Button>
+          </div>
         </div>
       )}
 
@@ -377,7 +445,7 @@ export function AjutorClient({
             tichet={detail.tichet}
             mesaje={detail.mesaje}
             userName={userName}
-            onBack={() => setView("list")}
+            onBack={handleBack}
           />
         )}
 
@@ -412,6 +480,7 @@ export function AjutorClient({
               <div className="space-y-2">
                 {tichete.map((t) => {
                   const catCfg = CATEGORIE_CONFIG[t.categorie];
+                  const hasUnread = unreadIds.has(t.id);
                   return (
                     <button
                       key={t.id}
@@ -438,8 +507,14 @@ export function AjutorClient({
                           </span>
                         </div>
                       </div>
-                      <div className="text-[#9CA3AF] group-hover:text-[#1877F2] transition-colors shrink-0">
-                        <ArrowLeft className="h-4 w-4 rotate-180" />
+                      <div className="flex items-center gap-2 shrink-0">
+                        {/* Unread indicator */}
+                        {hasUnread && (
+                          <span className="h-2.5 w-2.5 rounded-full bg-[#1877F2]" />
+                        )}
+                        <div className="text-[#9CA3AF] group-hover:text-[#1877F2] transition-colors">
+                          <ArrowLeft className="h-4 w-4 rotate-180" />
+                        </div>
                       </div>
                     </button>
                   );

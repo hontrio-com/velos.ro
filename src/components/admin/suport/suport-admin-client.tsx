@@ -6,7 +6,7 @@ import { ro } from "date-fns/locale";
 import {
   Search, HelpCircle, Bug, Lightbulb, MoreHorizontal,
   CheckCircle2, Clock, AlertCircle, XCircle, Send, Loader2,
-  Sparkles, ArrowLeft, AlertTriangle,
+  Sparkles, ArrowLeft, AlertTriangle, Wifi,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -76,11 +76,11 @@ function TichetDetailPanel({
   const bottomRef = useRef<HTMLDivElement>(null);
   const userInitial = (tichet.profiles?.full_name ?? tichet.profiles?.email ?? "?").slice(0, 1).toUpperCase();
 
-  // Realtime subscription — mesaje noi apar instant
+  // Realtime: mesaje noi în threadul deschis
   useEffect(() => {
     const supabase = createClient();
     const channel = supabase
-      .channel(`tichet-admin-${tichet.id}`)
+      .channel(`tichet-admin-thread-${tichet.id}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "tichete_mesaje", filter: `tichet_id=eq.${tichet.id}` },
@@ -286,6 +286,70 @@ export function SuportAdminClient({ rows }: { rows: Tichet[] }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<{ tichet: Tichet; mesaje: TichetMesaj[] } | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [unreadIds, setUnreadIds] = useState<Set<string>>(new Set());
+  const [isLive, setIsLive] = useState(false);
+
+  // Ref to track currently open ticket (avoids stale closure in realtime callbacks)
+  const selectedIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    selectedIdRef.current = selectedId;
+  }, [selectedId]);
+
+  // ── Realtime: lista tichete (INSERT + UPDATE) ──────────────────────────────
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("admin-tichete-list")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "tichete" },
+        (payload) => {
+          const t = payload.new as Tichet;
+          setTichete((prev) => prev.some((x) => x.id === t.id) ? prev : [t, ...prev]);
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "tichete" },
+        (payload) => {
+          const t = payload.new as Tichet;
+          // Preserve profiles join data (not included in realtime payload)
+          setTichete((prev) => prev.map((x) => x.id === t.id ? { ...x, ...t, profiles: x.profiles } : x));
+          // Sync open detail panel
+          setDetail((prev) =>
+            prev && prev.tichet.id === t.id
+              ? { ...prev, tichet: { ...prev.tichet, ...t, profiles: prev.tichet.profiles } }
+              : prev
+          );
+        }
+      )
+      .subscribe((status) => {
+        setIsLive(status === "SUBSCRIBED");
+      });
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  // ── Realtime: mesaje noi → indicator unread pe lista ──────────────────────
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("admin-mesaje-unread")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "tichete_mesaje" },
+        (payload) => {
+          const msg = payload.new as TichetMesaj;
+          // Mark unread only if: message is from user (not admin) AND not the currently open ticket
+          if (!msg.is_admin && msg.tichet_id !== selectedIdRef.current) {
+            setUnreadIds((prev) => new Set([...prev, msg.tichet_id]));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   const filtered = tichete.filter((t) => {
     if (filterStatus !== "all" && t.status !== filterStatus) return false;
@@ -302,10 +366,19 @@ export function SuportAdminClient({ rows }: { rows: Tichet[] }) {
 
   async function openTichet(id: string) {
     setSelectedId(id);
+    selectedIdRef.current = id;
+    // Clear unread indicator for this ticket
+    setUnreadIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
     setLoadingDetail(true);
     const res = await adminGetTichetDetailAction(id);
     setLoadingDetail(false);
     if (res) setDetail(res);
+  }
+
+  function handleBack() {
+    setSelectedId(null);
+    selectedIdRef.current = null;
+    setDetail(null);
   }
 
   function handleStatusChange(id: string, status: TichetStatus, prioritate: TichetPrioritate) {
@@ -323,14 +396,24 @@ export function SuportAdminClient({ rows }: { rows: Tichet[] }) {
       <div className={cn("flex flex-col", showDetail && "border-r border-[#E5E7EB]")}>
         {/* Filters */}
         <div className="p-4 border-b border-[#E5E7EB] space-y-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9CA3AF]" />
-            <Input
-              placeholder="Caută utilizator, titlu..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9 text-sm"
-            />
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9CA3AF]" />
+              <Input
+                placeholder="Caută utilizator, titlu..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 h-9 text-sm"
+              />
+            </div>
+            {/* LIVE indicator */}
+            <div className={cn(
+              "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold shrink-0 transition-colors",
+              isLive ? "bg-emerald-50 text-emerald-600" : "bg-[#F3F4F6] text-[#9CA3AF]"
+            )}>
+              <Wifi className="h-3 w-3" />
+              {isLive ? "LIVE" : "..."}
+            </div>
           </div>
           <div className="flex gap-1 flex-wrap">
             {(["all", "deschis", "in_lucru", "rezolvat", "inchis"] as const).map((s) => (
@@ -370,6 +453,7 @@ export function SuportAdminClient({ rows }: { rows: Tichet[] }) {
             filtered.map((t) => {
               const catCfg = CATEGORIE_CONFIG[t.categorie];
               const isSelected = t.id === selectedId;
+              const hasUnread = unreadIds.has(t.id);
               return (
                 <button key={t.id} type="button"
                   onClick={() => openTichet(t.id)}
@@ -389,7 +473,7 @@ export function SuportAdminClient({ rows }: { rows: Tichet[] }) {
                       <p className="text-sm font-semibold text-[#111318] truncate">{t.titlu}</p>
                     </div>
                     <p className="text-xs text-[#6B7280] truncate">
-                      {t.profiles?.full_name ?? t.profiles?.email}
+                      {t.profiles?.full_name ?? t.profiles?.email ?? "Utilizator nou"}
                     </p>
                     <div className="flex items-center gap-1.5 mt-1">
                       <StatusBadge status={t.status} />
@@ -398,6 +482,10 @@ export function SuportAdminClient({ rows }: { rows: Tichet[] }) {
                       </span>
                     </div>
                   </div>
+                  {/* Unread indicator */}
+                  {hasUnread && (
+                    <span className="h-2.5 w-2.5 rounded-full bg-[#1877F2] shrink-0 mt-1.5" />
+                  )}
                 </button>
               );
             })
@@ -416,7 +504,7 @@ export function SuportAdminClient({ rows }: { rows: Tichet[] }) {
             <TichetDetailPanel
               tichet={detail.tichet}
               mesaje={detail.mesaje}
-              onBack={() => { setSelectedId(null); setDetail(null); }}
+              onBack={handleBack}
               onStatusChange={handleStatusChange}
             />
           ) : null}
