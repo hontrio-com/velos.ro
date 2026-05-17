@@ -1,9 +1,82 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type Stripe from "stripe";
-import { stripe, getPlanFromPriceId } from "@/lib/stripe";
+import { stripe, getPlanFromPriceId, PLAN_CONFIG } from "@/lib/stripe";
+import { emiteFactura, type SmartBillClientInfo } from "@/lib/smartbill";
 
 export const dynamic = "force-dynamic";
 import { createServiceClient } from "@/lib/supabase/service";
+
+// ── SmartBill helpers ──────────────────────────────────────────────────────
+
+async function getStatieClientInfo(
+  supabase: ReturnType<typeof createServiceClient>,
+  profileId: string
+): Promise<SmartBillClientInfo | null> {
+  const { data } = await supabase
+    .from("statii")
+    .select("nume, cui, adresa, oras, judet, email")
+    .eq("owner_id", profileId)
+    .eq("activa", true)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (!data) return null;
+  const s = data as any;
+  return {
+    name: s.nume ?? "Client",
+    vatCode: s.cui ?? undefined,
+    isTaxPayer: !!s.cui,
+    address: s.adresa ?? undefined,
+    city: s.oras ?? undefined,
+    county: s.judet ?? undefined,
+    email: s.email ?? undefined,
+  };
+}
+
+/**
+ * Emite factură SmartBill și înregistrează în tabelul `facturi`.
+ * Idempotent: dacă `referinta` există deja, nu emite a doua factură.
+ */
+async function emiteFacturaIdempotent(
+  supabase: ReturnType<typeof createServiceClient>,
+  params: {
+    profileId: string;
+    tip: "sms_purchase" | "subscription_new" | "subscription_renewal";
+    referinta: string;
+    client: SmartBillClientInfo;
+    productName: string;
+    amount: number;
+    currency: string;
+  }
+) {
+  // Verifică dacă factura a fost deja emisă (idempotență)
+  const { data: existing } = await (supabase as any)
+    .from("facturi")
+    .select("id")
+    .eq("referinta", params.referinta)
+    .maybeSingle();
+
+  if (existing) return; // deja procesată
+
+  const result = await emiteFactura({
+    client: params.client,
+    productName: params.productName,
+    amount: params.amount,
+    currency: params.currency,
+  });
+
+  await (supabase as any).from("facturi").insert({
+    profile_id: params.profileId,
+    tip: params.tip,
+    referinta: params.referinta,
+    smartbill_serie: result.serie ?? null,
+    smartbill_numar: result.numar ?? null,
+    suma: params.amount,
+    moneda: params.currency.toUpperCase(),
+    eroare: result.success ? null : (result.error ?? "Eroare necunoscuta"),
+  });
+}
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -54,6 +127,20 @@ export async function POST(request: NextRequest) {
           },
           { onConflict: "stripe_session_id" }
         );
+
+        // Factură SmartBill pentru achiziție SMS
+        const smsClient = await getStatieClientInfo(supabase, profileId);
+        if (smsClient) {
+          await emiteFacturaIdempotent(supabase, {
+            profileId,
+            tip: "sms_purchase",
+            referinta: session.id,
+            client: smsClient,
+            productName: `${cantitate} SMS-uri Velos CRM`,
+            amount: (session.amount_total ?? 0) / 100,
+            currency: session.currency ?? "eur",
+          });
+        }
       }
     }
 
@@ -99,6 +186,23 @@ export async function POST(request: NextRequest) {
           },
           { onConflict: "stripe_subscription_id" }
         );
+
+        // Factură SmartBill pentru abonament nou
+        const planConfig = (PLAN_CONFIG as any)[plan];
+        const planName = planConfig?.name ?? plan;
+        const cycleLabel = cycle === "yearly" ? "anual" : "lunar";
+        const subClient = await getStatieClientInfo(supabase, profileId);
+        if (subClient) {
+          await emiteFacturaIdempotent(supabase, {
+            profileId,
+            tip: "subscription_new",
+            referinta: session.id,
+            client: subClient,
+            productName: `Abonament Velos CRM - Plan ${planName} (${cycleLabel})`,
+            amount: (session.amount_total ?? 0) / 100,
+            currency: session.currency ?? "ron",
+          });
+        }
       }
     }
   }
@@ -185,6 +289,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (profile) {
+      const profileId = (profile as any).id as string;
       const subId = invoice.subscription as string;
       if (subId) {
         const sub = await stripe.subscriptions.retrieve(subId) as any;
@@ -195,7 +300,26 @@ export async function POST(request: NextRequest) {
             subscription_status: "active",
             subscription_ends_at: periodEnd,
           } as never)
-          .eq("id", (profile as any).id);
+          .eq("id", profileId);
+
+        // Factură SmartBill pentru reînnoire
+        const priceId = invoice.lines?.data?.[0]?.price?.id as string | undefined;
+        const planInfo = priceId ? getPlanFromPriceId(priceId) : null;
+        const planConfig = planInfo ? (PLAN_CONFIG as any)[planInfo.plan] : null;
+        const planName = planConfig?.name ?? planInfo?.plan ?? "unknown";
+        const cycleLabel = planInfo?.cycle === "yearly" ? "anual" : "lunar";
+        const renewalClient = await getStatieClientInfo(supabase, profileId);
+        if (renewalClient) {
+          await emiteFacturaIdempotent(supabase, {
+            profileId,
+            tip: "subscription_renewal",
+            referinta: invoice.id,
+            client: renewalClient,
+            productName: `Abonament Velos CRM - Reinnoire Plan ${planName} (${cycleLabel})`,
+            amount: (invoice.amount_paid ?? 0) / 100,
+            currency: invoice.currency ?? "ron",
+          });
+        }
       }
     }
   }

@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { stripe } from "@/lib/stripe";
+import { emiteFactura } from "@/lib/smartbill";
 
 /**
  * Fulfills an SMS purchase session idempotently.
@@ -79,6 +80,53 @@ export async function fulfillSmsSessionAction(
     status: "completed",
     completed_at: new Date().toISOString(),
   });
+
+  // Factură SmartBill (idempotentă — verifică dacă a fost deja emisă de webhook)
+  const { data: facturaExisting } = await (serviceClient as any)
+    .from("facturi")
+    .select("id")
+    .eq("referinta", session.id)
+    .maybeSingle();
+
+  if (!facturaExisting) {
+    const { data: statie } = await serviceClient
+      .from("statii")
+      .select("nume, cui, adresa, oras, judet, email")
+      .eq("owner_id", user.id)
+      .eq("activa", true)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (statie) {
+      const s = statie as any;
+      const facturaResult = await emiteFactura({
+        client: {
+          name: s.nume ?? "Client",
+          vatCode: s.cui ?? undefined,
+          isTaxPayer: !!s.cui,
+          address: s.adresa ?? undefined,
+          city: s.oras ?? undefined,
+          county: s.judet ?? undefined,
+          email: s.email ?? undefined,
+        },
+        productName: `${cantitate} SMS-uri Velos CRM`,
+        amount: (session.amount_total ?? 0) / 100,
+        currency: session.currency ?? "eur",
+      });
+
+      await (serviceClient as any).from("facturi").insert({
+        profile_id: user.id,
+        tip: "sms_purchase",
+        referinta: session.id,
+        smartbill_serie: facturaResult.serie ?? null,
+        smartbill_numar: facturaResult.numar ?? null,
+        suma: (session.amount_total ?? 0) / 100,
+        moneda: (session.currency ?? "eur").toUpperCase(),
+        eroare: facturaResult.success ? null : (facturaResult.error ?? "Eroare necunoscuta"),
+      });
+    }
+  }
 
   return { success: true, cantitate };
 }
