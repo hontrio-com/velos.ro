@@ -22,6 +22,9 @@ export const metadata: Metadata = {
     title: "Velos.ro",
   },
   formatDetection: { telephone: false },
+  verification: {
+    google: "s4J0XLTSqBb1v2zQazQm8hTgPnzWT1082geEamLleC0",
+  },
 };
 
 export default function RootLayout({
