@@ -20,6 +20,7 @@ import {
   Plus,
   UserCog,
   Globe,
+  HelpCircle,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAppStore } from "@/stores/app-store";
@@ -68,6 +69,10 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "RAPOARTE",
     items: [{ href: "/rapoarte", label: "Rapoarte", icon: BarChart3, permission: "rapoarte" }],
+  },
+  {
+    label: "SUPORT",
+    items: [{ href: "/ajutor", label: "Ajutor", icon: HelpCircle }],
   },
 ];
 
