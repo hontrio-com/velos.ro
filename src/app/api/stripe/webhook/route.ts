@@ -11,8 +11,9 @@ import { createServiceClient } from "@/lib/supabase/service";
 async function getStatieClientInfo(
   supabase: ReturnType<typeof createServiceClient>,
   profileId: string
-): Promise<SmartBillClientInfo | null> {
-  const { data } = await supabase
+): Promise<SmartBillClientInfo> {
+  // Încearcă să ia datele din prima stație activă a utilizatorului
+  const { data: statie } = await supabase
     .from("statii")
     .select("nume, cui, adresa, oras, judet, email")
     .eq("owner_id", profileId)
@@ -21,16 +22,29 @@ async function getStatieClientInfo(
     .limit(1)
     .maybeSingle();
 
-  if (!data) return null;
-  const s = data as any;
+  if (statie) {
+    const s = statie as any;
+    return {
+      name: s.nume ?? "Client",
+      vatCode: s.cui ?? undefined,
+      isTaxPayer: !!s.cui,
+      address: s.adresa ?? undefined,
+      city: s.oras ?? undefined,
+      county: s.judet ?? undefined,
+      email: s.email ?? undefined,
+    };
+  }
+
+  // Fallback: date din profilul utilizatorului
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name, email")
+    .eq("id", profileId)
+    .single();
+
   return {
-    name: s.nume ?? "Client",
-    vatCode: s.cui ?? undefined,
-    isTaxPayer: !!s.cui,
-    address: s.adresa ?? undefined,
-    city: s.oras ?? undefined,
-    county: s.judet ?? undefined,
-    email: s.email ?? undefined,
+    name: (profile as any)?.full_name ?? "Client Velos CRM",
+    email: profile?.email ?? undefined,
   };
 }
 
@@ -129,18 +143,15 @@ export async function POST(request: NextRequest) {
         );
 
         // Factură SmartBill pentru achiziție SMS
-        const smsClient = await getStatieClientInfo(supabase, profileId);
-        if (smsClient) {
-          await emiteFacturaIdempotent(supabase, {
-            profileId,
-            tip: "sms_purchase",
-            referinta: session.id,
-            client: smsClient,
-            productName: `${cantitate} SMS-uri Velos CRM`,
-            amount: (session.amount_total ?? 0) / 100,
-            currency: session.currency ?? "eur",
-          });
-        }
+        await emiteFacturaIdempotent(supabase, {
+          profileId,
+          tip: "sms_purchase",
+          referinta: session.id,
+          client: await getStatieClientInfo(supabase, profileId),
+          productName: `${cantitate} SMS-uri Velos CRM`,
+          amount: (session.amount_total ?? 0) / 100,
+          currency: session.currency ?? "eur",
+        });
       }
     }
 
@@ -191,18 +202,15 @@ export async function POST(request: NextRequest) {
         const planConfig = (PLAN_CONFIG as any)[plan];
         const planName = planConfig?.name ?? plan;
         const cycleLabel = cycle === "yearly" ? "anual" : "lunar";
-        const subClient = await getStatieClientInfo(supabase, profileId);
-        if (subClient) {
-          await emiteFacturaIdempotent(supabase, {
-            profileId,
-            tip: "subscription_new",
-            referinta: session.id,
-            client: subClient,
-            productName: `Abonament Velos CRM - Plan ${planName} (${cycleLabel})`,
-            amount: (session.amount_total ?? 0) / 100,
-            currency: session.currency ?? "ron",
-          });
-        }
+        await emiteFacturaIdempotent(supabase, {
+          profileId,
+          tip: "subscription_new",
+          referinta: session.id,
+          client: await getStatieClientInfo(supabase, profileId),
+          productName: `Abonament Velos CRM - Plan ${planName} (${cycleLabel})`,
+          amount: (session.amount_total ?? 0) / 100,
+          currency: session.currency ?? "ron",
+        });
       }
     }
   }
@@ -308,18 +316,15 @@ export async function POST(request: NextRequest) {
         const planConfig = planInfo ? (PLAN_CONFIG as any)[planInfo.plan] : null;
         const planName = planConfig?.name ?? planInfo?.plan ?? "unknown";
         const cycleLabel = planInfo?.cycle === "yearly" ? "anual" : "lunar";
-        const renewalClient = await getStatieClientInfo(supabase, profileId);
-        if (renewalClient) {
-          await emiteFacturaIdempotent(supabase, {
-            profileId,
-            tip: "subscription_renewal",
-            referinta: invoice.id,
-            client: renewalClient,
-            productName: `Abonament Velos CRM - Reinnoire Plan ${planName} (${cycleLabel})`,
-            amount: (invoice.amount_paid ?? 0) / 100,
-            currency: invoice.currency ?? "ron",
-          });
-        }
+        await emiteFacturaIdempotent(supabase, {
+          profileId,
+          tip: "subscription_renewal",
+          referinta: invoice.id,
+          client: await getStatieClientInfo(supabase, profileId),
+          productName: `Abonament Velos CRM - Reinnoire Plan ${planName} (${cycleLabel})`,
+          amount: (invoice.amount_paid ?? 0) / 100,
+          currency: invoice.currency ?? "ron",
+        });
       }
     }
   }

@@ -89,6 +89,7 @@ export async function fulfillSmsSessionAction(
     .maybeSingle();
 
   if (!facturaExisting) {
+    // Date client: stație activă sau fallback pe profil
     const { data: statie } = await serviceClient
       .from("statii")
       .select("nume, cui, adresa, oras, judet, email")
@@ -98,34 +99,43 @@ export async function fulfillSmsSessionAction(
       .limit(1)
       .maybeSingle();
 
-    if (statie) {
-      const s = statie as any;
-      const facturaResult = await emiteFactura({
-        client: {
-          name: s.nume ?? "Client",
+    const { data: profile } = !statie
+      ? await serviceClient.from("profiles").select("full_name, email").eq("id", user.id).single()
+      : { data: null };
+
+    const s = statie as any;
+    const clientInfo = statie
+      ? {
+          name: s.nume ?? "Client Velos CRM",
           vatCode: s.cui ?? undefined,
           isTaxPayer: !!s.cui,
           address: s.adresa ?? undefined,
           city: s.oras ?? undefined,
           county: s.judet ?? undefined,
           email: s.email ?? undefined,
-        },
-        productName: `${cantitate} SMS-uri Velos CRM`,
-        amount: (session.amount_total ?? 0) / 100,
-        currency: session.currency ?? "eur",
-      });
+        }
+      : {
+          name: (profile as any)?.full_name ?? "Client Velos CRM",
+          email: (profile as any)?.email ?? undefined,
+        };
 
-      await (serviceClient as any).from("facturi").insert({
-        profile_id: user.id,
-        tip: "sms_purchase",
-        referinta: session.id,
-        smartbill_serie: facturaResult.serie ?? null,
-        smartbill_numar: facturaResult.numar ?? null,
-        suma: (session.amount_total ?? 0) / 100,
-        moneda: (session.currency ?? "eur").toUpperCase(),
-        eroare: facturaResult.success ? null : (facturaResult.error ?? "Eroare necunoscuta"),
-      });
-    }
+    const facturaResult = await emiteFactura({
+      client: clientInfo,
+      productName: `${cantitate} SMS-uri Velos CRM`,
+      amount: (session.amount_total ?? 0) / 100,
+      currency: session.currency ?? "eur",
+    });
+
+    await (serviceClient as any).from("facturi").insert({
+      profile_id: user.id,
+      tip: "sms_purchase",
+      referinta: session.id,
+      smartbill_serie: facturaResult.serie ?? null,
+      smartbill_numar: facturaResult.numar ?? null,
+      suma: (session.amount_total ?? 0) / 100,
+      moneda: (session.currency ?? "eur").toUpperCase(),
+      eroare: facturaResult.success ? null : (facturaResult.error ?? "Eroare necunoscuta"),
+    });
   }
 
   return { success: true, cantitate };
