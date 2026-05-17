@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
-  MoreHorizontal, Settings, Copy, Power, Trash2, MapPin, Clock, Layers,
+  MoreHorizontal, Settings, Power, Trash2, MapPin, Clock, Layers,
   CheckCircle2, XCircle, Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -42,12 +42,6 @@ export function StatieCard({ statie }: StatieCardProps) {
         toast.success(activa ? "Stație dezactivată" : "Stație activată");
       }
     });
-  }
-
-  function copyLink() {
-    const link = `${window.location.origin}/booking/${statie.slug}`;
-    navigator.clipboard.writeText(link);
-    toast.success("Link copiat!");
   }
 
   const initiale = statie.nume
@@ -131,14 +125,10 @@ export function StatieCard({ statie }: StatieCardProps) {
               <DropdownMenuTrigger className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[#9CA3AF] hover:text-[#374151] hover:bg-[#F3F4F6] transition-colors">
                 <MoreHorizontal className="h-4 w-4" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="w-44">
                 <DropdownMenuItem onClick={() => router.push(`/setari/statii/${statie.id}`)}>
                   <Settings className="mr-2 h-4 w-4" />
                   Configurează
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={copyLink}>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copiază link booking
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={toggleActiva} disabled={isPending}>

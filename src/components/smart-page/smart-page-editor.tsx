@@ -100,6 +100,19 @@ export function SmartPageEditor({ statieId, statieSlug, statieNume, initialData 
     file: File,
     setLoading: (v: boolean) => void
   ) {
+    const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    const MAX_MB = 5;
+    if (!ALLOWED.includes(file.type)) {
+      toast.error("Format nesuportat. Folosiți JPG, PNG sau WebP.");
+      return;
+    }
+    if (file.size > MAX_MB * 1024 * 1024) {
+      toast.error(`Imaginea depășește ${MAX_MB}MB. Reduceți dimensiunea și reîncercați.`);
+      return;
+    }
+    if (type === "banner" && file.size > 2 * 1024 * 1024) {
+      toast.warning("Recomandăm banner-ul în format 16:9 (ex: 1200×675px), maxim 2MB.");
+    }
     setLoading(true);
     try {
       const fd = new FormData();

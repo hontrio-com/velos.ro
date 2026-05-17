@@ -21,8 +21,6 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SearchCommand } from "./search-command";
@@ -138,36 +136,46 @@ export function Header({ userEmail, userName, onMenuToggle, role = "owner" }: He
               <ChevronDown className="h-3 w-3 text-[#9CA3AF] hidden md:block" />
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent align="end" className="w-52">
-              <DropdownMenuGroup>
-                <DropdownMenuLabel className="text-xs text-muted-foreground font-normal truncate">
-                  {userEmail}
-                </DropdownMenuLabel>
-                {!isEmployee && (
-                  <>
-                    <DropdownMenuItem onClick={() => router.push("/setari/profil")}>
-                      <User className="h-4 w-4" />
-                      Profilul meu
+            <DropdownMenuContent align="end" className="w-56 p-1">
+              {/* User info card */}
+              <div className="flex items-center gap-3 px-3 py-2.5 mb-1">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1877F2] text-white text-sm font-bold shrink-0">
+                  {initials}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-[#111318] truncate">{userName || displayName}</p>
+                  <p className="text-xs text-[#9CA3AF] truncate">{userEmail}</p>
+                </div>
+              </div>
+
+              {!isEmployee && (
+                <>
+                  <div className="h-px bg-[#F3F4F6] mx-1 mb-1" />
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem onClick={() => router.push("/setari/profil")} className="rounded-lg">
+                      <User className="h-4 w-4 text-[#6B7280]" />
+                      <span>Profilul meu</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push("/setari/statii")}>
-                      <Building2 className="h-4 w-4" />
-                      Stațiile mele
+                    <DropdownMenuItem onClick={() => router.push("/setari/statii")} className="rounded-lg">
+                      <Building2 className="h-4 w-4 text-[#6B7280]" />
+                      <span>Stațiile mele</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push("/setari/abonament")}>
-                      <CreditCard className="h-4 w-4" />
-                      Abonament
+                    <DropdownMenuItem onClick={() => router.push("/setari/abonament")} className="rounded-lg">
+                      <CreditCard className="h-4 w-4 text-[#6B7280]" />
+                      <span>Abonament</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push("/setari")}>
-                      <Settings className="h-4 w-4" />
-                      Setări
+                    <DropdownMenuItem onClick={() => router.push("/setari")} className="rounded-lg">
+                      <Settings className="h-4 w-4 text-[#6B7280]" />
+                      <span>Setări</span>
                     </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem variant="destructive" onClick={handleLogout}>
+                  </DropdownMenuGroup>
+                </>
+              )}
+
+              <div className="h-px bg-[#F3F4F6] mx-1 my-1" />
+              <DropdownMenuItem variant="destructive" onClick={handleLogout} className="rounded-lg">
                 <LogOut className="h-4 w-4" />
-                Deconectare
+                <span>Deconectare</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

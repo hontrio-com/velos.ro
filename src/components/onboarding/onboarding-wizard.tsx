@@ -145,7 +145,7 @@ export function OnboardingWizard({ userEmail, hasStation }: { userEmail: string;
                       îți configurăm contul și ești gata să începi.
                     </p>
                   </div>
-                  <div className="grid grid-cols-3 gap-4 w-full mt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full mt-2">
                     {[
                       { icon: <CalendarDays className="h-5 w-5 text-[#1877F2]" />, label: "Programări", desc: "Calendar inteligent" },
                       { icon: <MessageSquare className="h-5 w-5 text-[#1877F2]" />, label: "SMS-uri", desc: "Remindere automate" },

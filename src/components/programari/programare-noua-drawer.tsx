@@ -548,7 +548,7 @@ export function ProgramareNouaDrawer({
                 </div>
               </div>
 
-              {angajati.length > 0 && (
+              {angajati.length > 0 ? (
                 <div className="space-y-1.5">
                   <Label className="text-[#374151]">Inspector / Angajat (opțional)</Label>
                   <select
@@ -563,6 +563,13 @@ export function ProgramareNouaDrawer({
                       </option>
                     ))}
                   </select>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2.5">
+                  <p className="text-xs text-[#9CA3AF]">
+                    Nu ai angajați adăugați. Poți gestiona echipa din secțiunea{" "}
+                    <a href="/angajati" className="text-[#1877F2] hover:underline">Angajați</a>.
+                  </p>
                 </div>
               )}
 

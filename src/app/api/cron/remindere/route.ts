@@ -5,8 +5,11 @@ import { DEFAULT_TEMPLATES } from "@/lib/remindere-generator";
 import type { TipReminder } from "@/lib/remindere-generator";
 
 export async function GET(request: Request) {
-  const secret = request.headers.get("x-cron-secret");
-  if (secret !== process.env.CRON_SECRET) {
+  // Support both Vercel native cron (Authorization: Bearer) and manual trigger (x-cron-secret)
+  const bearerToken = request.headers.get("authorization")?.replace("Bearer ", "");
+  const customHeader = request.headers.get("x-cron-secret");
+  const expectedSecret = process.env.CRON_SECRET;
+  if (!expectedSecret || (bearerToken !== expectedSecret && customHeader !== expectedSecret)) {
     return new Response("Unauthorized", { status: 401 });
   }
 

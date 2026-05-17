@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, X, CalendarDays, Users, Car, ScanText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScanVehiculModal } from "./scan-vehicul-modal";
-import { VehiculFormDialog } from "@/components/vehicule/vehicul-form-dialog";
+import { QuickAddVehiculModal } from "./quick-add-vehicul-modal";
 
 const NAV_ACTIONS = [
   { icon: CalendarDays, label: "Programare nouă", href: "/programari", color: "bg-[#1877F2]" },
@@ -55,7 +55,7 @@ export function QuickActions({ statieId }: { statieId: string }) {
                 className="flex items-center gap-3"
               >
                 <span className="bg-white text-[#111318] text-xs font-medium px-2.5 py-1.5 rounded-lg shadow border border-[#E5E7EB] whitespace-nowrap">
-                  Scanează vehicul
+                  Adăugare rapidă vehicul
                 </span>
                 <motion.button
                   type="button"
@@ -128,11 +128,11 @@ export function QuickActions({ statieId }: { statieId: string }) {
         />
       )}
 
-      {/* Vehicle form — opens after scan with plate pre-filled */}
+      {/* Quick-add modal — opens after scan with plate pre-filled */}
       {scannedPlate !== null && (
-        <VehiculFormDialog
+        <QuickAddVehiculModal
           statieId={statieId}
-          prefillNrInmatriculare={scannedPlate}
+          prefillPlate={scannedPlate}
           onClose={() => setScannedPlate(null)}
           onSave={() => {
             setScannedPlate(null);
