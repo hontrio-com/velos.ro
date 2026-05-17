@@ -70,10 +70,6 @@ const NAV_GROUPS: NavGroup[] = [
     label: "RAPOARTE",
     items: [{ href: "/rapoarte", label: "Rapoarte", icon: BarChart3, permission: "rapoarte" }],
   },
-  {
-    label: "SUPORT",
-    items: [{ href: "/ajutor", label: "Ajutor", icon: HelpCircle }],
-  },
 ];
 
 function NavItemLink({
@@ -323,6 +319,11 @@ export function Sidebar({
         {/* Bottom */}
         <div className="border-t border-[#E5E7EB] px-2 py-3 space-y-2 shrink-0">
           {!isEmployee && <SmsQuotaWidget />}
+          <NavItemLink
+            item={{ href: "/ajutor", label: "Ajutor", icon: HelpCircle }}
+            isActive={pathname === "/ajutor" || pathname.startsWith("/ajutor/")}
+            onClick={onClose}
+          />
           {!isEmployee && (
             <NavItemLink
               item={{ href: "/setari", label: "Setări", icon: Settings }}
