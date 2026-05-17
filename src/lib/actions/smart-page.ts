@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 export type SmartServicii = {
   id: string;
@@ -127,6 +128,107 @@ export async function deleteSmartGalerieImageAction(
   }
 
   return { success: true };
+}
+
+// ── Analytics ─────────────────────────────────────────────────────────────────
+
+export type SmartPageDayStat = { date: string; views: number };
+export type SmartPageSourceStat = { source: string; views: number };
+export type SmartPageDeviceStat = { device: string; views: number };
+
+export type SmartPageStats = {
+  totalAllTime: number;
+  total30d: number;
+  total7d: number;
+  totalToday: number;
+  byDay: SmartPageDayStat[];
+  bySource: SmartPageSourceStat[];
+  byDevice: SmartPageDeviceStat[];
+};
+
+export async function getSmartPageStatsAction(
+  statieId: string
+): Promise<SmartPageStats | { error: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Neautentificat" };
+
+  // Verify ownership
+  const { data: statie } = await supabase
+    .from("statii")
+    .select("id")
+    .eq("id", statieId)
+    .eq("owner_id", user.id)
+    .single();
+  if (!statie) return { error: "Acces interzis" };
+
+  const svc = createServiceClient();
+
+  const now = new Date();
+  const todayStr = now.toISOString().slice(0, 10);
+  const ago7 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const ago30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  // All-time count
+  const { count: totalAllTime } = await (svc as any)
+    .from("smart_page_views")
+    .select("id", { count: "exact", head: true })
+    .eq("statie_id", statieId);
+
+  // Last 30 days rows (for all other aggregations)
+  const { data: rows30 } = await (svc as any)
+    .from("smart_page_views")
+    .select("viewed_at, source, device")
+    .eq("statie_id", statieId)
+    .gte("viewed_at", ago30)
+    .order("viewed_at", { ascending: true });
+
+  const all = (rows30 ?? []) as { viewed_at: string; source: string; device: string }[];
+
+  // Aggregate: by day (last 30 days)
+  const dayMap = new Map<string, number>();
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+    dayMap.set(d.toISOString().slice(0, 10), 0);
+  }
+  for (const r of all) {
+    const day = r.viewed_at.slice(0, 10);
+    if (dayMap.has(day)) dayMap.set(day, (dayMap.get(day) ?? 0) + 1);
+  }
+  const byDay: SmartPageDayStat[] = Array.from(dayMap.entries()).map(([date, views]) => ({ date, views }));
+
+  // Aggregate: by source
+  const sourceMap = new Map<string, number>();
+  for (const r of all) {
+    sourceMap.set(r.source, (sourceMap.get(r.source) ?? 0) + 1);
+  }
+  const bySource: SmartPageSourceStat[] = Array.from(sourceMap.entries())
+    .map(([source, views]) => ({ source, views }))
+    .sort((a, b) => b.views - a.views);
+
+  // Aggregate: by device
+  const deviceMap = new Map<string, number>();
+  for (const r of all) {
+    deviceMap.set(r.device, (deviceMap.get(r.device) ?? 0) + 1);
+  }
+  const byDevice: SmartPageDeviceStat[] = Array.from(deviceMap.entries())
+    .map(([device, views]) => ({ device, views }))
+    .sort((a, b) => b.views - a.views);
+
+  // Period counts
+  const total30d = all.length;
+  const total7d = all.filter((r) => r.viewed_at >= ago7).length;
+  const totalToday = all.filter((r) => r.viewed_at.slice(0, 10) === todayStr).length;
+
+  return {
+    totalAllTime: totalAllTime ?? 0,
+    total30d,
+    total7d,
+    totalToday,
+    byDay,
+    bySource,
+    byDevice,
+  };
 }
 
 export async function deleteSmartMediaAction(

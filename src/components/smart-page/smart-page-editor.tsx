@@ -6,7 +6,7 @@ import {
   Globe, Palette, Star, MessageCircle, Loader2, Plus, Trash2,
   Check, ExternalLink, Eye, EyeOff, Sparkles, Image as ImageIcon,
   ChevronUp, ChevronDown, GripVertical, CalendarDays, Clock,
-  MapPin, Phone, X, Upload,
+  MapPin, Phone, X, Upload, BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import {
   deleteSmartGalerieImageAction, deleteSmartMediaAction,
 } from "@/lib/actions/smart-page";
 import type { SmartPageData, SmartServicii, ChatbotQA } from "@/lib/actions/smart-page";
+import { SmartPageStatsTab } from "./smart-page-stats-tab";
 import { cn } from "@/lib/utils";
 
 const TABS = [
@@ -27,6 +28,7 @@ const TABS = [
   { id: "servicii", label: "Servicii", icon: Star },
   { id: "chatbot", label: "Chatbot", icon: MessageCircle },
   { id: "structura", label: "Structură", icon: GripVertical },
+  { id: "statistici", label: "Statistici", icon: BarChart3 },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -683,6 +685,11 @@ export function SmartPageEditor({ statieId, statieSlug, statieNume, initialData 
               Salvează ordinea
             </Button>
           </div>
+        )}
+
+        {/* ── STATISTICI ── */}
+        {activeTab === "statistici" && (
+          <SmartPageStatsTab statieId={statieId} />
         )}
       </div>
     </div>

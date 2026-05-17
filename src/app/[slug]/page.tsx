@@ -10,6 +10,7 @@ import {
 import { SmartBookingWizard } from "@/components/smart-page/smart-booking-wizard";
 import { SmartChatbot } from "@/components/smart-page/smart-chatbot";
 import { SmartGallery } from "@/components/smart-page/smart-gallery";
+import { SmartPageTracker } from "@/components/smart-page/smart-page-tracker";
 import type { SmartPageData } from "@/lib/actions/smart-page";
 
 interface Props {
@@ -53,21 +54,42 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const { statie, smartPage } = data;
   const location = [statie.localitate, statie.judet].filter(Boolean).join(", ");
+  const canonicalUrl = `https://velos.ro/${slug}`;
   const title = `ITP ${statie.localitate ?? statie.nume} — ${statie.nume} | Programare Online`;
   const description = smartPage?.seo_description ??
     `Programare ITP online la ${statie.nume}${location ? ` din ${location}` : ""}. Slot-uri disponibile, confirmare imediată. Rapid, simplu, fără așteptare.`;
+  const ogImage = smartPage?.banner_url
+    ? [{ url: smartPage.banner_url, width: 1200, height: 630, alt: statie.nume }]
+    : [];
 
   return {
     title,
     description,
+    alternates: { canonical: canonicalUrl },
     openGraph: {
       title,
       description,
+      url: canonicalUrl,
+      siteName: "Velos.ro",
       type: "website",
       locale: "ro_RO",
-      ...(smartPage?.banner_url ? { images: [{ url: smartPage.banner_url }] } : {}),
+      ...(ogImage.length > 0 ? { images: ogImage } : {}),
+    },
+    twitter: {
+      card: ogImage.length > 0 ? "summary_large_image" : "summary",
+      title,
+      description,
+      ...(ogImage.length > 0 ? { images: [ogImage[0].url] } : {}),
     },
     robots: { index: true, follow: true },
+    keywords: [
+      `ITP ${statie.localitate ?? ""}`,
+      `programare ITP ${statie.localitate ?? ""}`,
+      `statie ITP ${statie.localitate ?? ""}`,
+      statie.nume,
+      "ITP online",
+      "programare ITP",
+    ].filter(Boolean),
   };
 }
 
@@ -109,18 +131,21 @@ export default async function SmartPage({ params }: Props) {
     : `https://maps.google.com/maps?q=${encodeURIComponent(location)}&output=embed`;
 
   // JSON-LD LocalBusiness schema
+  const canonicalUrl = `https://velos.ro/${slug}`;
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "AutoRepair",
+    "@type": ["AutoRepair", "LocalBusiness"],
     name: statie.nume,
-    url: `https://velos.ro/${slug}`,
+    url: canonicalUrl,
     telephone: statie.telefon,
     email: statie.email,
+    description: smartPage?.seo_description ??
+      `Programare ITP online la ${statie.nume}${locationShort ? ` din ${locationShort}` : ""}.`,
     address: {
       "@type": "PostalAddress",
-      streetAddress: statie.adresa,
-      addressLocality: statie.localitate,
-      addressRegion: statie.judet,
+      streetAddress: statie.adresa ?? undefined,
+      addressLocality: statie.localitate ?? undefined,
+      addressRegion: statie.judet ?? undefined,
       addressCountry: "RO",
     },
     ...(statie.lat && statie.lng ? {
@@ -136,8 +161,24 @@ export default async function SmartPage({ params }: Props) {
       opens: (hours as { start: string })?.start,
       closes: (hours as { end: string })?.end,
     })),
+    potentialAction: {
+      "@type": "ReserveAction",
+      name: "Programare ITP online",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${canonicalUrl}#programare`,
+        actionPlatform: [
+          "https://schema.org/DesktopWebPlatform",
+          "https://schema.org/MobileWebPlatform",
+        ],
+      },
+    },
     priceRange: "$$",
+    currenciesAccepted: "RON",
+    paymentAccepted: "Cash, Card",
+    areaServed: statie.localitate ?? statie.judet ?? "România",
     hasMap: mapsUrl,
+    ...(logoUrl ? { logo: logoUrl } : {}),
     ...(galerieUrls.length > 0 ? { image: galerieUrls } : {}),
   };
 
@@ -331,6 +372,7 @@ export default async function SmartPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <SmartPageTracker statieId={statie.id} />
 
       <div className="min-h-screen bg-[#F7F8FA]">
 
