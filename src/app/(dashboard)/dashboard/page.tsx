@@ -16,7 +16,9 @@ import { ExpirareCurande } from "@/components/dashboard/expirare-curande";
 import { GraficLunar, type ZiData } from "@/components/dashboard/grafic-lunar";
 import { ActivitateRecenta } from "@/components/dashboard/activitate-recenta";
 import { QuickActions } from "@/components/dashboard/quick-actions";
+import { SmartPageWidget } from "@/components/dashboard/smart-page-widget";
 import { FadeUp } from "@/components/layout/fade-up";
+import { createServiceClient } from "@/lib/supabase/service";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -168,6 +170,32 @@ export default async function DashboardPage() {
       .limit(8),
   ]);
 
+  // Smart Page stats
+  const svc = createServiceClient();
+  const now = new Date();
+  const ago7 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const ago30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const todayStr = now.toISOString().slice(0, 10);
+
+  const [smartPageResult, smartViewsResult] = await Promise.all([
+    (svc as any).from("smart_page").select("id").eq("statie_id", statie.id).maybeSingle(),
+    (svc as any).from("smart_page_views").select("viewed_at").eq("statie_id", statie.id).gte("viewed_at", ago30).order("viewed_at", { ascending: true }),
+  ]);
+
+  const hasSmartPage = !!smartPageResult?.data;
+  const smartViews = (smartViewsResult?.data ?? []) as { viewed_at: string }[];
+
+  const smartTotalToday = smartViews.filter((r) => r.viewed_at.slice(0, 10) === todayStr).length;
+  const smartTotal7d = smartViews.filter((r) => r.viewed_at >= ago7).length;
+  const smartTotal30d = smartViews.length;
+
+  // Build last 7 days sparkline
+  const smartByDay7 = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(now.getTime() - (6 - i) * 24 * 60 * 60 * 1000);
+    const dateStr = d.toISOString().slice(0, 10);
+    return { date: dateStr, views: smartViews.filter((r) => r.viewed_at.slice(0, 10) === dateStr).length };
+  });
+
   // Compute KPI values
   const programariAzi = programariAziResult.data ?? [];
   const programariAziCount = programariAzi.length;
@@ -295,6 +323,19 @@ export default async function DashboardPage() {
           <ActivitateRecenta items={activitate} />
         </FadeUp>
 
+        <div className="flex flex-col gap-6">
+          {hasSmartPage && statie.slug && (
+            <FadeUp delay={0.52}>
+              <SmartPageWidget
+                slug={statie.slug}
+                totalToday={smartTotalToday}
+                total7d={smartTotal7d}
+                total30d={smartTotal30d}
+                byDay7={smartByDay7}
+              />
+            </FadeUp>
+          )}
+
         <FadeUp delay={0.54}>
           <div className="bg-white border border-[#E5E7EB] rounded-xl p-5 h-full">
             <p className="text-base font-semibold text-[#111318] mb-4">
@@ -323,6 +364,7 @@ export default async function DashboardPage() {
             )}
           </div>
         </FadeUp>
+        </div>
       </div>
 
       <QuickActions statieId={statie.id} />
