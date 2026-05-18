@@ -346,6 +346,7 @@ export function ClientTabVehicule({
                   <Input
                     {...register("expirare_itp")}
                     type="date"
+                    lang="ro"
                     className="border-[#E5E7EB]"
                   />
                 </div>
@@ -354,6 +355,7 @@ export function ClientTabVehicule({
                   <Input
                     {...register("expirare_rca")}
                     type="date"
+                    lang="ro"
                     className="border-[#E5E7EB]"
                   />
                 </div>
@@ -362,6 +364,7 @@ export function ClientTabVehicule({
                   <Input
                     {...register("expirare_rovinieta")}
                     type="date"
+                    lang="ro"
                     className="border-[#E5E7EB]"
                   />
                 </div>

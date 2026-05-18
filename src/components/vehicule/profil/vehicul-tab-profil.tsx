@@ -199,7 +199,7 @@ export function VehiculTabProfil({ vehicul }: Props) {
             { key: "expirare_iscir", label: "Expirare ISCIR" },
           ].map(({ key, label }) => (
             <Field key={key} label={label}>
-              <Input type="date" value={form[key as keyof typeof form]} onChange={(v) => set(key as keyof typeof form, v)} />
+              <Input type="date" lang="ro" value={form[key as keyof typeof form]} onChange={(v) => set(key as keyof typeof form, v)} />
             </Field>
           ))}
         </div>

@@ -152,6 +152,7 @@ export function RezultatItpForm({
           <Label>Data inspectie</Label>
           <Input
             type="date"
+            lang="ro"
             value={dataInspectie}
             onChange={(e) => setDataInspectie(e.target.value)}
           />
@@ -161,6 +162,7 @@ export function RezultatItpForm({
             <Label>Expira la</Label>
             <Input
               type="date"
+              lang="ro"
               value={expirareNoua}
               onChange={(e) => setExpirareNoua(e.target.value)}
             />

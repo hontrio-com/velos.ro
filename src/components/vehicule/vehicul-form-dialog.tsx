@@ -348,6 +348,7 @@ export function VehiculFormDialog({
                   <Label>Expirare ITP</Label>
                   <Input
                     type="date"
+                    lang="ro"
                     value={expirareItp}
                     onChange={(e) => setExpirareItp(e.target.value)}
                   />

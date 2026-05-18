@@ -348,12 +348,12 @@ export function VehiculTabDocumente({ vehiculId, statieId }: Props) {
             </div>
             <div>
               <label className="block text-xs font-medium text-[#374151] mb-1.5">Data document</label>
-              <input type="date" value={form.data_document} onChange={(e) => setField("data_document", e.target.value)}
+              <input type="date" lang="ro" value={form.data_document} onChange={(e) => setField("data_document", e.target.value)}
                 className="w-full text-sm rounded-lg border border-[#E5E7EB] px-3 py-2 outline-none focus:border-[#1877F2] text-[#111318]" />
             </div>
             <div>
               <label className="block text-xs font-medium text-[#374151] mb-1.5">Data expirare</label>
-              <input type="date" value={form.data_expirare} onChange={(e) => setField("data_expirare", e.target.value)}
+              <input type="date" lang="ro" value={form.data_expirare} onChange={(e) => setField("data_expirare", e.target.value)}
                 className="w-full text-sm rounded-lg border border-[#E5E7EB] px-3 py-2 outline-none focus:border-[#1877F2] text-[#111318]" />
             </div>
             <div className="sm:col-span-2">
