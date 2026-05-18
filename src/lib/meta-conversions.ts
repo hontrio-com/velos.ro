@@ -40,9 +40,7 @@ export async function sendMetaEvent(options: MetaEventOptions): Promise<void> {
   if (user.fbc) userData.fbc = user.fbc;
   if (user.fbp) userData.fbp = user.fbp;
 
-  const testEventCode = process.env.META_TEST_EVENT_CODE;
-
-  const payload: Record<string, unknown> = {
+  const payload = {
     data: [
       {
         event_name: eventName,
@@ -55,7 +53,6 @@ export async function sendMetaEvent(options: MetaEventOptions): Promise<void> {
       },
     ],
     access_token: ACCESS_TOKEN,
-    ...(testEventCode ? { test_event_code: testEventCode } : {}),
   };
 
   try {
