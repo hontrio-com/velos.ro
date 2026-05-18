@@ -26,7 +26,7 @@ export default async function DashboardLayout({
 
   const { data: profileRaw } = await (supabase as any)
     .from("profiles")
-    .select("full_name, suspended_at, plan, subscription_status, trial_expires_at, onboarding_completed, role, owner_profile_id")
+    .select("full_name, suspended_at, plan, subscription_status, trial_expires_at, onboarding_completed, role, owner_profile_id, is_admin")
     .eq("id", user.id)
     .single();
 
@@ -39,6 +39,7 @@ export default async function DashboardLayout({
     onboarding_completed: boolean;
     role: "owner" | "angajat";
     owner_profile_id: string | null;
+    is_admin: boolean | null;
   } | null;
 
   if (profile?.suspended_at) redirect("/suspendat");
@@ -141,6 +142,7 @@ export default async function DashboardLayout({
       statii={statii ?? []}
       permisiuni={null}
       role="owner"
+      isAdmin={profile?.is_admin === true}
     >
       <TrialBanner
         subscriptionStatus={effectiveStatus}
