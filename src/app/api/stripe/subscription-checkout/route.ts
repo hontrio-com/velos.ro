@@ -66,8 +66,6 @@ export async function POST(request: NextRequest) {
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://velos.ro";
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://velos.ro";
   const nameParts = ((profile as any)?.full_name as string | undefined)?.trim().split(/\s+/) ?? [];
   await sendMetaEvent({
     eventName: "InitiateCheckout",
