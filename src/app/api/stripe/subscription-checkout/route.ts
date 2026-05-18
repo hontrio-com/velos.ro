@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { stripe, PLAN_CONFIG, isValidPlan, isValidCycle, type PlanId, type BillingCycle } from "@/lib/stripe";
 import { createServiceClient } from "@/lib/supabase/service";
+import { sendMetaEvent } from "@/lib/meta-conversions";
 
 export async function POST(request: NextRequest) {
   const response = NextResponse.next();
@@ -65,6 +66,24 @@ export async function POST(request: NextRequest) {
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://velos.ro";
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://velos.ro";
+  const nameParts = ((profile as any)?.full_name as string | undefined)?.trim().split(/\s+/) ?? [];
+  await sendMetaEvent({
+    eventName: "InitiateCheckout",
+    eventId: `checkout_${user.id}_${plan}_${cycle}`,
+    sourceUrl: `${appUrl}/setari/abonament`,
+    user: {
+      email: profile?.email ?? user.email ?? undefined,
+      firstName: nameParts[0],
+      lastName: nameParts.slice(1).join(" ") || undefined,
+      externalId: user.id,
+      userAgent: request.headers.get("user-agent") ?? undefined,
+      fbc: request.cookies.get("_fbc")?.value,
+      fbp: request.cookies.get("_fbp")?.value,
+    },
+    customData: { content_name: `Plan ${plan} ${cycle}`, currency: "RON" },
+  }).catch(console.error);
 
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",

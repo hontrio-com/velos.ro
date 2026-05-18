@@ -9,6 +9,8 @@ import {
 } from "@/lib/validations/auth";
 import { sendBunVenitEmail, sendResetParolaEmail } from "@/lib/actions/email";
 import { createServiceClient } from "@/lib/supabase/service";
+import { headers, cookies } from "next/headers";
+import { sendMetaEvent } from "@/lib/meta-conversions";
 
 export async function loginAction(
   _prev: { error: string } | null,
@@ -68,6 +70,24 @@ export async function registerAction(
   }
 
   await sendBunVenitEmail(parsed.data.email, parsed.data.full_name).catch(console.error);
+
+  if (data.user) {
+    const headersList = await headers();
+    const cookieStore = await cookies();
+    const userAgent = headersList.get("user-agent") ?? undefined;
+    const fbc = cookieStore.get("_fbc")?.value;
+    const fbp = cookieStore.get("_fbp")?.value;
+    const nameParts = parsed.data.full_name.trim().split(/\s+/);
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(" ") || undefined;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://velos.ro";
+    const metaUser = { email: parsed.data.email, firstName, lastName, externalId: data.user.id, userAgent, fbc, fbp };
+
+    await Promise.all([
+      sendMetaEvent({ eventName: "CompleteRegistration", eventId: `reg_${data.user.id}`, sourceUrl: `${appUrl}/register`, user: metaUser }),
+      sendMetaEvent({ eventName: "StartTrial", eventId: `trial_${data.user.id}`, sourceUrl: `${appUrl}/register`, user: metaUser }),
+    ]).catch(console.error);
+  }
 
   redirect("/onboarding");
 }

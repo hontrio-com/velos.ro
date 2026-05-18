@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type Stripe from "stripe";
 import { stripe, getPlanFromPriceId, PLAN_CONFIG } from "@/lib/stripe";
 import { emiteFactura, type SmartBillClientInfo } from "@/lib/smartbill";
+import { sendMetaEvent } from "@/lib/meta-conversions";
 
 export const dynamic = "force-dynamic";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -119,7 +120,7 @@ export async function POST(request: NextRequest) {
       if (profileId && cantitate) {
         const { data: prof } = await supabase
           .from("profiles")
-          .select("sms_credit")
+          .select("sms_credit, email, full_name")
           .eq("id", profileId)
           .single();
 
@@ -141,6 +142,22 @@ export async function POST(request: NextRequest) {
           },
           { onConflict: "stripe_session_id" }
         );
+
+        // Meta Pixel — Purchase SMS
+        await sendMetaEvent({
+          eventName: "Purchase",
+          eventId: `sms_${session.id}`,
+          sourceUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://velos.ro"}/remindere`,
+          user: {
+            email: (prof as any)?.email ?? undefined,
+            externalId: profileId,
+          },
+          customData: {
+            value: (session.amount_total ?? 0) / 100,
+            currency: (session.currency ?? "eur").toUpperCase(),
+            content_name: `${cantitate} SMS-uri Velos`,
+          },
+        }).catch(console.error);
 
         // Factură SmartBill pentru achiziție SMS
         await emiteFacturaIdempotent(supabase, {
@@ -197,6 +214,30 @@ export async function POST(request: NextRequest) {
           },
           { onConflict: "stripe_subscription_id" }
         );
+
+        // Meta Pixel — Subscribe
+        const { data: subProf } = await supabase
+          .from("profiles")
+          .select("email, full_name")
+          .eq("id", profileId)
+          .maybeSingle();
+        const subNameParts = ((subProf as any)?.full_name as string | undefined)?.trim().split(/\s+/) ?? [];
+        await sendMetaEvent({
+          eventName: "Subscribe",
+          eventId: `sub_${subscriptionId}`,
+          sourceUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://velos.ro"}/setari/abonament`,
+          user: {
+            email: (subProf as any)?.email ?? undefined,
+            firstName: subNameParts[0],
+            lastName: subNameParts.slice(1).join(" ") || undefined,
+            externalId: profileId,
+          },
+          customData: {
+            value: (session.amount_total ?? 0) / 100,
+            currency: (session.currency ?? "ron").toUpperCase(),
+            content_name: `Abonament ${plan} ${cycle}`,
+          },
+        }).catch(console.error);
 
         // Factură SmartBill pentru abonament nou
         const planConfig = (PLAN_CONFIG as any)[plan];
