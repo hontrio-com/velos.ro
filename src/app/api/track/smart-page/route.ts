@@ -25,16 +25,15 @@ function detectDevice(ua: string | null): string {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { statieId } = body;
+    const { statieId, referer: bodyReferer } = body;
     if (!statieId || typeof statieId !== "string") {
       return NextResponse.json({ ok: false }, { status: 400 });
     }
 
-    const referer = req.headers.get("referer");
     const ua = req.headers.get("user-agent");
 
-    const source = detectSource(referer);
-    if (source === "internal") return NextResponse.json({ ok: true });
+    // Use document.referrer sent by client (actual traffic source), not the fetch referer
+    const source = detectSource(typeof bodyReferer === "string" ? bodyReferer : null);
 
     const device = detectDevice(ua);
 

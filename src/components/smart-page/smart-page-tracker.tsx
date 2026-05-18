@@ -7,7 +7,7 @@ export function SmartPageTracker({ statieId }: { statieId: string }) {
     fetch("/api/track/smart-page", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ statieId }),
+      body: JSON.stringify({ statieId, referer: document.referrer }),
       keepalive: true,
     }).catch(() => {});
   }, [statieId]);
