@@ -95,7 +95,7 @@ export function SmsQuotaWidget() {
 
         <div className="flex items-center justify-between">
           <span className={cn("text-[11px] font-medium", isEpuizata && credit === 0 ? "text-red-600" : "text-[#6B7280]")}>
-            {quota.trimise} / {quota.limita === 9999 ? "∞" : quota.limita}
+            {quota.trimise} / {quota.limita}
             {credit > 0 && (
               <span className="text-[#1877F2] ml-1">+{credit} credit</span>
             )}

@@ -19,7 +19,6 @@ const CONTACT_LINKS = [
   { label: "contact@velos.ro", href: "mailto:contact@velos.ro" },
   { label: "0757 941 553", href: "tel:0757941553" },
   { label: "Luni - Vineri, 09:00 - 18:00", href: "#" },
-  { label: "Trimite un mesaj", href: "/contact" },
 ];
 
 const LEGAL_LINKS = [
