@@ -3,42 +3,42 @@ import { Card, CardContent } from "@/components/ui/card";
 const TESTIMONIALS = [
   {
     quote:
-      "Inainte trimiteam SMS-uri manual din Excel, o data la cateva luni cand imi aminteam. Acum Velos face totul automat. In prima luna am recuperat 34 de clienti pe care altfel nu i-as mai fi contactat niciodata.",
-    name: "Mihai Dobrinescu",
-    role: "Director",
-    company: "AutoITP Prahova",
-    city: "Ploiesti",
-    initials: "MD",
+      "Sincer, am luat abonamentul mai mult sa incerc. Dupa vreo luna si jumatate mi-a sunat un client sa zica ca a primit SMS-ul si vrea sa vina. Nu il mai vazusem de doi ani. Aia m-a convins.",
+    name: "Relu Cojocaru",
+    role: "Proprietar",
+    company: "Statie ITP Buzau",
+    city: "Buzau",
+    initials: "RC",
     color: "#1877F2",
   },
   {
     quote:
-      "Setup in 20 de minute si de atunci nu am mai pierdut niciun client care voia sa revina. Rata de revenire a crescut cu 40% in primele 3 luni. Cel mai bun lucru pe care l-am facut pentru statie.",
-    name: "Sorina Marinescu",
+      "Eu nu prea ma pricep la calculatoare dar baiatul meu mi-a zis sa incerc. L-a setat el in vreo ora si de atunci merge singur. Clientii primesc mesaj, unii suna inapoi sa faca programare. Nu ma asteptam sa functioneze asa.",
+    name: "Gheorghe Vlaicu",
     role: "Proprietar",
-    company: "ITP Cluj-Centru",
-    city: "Cluj-Napoca",
-    initials: "SM",
-    color: "#7C3AED",
-  },
-  {
-    quote:
-      "Am doua statii si Velos le gestioneaza pe amandoua dintr-un singur ecran. Clientii primesc SMS de la noi, nu de la concurenta din fata. Diferenta e clara de la prima luna.",
-    name: "Bogdan Tanase",
-    role: "Manager",
-    company: "Statia ITP Bacau",
-    city: "Bacau",
-    initials: "BT",
+    company: "ITP Vlaicu",
+    city: "Craiova",
+    initials: "GV",
     color: "#059669",
   },
   {
     quote:
-      "La inceput eram sceptica daca merita. Acum nu mai pot concepe sa lucrez fara Velos. Clientii ma suna sa ma intrebe daca au primit bine SMS-ul si vin direct la noi, nu mai cauta altundeva.",
-    name: "Adriana Popa",
+      "Am stat vreo saptamana sa ma gandesc daca merita banii. Pana la urma am zis sa incerc trial-ul. In trial deja mi-au venit doi clienti vechi care nu mai venisera de ceva vreme. Asa ca am ramas.",
+    name: "Daniela Stoica",
     role: "Proprietar",
-    company: "AutoTest Sibiu",
-    city: "Sibiu",
-    initials: "AP",
+    company: "AutoITP Ploiesti",
+    city: "Ploiesti",
+    initials: "DS",
+    color: "#7C3AED",
+  },
+  {
+    quote:
+      "Aveam impresia ca clientii oricum stiu cand le expira ITP-ul. Dar nu e asa. Acum cand le trimitem mesaj, multi zic ca uitasera complet. Si vin la noi ca i-am anuntat noi, nu se duc sa caute altundeva.",
+    name: "Ionut Badea",
+    role: "Proprietar",
+    company: "Statie ITP Sector 4",
+    city: "Bucuresti",
+    initials: "IB",
     color: "#EA580C",
   },
 ];
