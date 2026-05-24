@@ -4,6 +4,7 @@ import { useState, useTransition, useMemo } from "react";
 import {
   Search, Phone, Mail, MapPin, ChevronRight, X, CheckCircle2,
   Clock, Star, UserCheck, XCircle, Monitor, Wrench, Filter,
+  ChevronLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { updateCrmStatus } from "@/lib/actions/prospectare";
@@ -286,6 +287,8 @@ export function ProspectareClient({
   const [filterJudet, setFilterJudet] = useState("toate");
   const [selected, setSelected] = useState<StatieRar | null>(null);
   const [stats, setStats] = useState(initialStats);
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(100);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -304,6 +307,12 @@ export function ProspectareClient({
       return matchSearch && matchStatus && matchJudet;
     });
   }, [statii, search, filterStatus, filterJudet]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const safePage = Math.min(page, totalPages);
+  const paginated = filtered.slice((safePage - 1) * perPage, safePage * perPage);
+
+  function resetPage() { setPage(1); }
 
   function handleSaved(
     id: string,
@@ -359,7 +368,7 @@ export function ProspectareClient({
           return (
             <button
               key={s}
-              onClick={() => setFilterStatus(active ? "toate" : s)}
+              onClick={() => { setFilterStatus(active ? "toate" : s); resetPage(); }}
               className={cn(
                 "rounded-xl p-3 text-left border transition-all",
                 active
@@ -406,14 +415,14 @@ export function ProspectareClient({
             type="text"
             placeholder="Caută după denumire, localitate, cod sau telefon..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); resetPage(); }}
             className="w-full pl-9 pr-4 py-2 text-sm border border-[#E5E7EB] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#1877F2]/20 focus:border-[#1877F2]"
           />
         </div>
         <div className="flex gap-2">
           <select
             value={filterJudet}
-            onChange={(e) => setFilterJudet(e.target.value)}
+            onChange={(e) => { setFilterJudet(e.target.value); resetPage(); }}
             className="px-3 py-2 text-sm border border-[#E5E7EB] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#1877F2]/20 min-w-[140px]"
           >
             <option value="toate">Toate județele</option>
@@ -423,7 +432,7 @@ export function ProspectareClient({
           </select>
           {(filterStatus !== "toate" || filterJudet !== "toate" || search) && (
             <button
-              onClick={() => { setFilterStatus("toate"); setFilterJudet("toate"); setSearch(""); }}
+              onClick={() => { setFilterStatus("toate"); setFilterJudet("toate"); setSearch(""); resetPage(); }}
               className="flex items-center gap-1.5 px-3 py-2 text-xs text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
             >
               <Filter className="h-3.5 w-3.5" />
@@ -456,7 +465,7 @@ export function ProspectareClient({
                   </td>
                 </tr>
               )}
-              {filtered.map((statie) => {
+              {paginated.map((statie) => {
                 const crmStatus = statie.crm?.status ?? "necontactat";
                 const cfg = STATUS_CONFIG[crmStatus];
                 const StatusIcon = cfg.icon;
@@ -515,10 +524,92 @@ export function ProspectareClient({
             </tbody>
           </table>
         </div>
-        <div className="px-4 py-2 border-t border-[#F9FAFB]">
-          <p className="text-xs text-[#9CA3AF]">
-            {filtered.length.toLocaleString("ro-RO")} din {totalStatii.toLocaleString("ro-RO")} stații
-          </p>
+        {/* Pagination footer */}
+        <div className="px-4 py-3 border-t border-[#F3F4F6] flex flex-col sm:flex-row items-center justify-between gap-3">
+          {/* Left: info + per-page */}
+          <div className="flex items-center gap-3 text-xs text-[#6B7280]">
+            <span>
+              {filtered.length === 0
+                ? "0 stații"
+                : `${((safePage - 1) * perPage + 1).toLocaleString("ro-RO")}–${Math.min(safePage * perPage, filtered.length).toLocaleString("ro-RO")} din ${filtered.length.toLocaleString("ro-RO")} stații`}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <span>Afișează</span>
+              <select
+                value={perPage}
+                onChange={(e) => { setPerPage(Number(e.target.value)); resetPage(); }}
+                className="px-2 py-1 border border-[#E5E7EB] rounded-md bg-white text-xs focus:outline-none focus:ring-2 focus:ring-[#1877F2]/20"
+              >
+                {[25, 50, 100, 250, 500].map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+              <span>pe pagină</span>
+            </div>
+          </div>
+
+          {/* Right: page controls */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage(1)}
+              disabled={safePage === 1}
+              className="px-2 py-1 text-xs rounded-md border border-[#E5E7EB] disabled:opacity-40 hover:bg-[#F3F4F6] transition-colors"
+            >
+              «
+            </button>
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={safePage === 1}
+              className="px-2 py-1 rounded-md border border-[#E5E7EB] disabled:opacity-40 hover:bg-[#F3F4F6] transition-colors"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </button>
+
+            {/* Page numbers */}
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter((p) =>
+                p === 1 || p === totalPages ||
+                (p >= safePage - 2 && p <= safePage + 2)
+              )
+              .reduce<(number | "...")[]>((acc, p, i, arr) => {
+                if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push("...");
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((p, i) =>
+                p === "..." ? (
+                  <span key={`ellipsis-${i}`} className="px-2 py-1 text-xs text-[#9CA3AF]">…</span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p as number)}
+                    className={cn(
+                      "min-w-[28px] px-2 py-1 text-xs rounded-md border transition-colors",
+                      safePage === p
+                        ? "bg-[#1877F2] text-white border-[#1877F2]"
+                        : "border-[#E5E7EB] hover:bg-[#F3F4F6]"
+                    )}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safePage === totalPages}
+              className="px-2 py-1 rounded-md border border-[#E5E7EB] disabled:opacity-40 hover:bg-[#F3F4F6] transition-colors"
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => setPage(totalPages)}
+              disabled={safePage === totalPages}
+              className="px-2 py-1 text-xs rounded-md border border-[#E5E7EB] disabled:opacity-40 hover:bg-[#F3F4F6] transition-colors"
+            >
+              »
+            </button>
+          </div>
         </div>
       </div>
 
