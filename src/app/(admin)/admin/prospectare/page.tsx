@@ -21,7 +21,8 @@ export default async function ProspectarePage() {
       nr_linii, data_valabilitate_sfarsit, status_autorizare,
       statii_rar_crm(status, canal_contact, note, data_contact, updated_at)
     `)
-    .order("denumire", { ascending: true });
+    .order("denumire", { ascending: true })
+    .range(0, 9999);
 
   const statii = (statiiRaw ?? []).map((s: any) => {
     const crmArr = Array.isArray(s.statii_rar_crm) ? s.statii_rar_crm : [];
