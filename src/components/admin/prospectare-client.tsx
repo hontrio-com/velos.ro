@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
+import { useState, useTransition, useMemo, useRef } from "react";
 import {
   Search, Phone, Mail, MapPin, ChevronRight, X, CheckCircle2,
   Clock, Star, UserCheck, XCircle, Monitor, Wrench, Filter,
-  ChevronLeft,
+  ChevronLeft, MessageSquare, Send, AlertTriangle, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { updateCrmStatus } from "@/lib/actions/prospectare";
+import { updateCrmStatus, sendProspectareBulkSms } from "@/lib/actions/prospectare";
 import type { StatusCrm, CanalContact } from "@/lib/actions/prospectare";
 import { format } from "date-fns";
 import { ro } from "date-fns/locale";
@@ -18,26 +18,32 @@ export const STATUS_CONFIG: Record<
   StatusCrm,
   { label: string; color: string; bg: string; icon: React.ElementType }
 > = {
-  necontactat:      { label: "Necontactat",        color: "#9CA3AF", bg: "#F3F4F6", icon: Clock },
-  contactat:        { label: "Contactat",           color: "#1877F2", bg: "#EFF6FF", icon: CheckCircle2 },
-  interesat:        { label: "Interesat",           color: "#D97706", bg: "#FFFBEB", icon: Star },
-  client:           { label: "Client",              color: "#059669", bg: "#ECFDF5", icon: UserCheck },
-  refuzat:          { label: "Refuzat",             color: "#DC2626", bg: "#FEF2F2", icon: XCircle },
-  foloseste_alt_soft: { label: "Alt soft",          color: "#7C3AED", bg: "#F5F3FF", icon: Monitor },
-  are_soft_custom:  { label: "Soft custom",         color: "#0891B2", bg: "#ECFEFF", icon: Wrench },
+  necontactat:        { label: "Necontactat",   color: "#9CA3AF", bg: "#F3F4F6", icon: Clock },
+  contactat:          { label: "Contactat",      color: "#1877F2", bg: "#EFF6FF", icon: CheckCircle2 },
+  interesat:          { label: "Interesat",      color: "#D97706", bg: "#FFFBEB", icon: Star },
+  client:             { label: "Client",         color: "#059669", bg: "#ECFDF5", icon: UserCheck },
+  refuzat:            { label: "Refuzat",        color: "#DC2626", bg: "#FEF2F2", icon: XCircle },
+  foloseste_alt_soft: { label: "Alt soft",       color: "#7C3AED", bg: "#F5F3FF", icon: Monitor },
+  are_soft_custom:    { label: "Soft custom",    color: "#0891B2", bg: "#ECFEFF", icon: Wrench },
 };
 
 const CANAL_CONFIG: Record<CanalContact, string> = {
-  telefon:  "Telefon",
+  sms:      "Mesaj SMS",
+  whatsapp: "Mesaj WhatsApp",
+  apel:     "Apel telefon",
   email:    "Email",
-  whatsapp: "WhatsApp",
   vizita:   "Vizită",
+  telefon:  "Telefon",
 };
 
 const STATUS_ORDER: StatusCrm[] = [
   "necontactat", "contactat", "interesat", "client",
   "refuzat", "foloseste_alt_soft", "are_soft_custom",
 ];
+
+const CANAL_ORDER: CanalContact[] = ["sms", "whatsapp", "apel", "email", "vizita"];
+
+const DEFAULT_SMS = `Buna ziua! ITPBASE.RO va ofera: programari online, reminder-uri SMS automate, gestiune clienti & vehicule, rapoarte detaliate si pagina web proprie. Incercati GRATUIT 30 zile: itpbase.ro`;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -64,7 +70,182 @@ export interface StatieRar {
   } | null;
 }
 
-// ─── Drawer ───────────────────────────────────────────────────────────────────
+// ─── SMS Modal ────────────────────────────────────────────────────────────────
+
+function SmsModal({
+  selectedIds,
+  statii,
+  onClose,
+  onSent,
+}: {
+  selectedIds: Set<string>;
+  statii: StatieRar[];
+  onClose: () => void;
+  onSent: (ids: string[]) => void;
+}) {
+  const [mesaj, setMesaj] = useState(DEFAULT_SMS);
+  const [isPending, startTransition] = useTransition();
+  const [result, setResult] = useState<{ trimise: number; erori: number } | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const targets = statii.filter((s) => selectedIds.has(s.id) && s.telefon);
+  const charCount = mesaj.length;
+  const smsCount = charCount <= 160 ? 1 : charCount <= 306 ? 2 : 3;
+  const charLeft = smsCount === 1 ? 160 - charCount : smsCount === 2 ? 306 - charCount : 459 - charCount;
+
+  function handleSend() {
+    startTransition(async () => {
+      const res = await sendProspectareBulkSms(targets.map((s) => s.id), mesaj);
+      setResult({ trimise: res.trimise, erori: res.erori });
+      onSent(res.results.filter((r) => r.success).map((r) => r.statieRarId));
+    });
+  }
+
+  return (
+    <>
+      <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]">
+          {/* Header */}
+          <div className="flex items-center justify-between p-5 border-b border-[#F3F4F6]">
+            <div>
+              <h2 className="text-base font-bold text-[#111318] flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-[#1877F2]" />
+                Trimite SMS în masă
+              </h2>
+              <p className="text-xs text-[#6B7280] mt-0.5">
+                {targets.length} stații selectate cu nr. de telefon
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="h-8 w-8 rounded-lg flex items-center justify-center text-[#9CA3AF] hover:bg-[#F3F4F6] transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          {result ? (
+            /* Result screen */
+            <div className="flex-1 flex flex-col items-center justify-center p-8 gap-4 text-center">
+              <div className="h-16 w-16 rounded-full bg-green-50 flex items-center justify-center">
+                <CheckCircle2 className="h-8 w-8 text-[#059669]" />
+              </div>
+              <div>
+                <p className="text-xl font-bold text-[#111318]">Trimitere finalizată</p>
+                <p className="text-sm text-[#6B7280] mt-1">
+                  <span className="text-[#059669] font-semibold">{result.trimise} SMS-uri trimise</span>
+                  {result.erori > 0 && (
+                    <span className="text-red-500 ml-2 font-semibold">{result.erori} erori</span>
+                  )}
+                </p>
+                <p className="text-xs text-[#9CA3AF] mt-2">
+                  Stațiile contactate au fost marcate automat cu statusul „Contactat".
+                </p>
+              </div>
+              <button
+                onClick={onClose}
+                className="mt-2 px-6 py-2.5 bg-[#1877F2] text-white text-sm font-semibold rounded-xl hover:bg-[#1565D8] transition-colors"
+              >
+                Închide
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Body */}
+              <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                {/* Message editor */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-semibold text-[#374151]">
+                      Mesaj SMS
+                    </label>
+                    <span className={cn(
+                      "text-[10px] font-medium",
+                      charLeft < 10 ? "text-red-500" : "text-[#9CA3AF]"
+                    )}>
+                      {charCount} caractere · {smsCount} SMS{smsCount > 1 ? "-uri" : ""} · {charLeft} rămas{charLeft === 1 ? "" : "e"}
+                    </span>
+                  </div>
+                  <textarea
+                    ref={textareaRef}
+                    value={mesaj}
+                    onChange={(e) => setMesaj(e.target.value)}
+                    rows={6}
+                    className="w-full px-3 py-2.5 text-sm border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1877F2]/20 focus:border-[#1877F2] resize-none"
+                  />
+                  {/* Progress bar chars */}
+                  <div className="mt-1.5 h-1 bg-[#F3F4F6] rounded-full overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all",
+                        smsCount === 1 ? "bg-[#059669]" : smsCount === 2 ? "bg-[#D97706]" : "bg-red-500"
+                      )}
+                      style={{ width: `${Math.min(100, (charCount / (smsCount === 1 ? 160 : smsCount === 2 ? 306 : 459)) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Warning >1 SMS */}
+                {smsCount > 1 && (
+                  <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+                    <p className="text-xs text-amber-700">
+                      Mesajul are {smsCount} SMS-uri — costul per destinatar se dublează.
+                    </p>
+                  </div>
+                )}
+
+                {/* Preview targets */}
+                <div>
+                  <p className="text-xs font-semibold text-[#374151] mb-2">
+                    Destinatari ({targets.length})
+                  </p>
+                  <div className="max-h-32 overflow-y-auto space-y-1 border border-[#F3F4F6] rounded-lg p-2">
+                    {targets.map((s) => (
+                      <div key={s.id} className="flex items-center justify-between text-xs">
+                        <span className="text-[#374151] truncate max-w-[60%]">{s.denumire}</span>
+                        <span className="text-[#9CA3AF] font-mono">{s.telefon}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-5 border-t border-[#F3F4F6] flex gap-3">
+                <button
+                  onClick={onClose}
+                  className="flex-1 py-2.5 text-sm text-[#6B7280] border border-[#E5E7EB] rounded-xl hover:bg-[#F9FAFB] transition-colors"
+                >
+                  Anulează
+                </button>
+                <button
+                  onClick={handleSend}
+                  disabled={isPending || !mesaj.trim() || targets.length === 0}
+                  className="flex-1 flex items-center justify-center gap-2 bg-[#1877F2] hover:bg-[#1565D8] text-white text-sm font-semibold py-2.5 rounded-xl transition-colors disabled:opacity-60"
+                >
+                  {isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Se trimite...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4" />
+                      Trimite {targets.length} SMS-uri
+                    </>
+                  )}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── CRM Drawer ───────────────────────────────────────────────────────────────
 
 function CrmDrawer({
   statie,
@@ -96,17 +277,9 @@ function CrmDrawer({
     });
   }
 
-  const cfg = STATUS_CONFIG[status];
-  const Icon = cfg.icon;
-
   return (
     <>
-      {/* Overlay */}
-      <div
-        className="fixed inset-0 z-40 bg-black/30"
-        onClick={onClose}
-      />
-      {/* Drawer */}
+      <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
       <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[420px] bg-white shadow-2xl flex flex-col">
         {/* Header */}
         <div className="flex items-start justify-between p-5 border-b border-[#F3F4F6]">
@@ -133,31 +306,26 @@ function CrmDrawer({
         {/* Contact info */}
         <div className="px-5 py-3 border-b border-[#F3F4F6] space-y-1.5">
           {statie.telefon && (
-            <a
-              href={`tel:${statie.telefon}`}
-              className="flex items-center gap-2 text-sm text-[#1877F2] hover:underline"
-            >
+            <a href={`tel:${statie.telefon}`} className="flex items-center gap-2 text-sm text-[#1877F2] hover:underline">
               <Phone className="h-3.5 w-3.5 shrink-0" />
               {statie.telefon}
             </a>
           )}
           {statie.email && (
-            <a
-              href={`mailto:${statie.email}`}
-              className="flex items-center gap-2 text-sm text-[#6B7280] hover:text-[#111318]"
-            >
+            <a href={`mailto:${statie.email}`} className="flex items-center gap-2 text-sm text-[#6B7280] hover:text-[#111318]">
               <Mail className="h-3.5 w-3.5 shrink-0" />
               {statie.email}
             </a>
           )}
           {statie.clase_autorizare && (
             <p className="text-xs text-[#9CA3AF]">
-              Clase: {statie.clase_autorizare} • {statie.nr_linii ?? "?"} {statie.nr_linii === 1 ? "linie" : "linii"}
+              Clase: {statie.clase_autorizare} · {statie.nr_linii ?? "?"} {statie.nr_linii === 1 ? "linie" : "linii"}
             </p>
           )}
           {statie.data_valabilitate_sfarsit && (
             <p className="text-xs text-[#9CA3AF]">
-              Autorizație valabilă până: <span className="font-medium text-[#374151]">{statie.data_valabilitate_sfarsit}</span>
+              Autorizație valabilă până:{" "}
+              <span className="font-medium text-[#374151]">{statie.data_valabilitate_sfarsit}</span>
             </p>
           )}
         </div>
@@ -166,9 +334,7 @@ function CrmDrawer({
         <div className="flex-1 overflow-y-auto p-5 space-y-5">
           {/* Status */}
           <div>
-            <label className="block text-xs font-semibold text-[#374151] mb-2">
-              Status contact
-            </label>
+            <label className="block text-xs font-semibold text-[#374151] mb-2">Status contact</label>
             <div className="grid grid-cols-2 gap-2">
               {STATUS_ORDER.map((s) => {
                 const c = STATUS_CONFIG[s];
@@ -181,11 +347,9 @@ function CrmDrawer({
                     onClick={() => setStatus(s)}
                     className={cn(
                       "flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border transition-all text-left",
-                      active
-                        ? "border-transparent text-white"
-                        : "border-[#E5E7EB] text-[#6B7280] hover:border-[#D1D5DB] hover:text-[#374151]"
+                      active ? "border-transparent text-white" : "border-[#E5E7EB] text-[#6B7280] hover:border-[#D1D5DB]"
                     )}
-                    style={active ? { background: c.color, borderColor: c.color } : {}}
+                    style={active ? { background: c.color } : {}}
                   >
                     <Ic className="h-3.5 w-3.5 shrink-0" />
                     {c.label}
@@ -198,11 +362,9 @@ function CrmDrawer({
           {/* Canal */}
           {status !== "necontactat" && (
             <div>
-              <label className="block text-xs font-semibold text-[#374151] mb-2">
-                Canal contact
-              </label>
+              <label className="block text-xs font-semibold text-[#374151] mb-2">Canal contact</label>
               <div className="flex flex-wrap gap-2">
-                {(Object.keys(CANAL_CONFIG) as CanalContact[]).map((c) => (
+                {CANAL_ORDER.map((c) => (
                   <button
                     key={c}
                     type="button"
@@ -223,19 +385,16 @@ function CrmDrawer({
 
           {/* Note */}
           <div>
-            <label className="block text-xs font-semibold text-[#374151] mb-2">
-              Note
-            </label>
+            <label className="block text-xs font-semibold text-[#374151] mb-2">Note</label>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={4}
-              placeholder="Adaugă observații despre această stație..."
+              placeholder="Adaugă observații..."
               className="w-full px-3 py-2 text-sm border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1877F2]/20 focus:border-[#1877F2] resize-none"
             />
           </div>
 
-          {/* Last contact */}
           {crm?.data_contact && (
             <p className="text-xs text-[#9CA3AF]">
               Ultimul contact:{" "}
@@ -246,7 +405,6 @@ function CrmDrawer({
           )}
         </div>
 
-        {/* Footer */}
         <div className="p-5 border-t border-[#F3F4F6]">
           <button
             onClick={handleSave}
@@ -254,15 +412,8 @@ function CrmDrawer({
             className="w-full flex items-center justify-center gap-2 bg-[#1877F2] hover:bg-[#1565D8] text-white text-sm font-semibold py-2.5 rounded-xl transition-colors disabled:opacity-60"
           >
             {saved ? (
-              <>
-                <CheckCircle2 className="h-4 w-4" />
-                Salvat!
-              </>
-            ) : isPending ? (
-              "Se salvează..."
-            ) : (
-              "Salvează"
-            )}
+              <><CheckCircle2 className="h-4 w-4" />Salvat!</>
+            ) : isPending ? "Se salvează..." : "Salvează"}
           </button>
         </div>
       </div>
@@ -290,6 +441,10 @@ export function ProspectareClient({
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(100);
 
+  // Selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showSmsModal, setShowSmsModal] = useState(false);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return statii.filter((s) => {
@@ -300,8 +455,7 @@ export function ProspectareClient({
         (s.cod_statie ?? "").toLowerCase().includes(q) ||
         (s.telefon ?? "").includes(q);
       const matchStatus =
-        filterStatus === "toate" ||
-        (s.crm?.status ?? "necontactat") === filterStatus;
+        filterStatus === "toate" || (s.crm?.status ?? "necontactat") === filterStatus;
       const matchJudet =
         filterJudet === "toate" || s.judet === filterJudet;
       return matchSearch && matchStatus && matchJudet;
@@ -314,17 +468,47 @@ export function ProspectareClient({
 
   function resetPage() { setPage(1); }
 
-  function handleSaved(
-    id: string,
-    status: StatusCrm,
-    canal: CanalContact | null,
-    note: string | null
-  ) {
+  // Selection helpers
+  const allPageSelected = paginated.length > 0 && paginated.every((s) => selectedIds.has(s.id));
+  const somePageSelected = paginated.some((s) => selectedIds.has(s.id));
+
+  function toggleSelectAll() {
+    if (allPageSelected) {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        paginated.forEach((s) => next.delete(s.id));
+        return next;
+      });
+    } else {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        paginated.forEach((s) => next.add(s.id));
+        return next;
+      });
+    }
+  }
+
+  function toggleOne(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  function selectAllFiltered() {
+    setSelectedIds(new Set(filtered.map((s) => s.id)));
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set());
+  }
+
+  function handleSaved(id: string, status: StatusCrm, canal: CanalContact | null, note: string | null) {
     setStatii((prev) =>
       prev.map((s) => {
         if (s.id !== id) return s;
         const oldStatus = s.crm?.status ?? "necontactat";
-        // update stats
         setStats((st) => ({
           ...st,
           [oldStatus]: Math.max(0, (st[oldStatus] ?? 0) - 1),
@@ -344,17 +528,18 @@ export function ProspectareClient({
     );
   }
 
-  const totalContactate =
-    (stats.contactat ?? 0) +
-    (stats.interesat ?? 0) +
-    (stats.client ?? 0) +
-    (stats.refuzat ?? 0) +
-    (stats.foloseste_alt_soft ?? 0) +
-    (stats.are_soft_custom ?? 0);
+  function handleSmsSent(sentIds: string[]) {
+    sentIds.forEach((id) => {
+      handleSaved(id, "contactat", "sms", null);
+    });
+    clearSelection();
+  }
 
+  const totalContactate =
+    (stats.contactat ?? 0) + (stats.interesat ?? 0) + (stats.client ?? 0) +
+    (stats.refuzat ?? 0) + (stats.foloseste_alt_soft ?? 0) + (stats.are_soft_custom ?? 0);
   const totalStatii = statii.length;
-  const pctContactate =
-    totalStatii > 0 ? Math.round((totalContactate / totalStatii) * 100) : 0;
+  const pctContactate = totalStatii > 0 ? Math.round((totalContactate / totalStatii) * 100) : 0;
 
   return (
     <div className="space-y-5">
@@ -371,17 +556,13 @@ export function ProspectareClient({
               onClick={() => { setFilterStatus(active ? "toate" : s); resetPage(); }}
               className={cn(
                 "rounded-xl p-3 text-left border transition-all",
-                active
-                  ? "border-transparent shadow-sm"
-                  : "border-[#F3F4F6] bg-white hover:shadow-sm"
+                active ? "border-transparent shadow-sm" : "border-[#F3F4F6] bg-white hover:shadow-sm"
               )}
               style={active ? { background: c.bg, borderColor: c.color } : {}}
             >
               <div className="flex items-center gap-1.5 mb-1">
                 <Ic className="h-3.5 w-3.5" style={{ color: c.color }} />
-                <span className="text-[10px] font-semibold" style={{ color: c.color }}>
-                  {c.label}
-                </span>
+                <span className="text-[10px] font-semibold" style={{ color: c.color }}>{c.label}</span>
               </div>
               <p className="text-xl font-bold text-[#111318]">{count.toLocaleString("ro-RO")}</p>
             </button>
@@ -392,18 +573,13 @@ export function ProspectareClient({
       {/* Progress bar */}
       <div className="bg-white border border-[#F3F4F6] rounded-xl p-4">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-semibold text-[#374151]">
-            Progres prospectare
-          </span>
+          <span className="text-xs font-semibold text-[#374151]">Progres prospectare</span>
           <span className="text-xs text-[#6B7280]">
             {totalContactate.toLocaleString("ro-RO")} / {totalStatii.toLocaleString("ro-RO")} contactate ({pctContactate}%)
           </span>
         </div>
         <div className="h-2 bg-[#F3F4F6] rounded-full overflow-hidden">
-          <div
-            className="h-full bg-[#1877F2] rounded-full transition-all"
-            style={{ width: `${pctContactate}%` }}
-          />
+          <div className="h-full bg-[#1877F2] rounded-full transition-all" style={{ width: `${pctContactate}%` }} />
         </div>
       </div>
 
@@ -442,12 +618,55 @@ export function ProspectareClient({
         </div>
       </div>
 
+      {/* Selection banner */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center justify-between bg-[#1877F2] text-white px-4 py-3 rounded-xl">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-semibold">
+              {selectedIds.size.toLocaleString("ro-RO")} stații selectate
+            </span>
+            {selectedIds.size < filtered.length && (
+              <button
+                onClick={selectAllFiltered}
+                className="text-xs underline opacity-80 hover:opacity-100"
+              >
+                Selectează toate {filtered.length.toLocaleString("ro-RO")} din filtre
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowSmsModal(true)}
+              className="flex items-center gap-1.5 bg-white text-[#1877F2] text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+            >
+              <MessageSquare className="h-3.5 w-3.5" />
+              Trimite SMS
+            </button>
+            <button
+              onClick={clearSelection}
+              className="h-7 w-7 flex items-center justify-center rounded-lg hover:bg-white/20 transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Table */}
       <div className="bg-white border border-[#F3F4F6] rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#F3F4F6] bg-[#F9FAFB]">
+                <th className="px-4 py-3 w-8">
+                  <input
+                    type="checkbox"
+                    checked={allPageSelected}
+                    ref={(el) => { if (el) el.indeterminate = somePageSelected && !allPageSelected; }}
+                    onChange={toggleSelectAll}
+                    className="h-4 w-4 rounded border-[#D1D5DB] text-[#1877F2] cursor-pointer"
+                  />
+                </th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-[#6B7280]">Stație</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-[#6B7280]">Localitate</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-[#6B7280]">Telefon</th>
@@ -458,9 +677,9 @@ export function ProspectareClient({
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 && (
+              {paginated.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-[#9CA3AF]">
+                  <td colSpan={8} className="text-center py-12 text-[#9CA3AF]">
                     Nicio stație găsită
                   </td>
                 </tr>
@@ -469,19 +688,31 @@ export function ProspectareClient({
                 const crmStatus = statie.crm?.status ?? "necontactat";
                 const cfg = STATUS_CONFIG[crmStatus];
                 const StatusIcon = cfg.icon;
+                const isChecked = selectedIds.has(statie.id);
                 return (
                   <tr
                     key={statie.id}
-                    className="border-b border-[#F9FAFB] hover:bg-[#F9FAFB] transition-colors cursor-pointer"
-                    onClick={() => setSelected(statie)}
+                    className={cn(
+                      "border-b border-[#F9FAFB] hover:bg-[#F9FAFB] transition-colors",
+                      isChecked && "bg-blue-50/50"
+                    )}
                   >
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-[#111318] leading-snug line-clamp-1">
-                        {statie.denumire}
-                      </p>
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => toggleOne(statie.id)}
+                        className="h-4 w-4 rounded border-[#D1D5DB] text-[#1877F2] cursor-pointer"
+                      />
+                    </td>
+                    <td
+                      className="px-4 py-3 cursor-pointer"
+                      onClick={() => setSelected(statie)}
+                    >
+                      <p className="font-medium text-[#111318] leading-snug line-clamp-1">{statie.denumire}</p>
                       <p className="text-[10px] font-mono text-[#9CA3AF]">{statie.cod_statie}</p>
                     </td>
-                    <td className="px-4 py-3 text-sm text-[#374151]">
+                    <td className="px-4 py-3 text-sm text-[#374151] cursor-pointer" onClick={() => setSelected(statie)}>
                       {[statie.localitate, statie.judet].filter(Boolean).join(", ") || "—"}
                     </td>
                     <td className="px-4 py-3">
@@ -498,10 +729,10 @@ export function ProspectareClient({
                         <span className="text-xs text-[#9CA3AF]">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-xs text-[#6B7280]">
+                    <td className="px-4 py-3 text-xs text-[#6B7280] cursor-pointer" onClick={() => setSelected(statie)}>
                       {statie.nr_linii ? `${statie.nr_linii} ${statie.nr_linii === 1 ? "linie" : "linii"}` : "—"}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 cursor-pointer" onClick={() => setSelected(statie)}>
                       <span
                         className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-full"
                         style={{ color: cfg.color, background: cfg.bg }}
@@ -510,12 +741,10 @@ export function ProspectareClient({
                         {cfg.label}
                       </span>
                     </td>
-                    <td className="px-4 py-3 max-w-[160px]">
-                      <p className="text-xs text-[#6B7280] truncate">
-                        {statie.crm?.note || "—"}
-                      </p>
+                    <td className="px-4 py-3 max-w-[160px] cursor-pointer" onClick={() => setSelected(statie)}>
+                      <p className="text-xs text-[#6B7280] truncate">{statie.crm?.note || "—"}</p>
                     </td>
-                    <td className="px-2 py-3">
+                    <td className="px-2 py-3 cursor-pointer" onClick={() => setSelected(statie)}>
                       <ChevronRight className="h-4 w-4 text-[#9CA3AF]" />
                     </td>
                   </tr>
@@ -524,9 +753,9 @@ export function ProspectareClient({
             </tbody>
           </table>
         </div>
+
         {/* Pagination footer */}
         <div className="px-4 py-3 border-t border-[#F3F4F6] flex flex-col sm:flex-row items-center justify-between gap-3">
-          {/* Left: info + per-page */}
           <div className="flex items-center gap-3 text-xs text-[#6B7280]">
             <span>
               {filtered.length === 0
@@ -548,15 +777,12 @@ export function ProspectareClient({
             </div>
           </div>
 
-          {/* Right: page controls */}
           <div className="flex items-center gap-1">
             <button
               onClick={() => setPage(1)}
               disabled={safePage === 1}
               className="px-2 py-1 text-xs rounded-md border border-[#E5E7EB] disabled:opacity-40 hover:bg-[#F3F4F6] transition-colors"
-            >
-              «
-            </button>
+            >«</button>
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={safePage === 1}
@@ -565,12 +791,8 @@ export function ProspectareClient({
               <ChevronLeft className="h-3.5 w-3.5" />
             </button>
 
-            {/* Page numbers */}
             {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter((p) =>
-                p === 1 || p === totalPages ||
-                (p >= safePage - 2 && p <= safePage + 2)
-              )
+              .filter((p) => p === 1 || p === totalPages || (p >= safePage - 2 && p <= safePage + 2))
               .reduce<(number | "...")[]>((acc, p, i, arr) => {
                 if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push("...");
                 acc.push(p);
@@ -578,20 +800,16 @@ export function ProspectareClient({
               }, [])
               .map((p, i) =>
                 p === "..." ? (
-                  <span key={`ellipsis-${i}`} className="px-2 py-1 text-xs text-[#9CA3AF]">…</span>
+                  <span key={`e-${i}`} className="px-2 py-1 text-xs text-[#9CA3AF]">…</span>
                 ) : (
                   <button
                     key={p}
                     onClick={() => setPage(p as number)}
                     className={cn(
                       "min-w-[28px] px-2 py-1 text-xs rounded-md border transition-colors",
-                      safePage === p
-                        ? "bg-[#1877F2] text-white border-[#1877F2]"
-                        : "border-[#E5E7EB] hover:bg-[#F3F4F6]"
+                      safePage === p ? "bg-[#1877F2] text-white border-[#1877F2]" : "border-[#E5E7EB] hover:bg-[#F3F4F6]"
                     )}
-                  >
-                    {p}
-                  </button>
+                  >{p}</button>
                 )
               )}
 
@@ -606,14 +824,12 @@ export function ProspectareClient({
               onClick={() => setPage(totalPages)}
               disabled={safePage === totalPages}
               className="px-2 py-1 text-xs rounded-md border border-[#E5E7EB] disabled:opacity-40 hover:bg-[#F3F4F6] transition-colors"
-            >
-              »
-            </button>
+            >»</button>
           </div>
         </div>
       </div>
 
-      {/* Drawer */}
+      {/* CRM Drawer */}
       {selected && (
         <CrmDrawer
           statie={selected}
@@ -622,20 +838,20 @@ export function ProspectareClient({
             handleSaved(id, status, canal, note);
             setSelected((prev) =>
               prev?.id === id
-                ? {
-                    ...prev,
-                    crm: {
-                      status,
-                      canal_contact: canal,
-                      note,
-                      data_contact:
-                        status !== "necontactat" ? new Date().toISOString() : null,
-                      updated_at: new Date().toISOString(),
-                    },
-                  }
+                ? { ...prev, crm: { status, canal_contact: canal, note, data_contact: status !== "necontactat" ? new Date().toISOString() : null, updated_at: new Date().toISOString() } }
                 : prev
             );
           }}
+        />
+      )}
+
+      {/* SMS Modal */}
+      {showSmsModal && (
+        <SmsModal
+          selectedIds={selectedIds}
+          statii={statii}
+          onClose={() => setShowSmsModal(false)}
+          onSent={handleSmsSent}
         />
       )}
     </div>
