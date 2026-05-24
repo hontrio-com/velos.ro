@@ -21,6 +21,8 @@ export default async function ProspectarePage() {
       nr_linii, data_valabilitate_sfarsit, status_autorizare,
       statii_rar_crm(status, canal_contact, note, data_contact, updated_at)
     `)
+    .not("telefon", "is", null)
+    .not("telefon", "eq", "")
     .order("denumire", { ascending: true })
     .range(0, 9999);
 
