@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, Building2, CreditCard, MessageSquare,
-  ArrowLeft, Shield, Settings, Send, ClipboardList, FileText, HeadphonesIcon, X,
+  ArrowLeft, Shield, Settings, Send, ClipboardList, FileText, HeadphonesIcon, X, Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +19,7 @@ const NAV = [
   { href: "/admin/sms", label: "SMS Quota", icon: MessageSquare },
   { href: "/admin/broadcast", label: "Broadcast", icon: Send },
   { href: "/admin/setari", label: "Setări", icon: Settings },
+  { href: "/admin/prospectare", label: "Prospectare", icon: Target },
   { href: "/admin/audit", label: "Audit Log", icon: ClipboardList },
 ];
 
