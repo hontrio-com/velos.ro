@@ -43,7 +43,7 @@ const STATUS_ORDER: StatusCrm[] = [
 
 const CANAL_ORDER: CanalContact[] = ["sms", "whatsapp", "apel", "email", "vizita"];
 
-const DEFAULT_SMS = `Buna ziua! ITPBASE.RO va ofera: programari online, reminder-uri SMS automate, gestiune clienti & vehicule, rapoarte detaliate si pagina web proprie. Incercati GRATUIT 30 zile: itpbase.ro`;
+const DEFAULT_SMS = `Buna ziua! Velos.ro va ofera: programari online, reminder-uri SMS automate, gestiune clienti & vehicule, rapoarte detaliate si pagina web proprie. Incercati GRATUIT 30 zile: velos.ro`;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
