@@ -37,9 +37,12 @@ export default async function AbonamentPage({
 
   const trialEndsAt = (profile as any)?.trial_expires_at as string | null;
   const subscriptionStatus = ((profile as any)?.subscription_status ?? "trial") as SubscriptionStatus;
+  const currentPlan = ((profile as any)?.plan ?? "trial") as string;
 
   const effectiveStatus: SubscriptionStatus =
-    subscriptionStatus === "trial" && trialEndsAt && new Date(trialEndsAt) < new Date()
+    currentPlan !== "trial" && subscriptionStatus === "trial"
+      ? "active"
+      : subscriptionStatus === "trial" && trialEndsAt && new Date(trialEndsAt) < new Date()
       ? "trial_expired"
       : subscriptionStatus;
 

@@ -122,9 +122,14 @@ export default async function DashboardLayout({
   // Subscription gating
   const subscriptionStatus = (profile?.subscription_status ?? "trial") as SubscriptionStatus;
   const trialEndsAt = profile?.trial_expires_at ?? null;
+  const currentPlan = profile?.plan ?? "trial";
 
+  // If the user has a paid plan but subscription_status is still "trial"
+  // (e.g. Stripe webhook failed), treat them as active — not trial_expired.
   const effectiveStatus: SubscriptionStatus =
-    subscriptionStatus === "trial" && trialEndsAt && new Date(trialEndsAt) < new Date()
+    currentPlan !== "trial" && subscriptionStatus === "trial"
+      ? "active"
+      : subscriptionStatus === "trial" && trialEndsAt && new Date(trialEndsAt) < new Date()
       ? "trial_expired"
       : subscriptionStatus;
 
