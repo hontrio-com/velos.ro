@@ -17,6 +17,7 @@ import { GraficLunar, type ZiData } from "@/components/dashboard/grafic-lunar";
 import { ActivitateRecenta } from "@/components/dashboard/activitate-recenta";
 import { QuickActions } from "@/components/dashboard/quick-actions";
 import { SmartPageWidget } from "@/components/dashboard/smart-page-widget";
+import { SmartPageBanner } from "@/components/dashboard/smart-page-banner";
 import { FadeUp } from "@/components/layout/fade-up";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -286,6 +287,13 @@ export default async function DashboardPage() {
           {dataAziCap} · {statie.nume}
         </p>
       </FadeUp>
+
+      {/* Banner Smart Page / Programări */}
+      {hasSmartPage && statie.slug && (
+        <FadeUp delay={0.08}>
+          <SmartPageBanner slug={statie.slug} />
+        </FadeUp>
+      )}
 
       {/* KPI Cards */}
       <KpiCards
