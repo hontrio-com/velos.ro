@@ -14,6 +14,16 @@ export async function GET(request: Request) {
   }
 
   const supabase = createServiceClient();
+
+  // Step 1: Generate pending reminders for all stations
+  const { data: statii } = await supabase.from("statii").select("id");
+  let generated = 0;
+  for (const s of statii ?? []) {
+    const { data } = await supabase.rpc("genereaza_remindere_zilnice", { p_statie_id: s.id });
+    generated += (data as { total?: number } | null)?.total ?? 0;
+  }
+
+  // Step 2: Send pending reminders
   const now = new Date().toISOString();
 
   const { data: remindere, error } = await supabase
@@ -107,5 +117,5 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.json({ trimise, erori, total: (remindere ?? []).length });
+  return NextResponse.json({ generated, trimise, erori, total: (remindere ?? []).length });
 }
