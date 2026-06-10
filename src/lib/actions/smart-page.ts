@@ -78,9 +78,14 @@ export async function uploadSmartMediaAction(
 
   if (uploadError) return { error: uploadError.message };
 
-  const { data: { publicUrl } } = supabase.storage
+  const { data: { publicUrl: rawUrl } } = supabase.storage
     .from("smart-page-media")
     .getPublicUrl(path);
+
+  // Add cache-buster so browsers don't show stale versions after re-upload
+  const publicUrl = type === "galerie"
+    ? rawUrl
+    : `${rawUrl}?v=${Date.now()}`;
 
   if (type === "galerie") {
     const { data: existing } = await (supabase as any)
