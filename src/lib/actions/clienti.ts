@@ -4,7 +4,17 @@ import { createClient } from "@/lib/supabase/server";
 import { getStatieForUser } from "@/lib/get-user-statie";
 import { revalidatePath } from "next/cache";
 import { clientSchema } from "@/lib/validations/client";
+import { capitalizeName } from "@/lib/format-name";
 import { redirect } from "next/navigation";
+
+/** Aplică Title Case pe nume/prenume înainte de salvare (păstrează valorile goale ca atare). */
+function normalizeNames<T extends { nume: string; prenume?: string | undefined }>(data: T): T {
+  return {
+    ...data,
+    nume: capitalizeName(data.nume),
+    prenume: data.prenume ? capitalizeName(data.prenume) : data.prenume,
+  };
+}
 
 async function getStatieId() {
   const supabase = await createClient();
@@ -26,7 +36,7 @@ export async function createClientAction(formData: unknown) {
 
   const { data, error } = await supabase
     .from("clienti")
-    .insert({ ...parsed.data, statie_id: statieId })
+    .insert({ ...normalizeNames(parsed.data), statie_id: statieId })
     .select("id")
     .single();
 
@@ -52,7 +62,7 @@ export async function updateClientAction(id: string, formData: unknown) {
 
   const { error } = await supabase
     .from("clienti")
-    .update(parsed.data)
+    .update(normalizeNames(parsed.data))
     .eq("id", id)
     .eq("statie_id", statieId);
 

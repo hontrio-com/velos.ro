@@ -29,6 +29,7 @@ import { SlotPicker } from "./slot-picker";
 import { DayNavigator } from "./day-navigator";
 import { cn } from "@/lib/utils";
 import { createProgramareStaffAction } from "@/lib/actions/programari";
+import { capitalizeName } from "@/lib/format-name";
 
 interface VehiculFound {
   id: string;
@@ -156,7 +157,7 @@ export function ProgramareDialog({
         .from("clienti")
         .insert({
           statie_id: statieId,
-          nume: newNume,
+          nume: capitalizeName(newNume),
           telefon: newTelefon,
         })
         .select("id, nume, prenume, telefon")

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
+import { capitalizeName, capitalizeNameOrNull } from "@/lib/format-name";
 import { toast } from "sonner";
 
 interface VehiculInitial {
@@ -89,8 +90,8 @@ export function VehiculFormDialog({
         const { error } = await supabase
           .from("clienti")
           .update({
-            nume: nume.trim(),
-            prenume: prenume.trim() || null,
+            nume: capitalizeName(nume),
+            prenume: capitalizeNameOrNull(prenume),
             telefon: telefon.trim(),
             email: email.trim() || null,
           })
@@ -114,8 +115,8 @@ export function VehiculFormDialog({
           await supabase
             .from("clienti")
             .update({
-              nume: nume.trim(),
-              prenume: prenume.trim() || null,
+              nume: capitalizeName(nume),
+              prenume: capitalizeNameOrNull(prenume),
               email: email.trim() || null,
             })
             .eq("id", existing.id);
@@ -124,8 +125,8 @@ export function VehiculFormDialog({
             .from("clienti")
             .insert({
               statie_id: statieId,
-              nume: nume.trim(),
-              prenume: prenume.trim() || null,
+              nume: capitalizeName(nume),
+              prenume: capitalizeNameOrNull(prenume),
               telefon: telefon.trim(),
               email: email.trim() || null,
             })

@@ -3,6 +3,7 @@ import { sendBookingOnlineEmail, sendConfirmareProgramareEmail } from "@/lib/act
 import { createServiceClient } from "@/lib/supabase/service";
 import { parseISO, getDay, format } from "date-fns";
 import { ro } from "date-fns/locale";
+import { capitalizeName, capitalizeNameOrNull } from "@/lib/format-name";
 
 const ZILE_MAP: Record<number, string> = {
   1: "luni",
@@ -153,8 +154,8 @@ export async function createBookingAction(
         .from("clienti")
         .insert({
           statie_id: input.statieId,
-          nume: input.nume,
-          prenume: input.prenume,
+          nume: capitalizeName(input.nume),
+          prenume: capitalizeNameOrNull(input.prenume),
           telefon: normalizedPhone,
           email: input.email || null,
           sms_optin: true,

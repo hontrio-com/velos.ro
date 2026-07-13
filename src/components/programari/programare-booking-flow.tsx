@@ -33,6 +33,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SlotPicker } from "./slot-picker";
 import { createProgramareStaffAction } from "@/lib/actions/programari";
+import { capitalizeName } from "@/lib/format-name";
 
 type ProgramLucru = Record<string, { start: string; end: string } | null>;
 
@@ -229,7 +230,7 @@ export function ProgramareBookingFlow({
     if (!client) {
       const { data: created } = await supabase
         .from("clienti")
-        .insert({ statie_id: statieId, nume: newNume, telefon: newTelefon })
+        .insert({ statie_id: statieId, nume: capitalizeName(newNume), telefon: newTelefon })
         .select("id, nume, prenume, telefon")
         .single();
       client = created;

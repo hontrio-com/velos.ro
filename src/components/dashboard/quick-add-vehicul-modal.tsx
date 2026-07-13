@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
+import { capitalizeName } from "@/lib/format-name";
 
 interface Props {
   statieId: string;
@@ -43,7 +44,7 @@ export function QuickAddVehiculModal({ statieId, prefillPlate = "", onClose, onS
       } else {
         const { data: newClient, error } = await supabase
           .from("clienti")
-          .insert({ statie_id: statieId, nume: nume.trim(), telefon: telefon.trim() })
+          .insert({ statie_id: statieId, nume: capitalizeName(nume), telefon: telefon.trim() })
           .select("id")
           .single();
         if (error || !newClient) { toast.error("Eroare la crearea proprietarului"); return; }
