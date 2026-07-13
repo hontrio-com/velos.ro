@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { format, parseISO, differenceInDays, addYears } from "date-fns";
@@ -126,12 +126,6 @@ export function ProgramareDrawer({
     }
   }
 
-  useEffect(() => {
-    if (p?.status === "finalizat" && !rezultat) {
-      setShowRezultatForm(true);
-    }
-  }, [p?.status, rezultat]);
-
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ["programare-detail", programareId] });
     queryClient.invalidateQueries({ queryKey: ["programari"] });
@@ -168,6 +162,7 @@ export function ProgramareDrawer({
 
     await updateProgramareStatusAction(programareId, "finalizat");
     trimiteRecenzieAction(programareId).catch(() => null);
+    setShowRezultatForm(false);
     toast.success(rez === "admis" ? "Marcat: Admis" : "Marcat: Respins");
     invalidate();
     setUpdatingStatus(false);
