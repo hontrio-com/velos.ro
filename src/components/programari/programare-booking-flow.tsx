@@ -57,6 +57,7 @@ interface VehiculFound {
   marca: string | null;
   model: string | null;
   an_fabricatie: number | null;
+  tip_vehicul: string | null;
   expirare_itp: string | null;
   client: {
     id: string;
@@ -64,6 +65,18 @@ interface VehiculFound {
     prenume: string | null;
     telefon: string;
   } | null;
+}
+
+type TarifVehicul = { pret: number; durata_extra: number };
+type TarifeMap = Record<string, TarifVehicul>;
+
+function suggestedPret(
+  vehicul: VehiculFound | null,
+  tarife: TarifeMap | null
+): string {
+  if (!vehicul?.tip_vehicul || !tarife) return "";
+  const t = tarife[vehicul.tip_vehicul];
+  return t && t.pret > 0 ? String(t.pret) : "";
 }
 
 interface ProgramareBookingFlowProps {
@@ -120,18 +133,22 @@ export function ProgramareBookingFlow({
   const [observatii, setObservatii] = useState("");
   const [angajatId, setAngajatId] = useState<string | null>(null);
 
-  // ── Data: station work schedule (for disabling closed days) ────────────────
-  const { data: programLucru = null } = useQuery<ProgramLucru | null>({
-    queryKey: ["statie-program", statieId],
+  // ── Data: station work schedule (closed days) + tarife (auto price) ────────
+  const { data: statieCfg } = useQuery<{ programLucru: ProgramLucru | null; tarife: TarifeMap | null }>({
+    queryKey: ["statie-config", statieId],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("statii")
-        .select("program_lucru")
-        .eq("id", statieId)
-        .single();
-      return (data?.program_lucru as ProgramLucru) ?? null;
+      const [{ data: statie }, { data: setari }] = await Promise.all([
+        supabase.from("statii").select("program_lucru").eq("id", statieId).single(),
+        supabase.from("setari_statie").select("tarife").eq("statie_id", statieId).maybeSingle(),
+      ]);
+      return {
+        programLucru: (statie?.program_lucru as ProgramLucru) ?? null,
+        tarife: (setari?.tarife as TarifeMap) ?? null,
+      };
     },
   });
+  const programLucru = statieCfg?.programLucru ?? null;
+  const tarife = statieCfg?.tarife ?? null;
 
   const { data: angajati = [] } = useQuery<{ id: string; nume: string; functie: string | null }[]>({
     queryKey: ["angajati-activi", statieId],
@@ -153,7 +170,7 @@ export function ProgramareBookingFlow({
       const { data } = await supabase
         .from("vehicule")
         .select(
-          "id, nr_inmatriculare, marca, model, an_fabricatie, expirare_itp, client:clienti(id, nume, prenume, telefon)"
+          "id, nr_inmatriculare, marca, model, an_fabricatie, tip_vehicul, expirare_itp, client:clienti(id, nume, prenume, telefon)"
         )
         .eq("statie_id", statieId)
         .ilike("nr_inmatriculare", `%${plateSearch}%`)
@@ -190,6 +207,13 @@ export function ProgramareBookingFlow({
   function selectDate(date: Date) {
     setSelectedDate(format(date, "yyyy-MM-dd"));
     setSelectedSlot(null);
+  }
+
+  // Select a vehicle and auto-fill the price from station tarife (if empty)
+  function chooseVehicul(v: VehiculFound) {
+    setSelectedVehicul(v);
+    setPlateSearch("");
+    setPret((prev) => (prev ? prev : suggestedPret(v, tarife)));
   }
 
   // ── Vehicle create ─────────────────────────────────────────────────────────
@@ -492,7 +516,7 @@ export function ProgramareBookingFlow({
                       <button
                         key={v.id}
                         type="button"
-                        onClick={() => { setSelectedVehicul(v); setPlateSearch(""); }}
+                        onClick={() => chooseVehicul(v)}
                         className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F9FAFB] transition-colors text-left border-b border-[#E5E7EB] last:border-0"
                       >
                         <Car className="h-4 w-4 text-[#9CA3AF] shrink-0" />
@@ -689,11 +713,16 @@ export function ProgramareBookingFlow({
                 <Label className="text-[#374151]">Preț (RON)</Label>
                 <Input
                   type="number"
-                  placeholder="150"
+                  placeholder="0"
                   value={pret}
                   onChange={(e) => setPret(e.target.value)}
                   className="border-[#E5E7EB]"
                 />
+                {suggestedPret(selectedVehicul, tarife) && (
+                  <p className="text-[11px] text-[#9CA3AF]">
+                    Tarif configurat: {suggestedPret(selectedVehicul, tarife)} RON
+                  </p>
+                )}
               </div>
             </div>
 

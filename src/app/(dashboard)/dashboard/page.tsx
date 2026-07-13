@@ -203,17 +203,20 @@ export default async function DashboardPage() {
   const finalizateAziArr = finalizateAziResult.data ?? [];
   const finalizateAziCount = finalizateAziArr.length;
 
+  // Venitul contorizează toate programările active (nu anulate/neprezent)
+  const contorizeazaVenit = (s: string) => s !== "anulat" && s !== "neprezent";
+
   // Luna curentă stats
   const programariLuna = programariLunaResult.data ?? [];
   const venitLuna = programariLuna
-    .filter((p) => p.status === "finalizat")
+    .filter((p) => contorizeazaVenit(p.status))
     .reduce((s, p) => s + Number(p.pret ?? 0), 0);
   const finalizateLuna = programariLuna.filter((p) => p.status === "finalizat").length;
 
   // Luna trecută stats
   const programariLunaPre = programariLunaPreResult.data ?? [];
   const venitLunaPre = programariLunaPre
-    .filter((p) => p.status === "finalizat")
+    .filter((p) => contorizeazaVenit(p.status))
     .reduce((s, p) => s + Number(p.pret ?? 0), 0);
   const finalizateLunaPre = programariLunaPre
     .filter((p) => p.status === "finalizat").length;
@@ -241,7 +244,7 @@ export default async function DashboardPage() {
       programari: rows.length,
       finalizate: rows.filter((p) => p.status === "finalizat").length,
       venit: rows
-        .filter((p) => p.status === "finalizat")
+        .filter((p) => contorizeazaVenit(p.status))
         .reduce((s, p) => s + Number(p.pret ?? 0), 0),
     };
   });

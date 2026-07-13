@@ -19,6 +19,14 @@ function calcTrend(current: number, prev: number): number {
   return Math.round(((current - prev) / prev) * 100);
 }
 
+/**
+ * O programare contorizează la venit dacă are un preț și nu a fost
+ * anulată sau marcată ca neprezentare. (programat / în lucru / finalizat)
+ */
+function contorizeazaVenit(status: string): boolean {
+  return status !== "anulat" && status !== "neprezent";
+}
+
 // ─── Types ────────────────────────────────────────────────────
 
 export interface ZiFinanciar {
@@ -206,10 +214,8 @@ export async function getRaportFinanciarAction(
     const d = r.data_programare;
     if (!byDate[d]) byDate[d] = { data: d, total: 0, finalizate: 0, venit: 0 };
     byDate[d].total++;
-    if (r.status === "finalizat") {
-      byDate[d].finalizate++;
-      byDate[d].venit += Number(r.pret ?? 0);
-    }
+    if (r.status === "finalizat") byDate[d].finalizate++;
+    if (contorizeazaVenit(r.status)) byDate[d].venit += Number(r.pret ?? 0);
   }
   const zilnic = Object.values(byDate).sort((a, b) => a.data.localeCompare(b.data));
 
@@ -220,22 +226,22 @@ export async function getRaportFinanciarAction(
     const tip = (veh as { tip_vehicul?: string | null })?.tip_vehicul ?? "Necunoscut";
     if (!byTip[tip]) byTip[tip] = { nr: 0, venit: 0 };
     byTip[tip].nr++;
-    if (r.status === "finalizat") byTip[tip].venit += Number(r.pret ?? 0);
+    if (contorizeazaVenit(r.status)) byTip[tip].venit += Number(r.pret ?? 0);
   }
   const tipVehicul: TipVehiculStat[] = Object.entries(byTip)
     .map(([tip, d]) => ({ tip, nr: d.nr, venit: d.venit, pret_mediu: d.nr > 0 ? Math.round(d.venit / d.nr) : 0 }))
     .sort((a, b) => b.venit - a.venit);
 
-  // KPIs
-  const finalizate = rows.filter((r) => r.status === "finalizat");
-  const cuPret = finalizate.filter((r) => r.pret && r.pret > 0);
-  const venit_total = finalizate.reduce((s, r) => s + Number(r.pret ?? 0), 0);
+  // KPIs — venitul include toate programările active (nu anulate/neprezent)
+  const active = rows.filter((r) => contorizeazaVenit(r.status));
+  const cuPret = active.filter((r) => r.pret && r.pret > 0);
+  const venit_total = active.reduce((s, r) => s + Number(r.pret ?? 0), 0);
   const itp_platite = cuPret.length;
   const pret_mediu = itp_platite > 0 ? Math.round(venit_total / itp_platite) : 0;
-  const rata_colectare = finalizate.length > 0 ? Math.round((itp_platite / finalizate.length) * 100) : 0;
+  const rata_colectare = active.length > 0 ? Math.round((itp_platite / active.length) * 100) : 0;
 
-  const prevFinalizate = (prevRows ?? []).filter((r) => r.status === "finalizat");
-  const prevVenit = prevFinalizate.reduce((s, r) => s + Number(r.pret ?? 0), 0);
+  const prevActive = (prevRows ?? []).filter((r) => contorizeazaVenit(r.status));
+  const prevVenit = prevActive.reduce((s, r) => s + Number(r.pret ?? 0), 0);
 
   return {
     zilnic,
@@ -246,7 +252,7 @@ export async function getRaportFinanciarAction(
       pret_mediu,
       rata_colectare,
       trend_venit: calcTrend(venit_total, prevVenit),
-      trend_itp: calcTrend(itp_platite, prevFinalizate.filter((r) => r.pret && r.pret > 0).length),
+      trend_itp: calcTrend(itp_platite, prevActive.filter((r) => r.pret && r.pret > 0).length),
     },
   };
 }
@@ -283,7 +289,8 @@ export async function getRaportProgramariAction(
     const d = r.data_programare;
     if (!byDate[d]) byDate[d] = { data: d, total: 0, finalizate: 0, neprezent: 0, anulate: 0, venit: 0, rata: 0 };
     byDate[d].total++;
-    if (r.status === "finalizat") { byDate[d].finalizate++; byDate[d].venit += Number(r.pret ?? 0); }
+    if (r.status === "finalizat") byDate[d].finalizate++;
+    if (contorizeazaVenit(r.status)) byDate[d].venit += Number(r.pret ?? 0);
     if (r.status === "neprezent") byDate[d].neprezent++;
     if (r.status === "anulat") byDate[d].anulate++;
   }
@@ -573,10 +580,8 @@ export async function getRaportAngajatiAction(
     if (!p.angajat_id) continue;
     if (!statsMap[p.angajat_id]) statsMap[p.angajat_id] = { total: 0, finalizate: 0, venit: 0 };
     statsMap[p.angajat_id].total++;
-    if (p.status === "finalizat") {
-      statsMap[p.angajat_id].finalizate++;
-      statsMap[p.angajat_id].venit += Number(p.pret ?? 0);
-    }
+    if (p.status === "finalizat") statsMap[p.angajat_id].finalizate++;
+    if (contorizeazaVenit(p.status)) statsMap[p.angajat_id].venit += Number(p.pret ?? 0);
   }
 
   const angajati: AngajatRow[] = angajatiRaw.map((a) => ({
