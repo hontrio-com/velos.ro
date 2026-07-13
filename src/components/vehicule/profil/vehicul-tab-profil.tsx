@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Save, Loader2, Car, User, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { updateVehiculProfileAction } from "@/lib/actions/documente";
+import { DatePicker } from "@/components/ui/date-picker";
 import type { VehiculComplet } from "./vehicul-profil-client";
 
 const TIP_VEHICUL = ["autoturism", "autoutilitara", "motocicleta", "autobus", "camion", "remorca", "altul"];
@@ -200,7 +201,7 @@ export function VehiculTabProfil({ vehicul }: Props) {
             { key: "expirare_iscir", label: "Expirare ISCIR" },
           ].map(({ key, label }) => (
             <Field key={key} label={label}>
-              <Input type="date" value={form[key as keyof typeof form]} onChange={(v) => set(key as keyof typeof form, v)} />
+              <DatePicker value={form[key as keyof typeof form]} onChange={(v) => set(key as keyof typeof form, v)} />
             </Field>
           ))}
         </div>

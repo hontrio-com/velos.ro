@@ -14,6 +14,7 @@ import {
 import { runOcr } from "@/lib/ocr";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { saveDocumentAction, deleteDocumentAction, getSignedUrlAction } from "@/lib/actions/documente";
 import type { DocumentRow } from "@/lib/actions/documente";
 
@@ -348,13 +349,11 @@ export function VehiculTabDocumente({ vehiculId, statieId }: Props) {
             </div>
             <div>
               <label className="block text-xs font-medium text-[#374151] mb-1.5">Data document</label>
-              <input type="date" lang="ro" value={form.data_document} onChange={(e) => setField("data_document", e.target.value)}
-                className="w-full text-sm rounded-lg border border-[#E5E7EB] px-3 py-2 outline-none focus:border-[#1877F2] text-[#111318]" />
+              <DatePicker value={form.data_document} onChange={(v) => setField("data_document", v)} />
             </div>
             <div>
               <label className="block text-xs font-medium text-[#374151] mb-1.5">Data expirare</label>
-              <input type="date" lang="ro" value={form.data_expirare} onChange={(e) => setField("data_expirare", e.target.value)}
-                className="w-full text-sm rounded-lg border border-[#E5E7EB] px-3 py-2 outline-none focus:border-[#1877F2] text-[#111318]" />
+              <DatePicker value={form.data_expirare} onChange={(v) => setField("data_expirare", v)} />
             </div>
             <div className="sm:col-span-2">
               <label className="block text-xs font-medium text-[#374151] mb-1.5">Descriere (opțional)</label>

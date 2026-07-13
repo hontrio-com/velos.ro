@@ -14,7 +14,7 @@ import {
   ChevronRight,
   Loader2,
 } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import {
@@ -24,6 +24,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { vehiculSchema, type VehiculForm } from "@/lib/validations/vehicul";
@@ -110,6 +111,7 @@ export function ClientTabVehicule({
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
@@ -343,29 +345,32 @@ export function ClientTabVehicule({
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-[#374151]">Expirare ITP</Label>
-                  <Input
-                    {...register("expirare_itp")}
-                    type="date"
-                    lang="ro"
-                    className="border-[#E5E7EB]"
+                  <Controller
+                    control={control}
+                    name="expirare_itp"
+                    render={({ field }) => (
+                      <DatePicker value={field.value ?? ""} onChange={field.onChange} />
+                    )}
                   />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-[#374151]">Expirare RCA</Label>
-                  <Input
-                    {...register("expirare_rca")}
-                    type="date"
-                    lang="ro"
-                    className="border-[#E5E7EB]"
+                  <Controller
+                    control={control}
+                    name="expirare_rca"
+                    render={({ field }) => (
+                      <DatePicker value={field.value ?? ""} onChange={field.onChange} />
+                    )}
                   />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-[#374151]">Rovinieta</Label>
-                  <Input
-                    {...register("expirare_rovinieta")}
-                    type="date"
-                    lang="ro"
-                    className="border-[#E5E7EB]"
+                  <Controller
+                    control={control}
+                    name="expirare_rovinieta"
+                    render={({ field }) => (
+                      <DatePicker value={field.value ?? ""} onChange={field.onChange} />
+                    )}
                   />
                 </div>
               </div>

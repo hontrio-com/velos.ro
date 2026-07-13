@@ -6,6 +6,7 @@ import { CheckCircle2, XCircle, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { saveRezultatItpAction } from "@/lib/actions/programari";
@@ -150,21 +151,17 @@ export function RezultatItpForm({
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label>Data inspectie</Label>
-          <Input
-            type="date"
-            lang="ro"
+          <DatePicker
             value={dataInspectie}
-            onChange={(e) => setDataInspectie(e.target.value)}
+            onChange={setDataInspectie}
           />
         </div>
         {rezultat && rezultat !== "respins" && (
           <div className="space-y-1.5">
             <Label>Expira la</Label>
-            <Input
-              type="date"
-              lang="ro"
+            <DatePicker
               value={expirareNoua}
-              onChange={(e) => setExpirareNoua(e.target.value)}
+              onChange={setExpirareNoua}
             />
           </div>
         )}

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import { capitalizeName, capitalizeNameOrNull } from "@/lib/format-name";
+import { DatePicker } from "@/components/ui/date-picker";
 import { toast } from "sonner";
 
 interface VehiculInitial {
@@ -347,11 +348,9 @@ export function VehiculFormDialog({
                 </div>
                 <div className="space-y-1.5">
                   <Label>Expirare ITP</Label>
-                  <Input
-                    type="date"
-                    lang="ro"
+                  <DatePicker
                     value={expirareItp}
-                    onChange={(e) => setExpirareItp(e.target.value)}
+                    onChange={setExpirareItp}
                   />
                 </div>
               </div>
