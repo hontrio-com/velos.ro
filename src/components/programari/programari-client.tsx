@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { format } from "date-fns";
-import { CalendarDays, Search, Plus, LayoutList } from "lucide-react";
+import { CalendarDays, Search, Plus, LayoutList, CalendarPlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -14,10 +14,12 @@ import { DayNavigator } from "./day-navigator";
 import { ProgramareDrawer } from "./programare-drawer";
 import { ProgramareNouaDrawer } from "./programare-noua-drawer";
 import { ProgramariCalendar } from "./programari-calendar";
+import { ProgramareBookingFlow } from "./programare-booking-flow";
 import { cn } from "@/lib/utils";
 
 type StatusFilter = "toate" | "programat" | "in_lucru" | "finalizat" | "anulat";
 type ViewMode = "lista" | "calendar";
+type MainTab = "rezervare" | "programari";
 
 export const statusConfig = {
   programat:  { label: "Programat",  className: "bg-[#EFF6FF] text-[#1877F2] border-[#BFDBFE]" },
@@ -35,6 +37,7 @@ interface ProgramariClientProps {
 
 export function ProgramariClient({ statieId }: ProgramariClientProps) {
   const queryClient = useQueryClient();
+  const [mainTab, setMainTab] = useState<MainTab>("rezervare");
   const [viewMode, setViewMode] = useState<ViewMode>("lista");
   const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [search, setSearch] = useState("");
@@ -120,6 +123,48 @@ export function ProgramariClient({ statieId }: ProgramariClientProps) {
 
   return (
     <>
+      {/* Main tab switch: booking flow vs. management */}
+      <div className="flex items-center rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] p-0.5 mb-4 w-fit">
+        <button
+          onClick={() => setMainTab("rezervare")}
+          className={cn(
+            "flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-xs font-medium transition-colors",
+            mainTab === "rezervare"
+              ? "bg-white shadow-sm text-[#111318]"
+              : "text-[#9CA3AF] hover:text-[#374151]"
+          )}
+        >
+          <CalendarPlus className="h-3.5 w-3.5" />
+          Programare nouă
+        </button>
+        <button
+          onClick={() => setMainTab("programari")}
+          className={cn(
+            "flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-xs font-medium transition-colors",
+            mainTab === "programari"
+              ? "bg-white shadow-sm text-[#111318]"
+              : "text-[#9CA3AF] hover:text-[#374151]"
+          )}
+        >
+          <LayoutList className="h-3.5 w-3.5" />
+          Toate programările
+        </button>
+      </div>
+
+      {/* ── BOOKING FLOW (default) ──────────────────────── */}
+      {mainTab === "rezervare" && (
+        <ProgramareBookingFlow
+          statieId={statieId}
+          onCreated={(savedDate) => {
+            setSelectedDate(savedDate);
+            invalidateAll();
+          }}
+        />
+      )}
+
+      {/* ── MANAGEMENT VIEW ─────────────────────────────── */}
+      {mainTab === "programari" && (
+      <>
       {/* Stats */}
       {viewMode === "lista" && (
         <ProgramariStats statieId={statieId} date={selectedDate} />
@@ -273,6 +318,8 @@ export function ProgramariClient({ statieId }: ProgramariClientProps) {
           onSelectProgramare={(id) => setDetailDrawerProgramareId(id)}
           onAddProgramare={(date, time) => openNewDrawer(date, time)}
         />
+      )}
+      </>
       )}
 
       {/* New programare drawer */}
