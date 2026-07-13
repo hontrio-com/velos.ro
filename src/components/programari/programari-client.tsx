@@ -17,7 +17,7 @@ import { ProgramariCalendar } from "./programari-calendar";
 import { ProgramareBookingFlow } from "./programare-booking-flow";
 import { cn } from "@/lib/utils";
 
-type StatusFilter = "toate" | "programat" | "in_lucru" | "finalizat" | "anulat";
+type StatusFilter = "toate" | "programat" | "admis" | "respins" | "neprezent";
 type ViewMode = "lista" | "calendar";
 type MainTab = "rezervare" | "programari";
 
@@ -26,10 +26,36 @@ export const statusConfig = {
   in_lucru:   { label: "În lucru",   className: "bg-amber-50 text-amber-700 border-amber-200" },
   finalizat:  { label: "Finalizat",  className: "bg-[#DCFCE7] text-[#15803D] border-[#BBF7D0]" },
   anulat:     { label: "Anulat",     className: "bg-[#F9FAFB] text-[#6B7280] border-[#E5E7EB]" },
-  neprezent:  { label: "Neprezent",  className: "bg-red-50 text-red-600 border-red-200" },
+  neprezent:  { label: "Neprezentat", className: "bg-red-50 text-red-600 border-red-200" },
 } as const;
 
-const STATUS_FILTERS: StatusFilter[] = ["toate", "programat", "in_lucru", "finalizat", "anulat"];
+/**
+ * Badge unic pentru o programare, în funcție de rezultatul ITP (Admis/Respins)
+ * dacă există, altfel de status (Programat / Neprezentat / Anulat).
+ */
+export function programareBadge(
+  status: string,
+  rezultat?: string | null
+): { label: string; className: string } {
+  if (rezultat === "admis" || rezultat === "readmis")
+    return { label: "Admis", className: "bg-[#DCFCE7] text-[#15803D] border-[#BBF7D0]" };
+  if (rezultat === "respins")
+    return { label: "Respins", className: "bg-red-50 text-red-600 border-red-200" };
+  if (status === "neprezent")
+    return { label: "Neprezentat", className: "bg-red-50 text-red-600 border-red-200" };
+  if (status === "anulat")
+    return { label: "Anulat", className: "bg-[#F9FAFB] text-[#6B7280] border-[#E5E7EB]" };
+  return { label: "Programat", className: "bg-[#EFF6FF] text-[#1877F2] border-[#BFDBFE]" };
+}
+
+const STATUS_FILTERS: StatusFilter[] = ["toate", "programat", "admis", "respins", "neprezent"];
+const STATUS_FILTER_LABELS: Record<StatusFilter, string> = {
+  toate: "Toate",
+  programat: "Programat",
+  admis: "Admis",
+  respins: "Respins",
+  neprezent: "Neprezentat",
+};
 
 interface ProgramariClientProps {
   statieId: string;
@@ -71,25 +97,21 @@ export function ProgramariClient({ statieId }: ProgramariClientProps) {
   }, [statieId]);
 
   const { data: programari, isLoading } = useQuery({
-    queryKey: ["programari", statieId, selectedDate, statusFilter],
+    queryKey: ["programari", statieId, selectedDate],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from("programari")
         .select(`
           id, ora_start, ora_sfarsit, status, tip_serviciu, pret, observatii,
           sms_confirmare_trimis, sms_reminder_trimis,
           client:clienti(id, nume, prenume, telefon, email),
-          vehicul:vehicule(id, nr_inmatriculare, marca, model, expirare_itp)
+          vehicul:vehicule(id, nr_inmatriculare, marca, model, expirare_itp),
+          rezultate_itp(rezultat)
         `)
         .eq("statie_id", statieId)
         .eq("data_programare", selectedDate)
         .order("ora_start");
 
-      if (statusFilter !== "toate") {
-        query = query.eq("status", statusFilter);
-      }
-
-      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
@@ -102,7 +124,22 @@ export function ProgramariClient({ statieId }: ProgramariClientProps) {
     queryClient.invalidateQueries({ queryKey: ["programari-calendar", statieId] });
   }
 
+  function rezultatOf(p: { rezultate_itp?: unknown }): string | null {
+    const r = p.rezultate_itp;
+    if (Array.isArray(r)) return (r[0] as { rezultat?: string })?.rezultat ?? null;
+    return (r as { rezultat?: string } | null)?.rezultat ?? null;
+  }
+
   const filtered = programari?.filter((p) => {
+    // Status / rezultat filter
+    if (statusFilter !== "toate") {
+      const rez = rezultatOf(p);
+      if (statusFilter === "admis" && !(rez === "admis" || rez === "readmis")) return false;
+      if (statusFilter === "respins" && rez !== "respins") return false;
+      if (statusFilter === "neprezent" && p.status !== "neprezent") return false;
+      if (statusFilter === "programat" && p.status !== "programat") return false;
+    }
+
     if (!search) return true;
     const q = search.toLowerCase();
     const client = p.client;
@@ -234,25 +271,35 @@ export function ProgramariClient({ statieId }: ProgramariClientProps) {
         {/* Status filter pills (list mode only) */}
         {viewMode === "lista" && (
           <div className="flex gap-2 mt-3 flex-wrap">
-            {STATUS_FILTERS.map((s) => (
-              <button
-                key={s}
-                onClick={() => setStatusFilter(s)}
-                className={cn(
-                  "px-3 py-1 rounded-full text-xs font-medium border transition-all",
-                  statusFilter === s
-                    ? s === "toate"
-                      ? "bg-[#111318] text-white border-[#111318]"
-                      : cn(
-                          statusConfig[s as keyof typeof statusConfig].className,
-                          "border"
-                        )
-                    : "bg-transparent text-[#9CA3AF] border-[#E5E7EB] hover:border-[#E5E7EB] hover:text-[#374151]"
-                )}
-              >
-                {s === "toate" ? "Toate" : statusConfig[s as keyof typeof statusConfig].label}
-              </button>
-            ))}
+            {STATUS_FILTERS.map((s) => {
+              const activeClass =
+                s === "toate"
+                  ? "bg-[#111318] text-white border-[#111318]"
+                  : cn(
+                      s === "admis"
+                        ? programareBadge("finalizat", "admis").className
+                        : s === "respins"
+                          ? programareBadge("finalizat", "respins").className
+                          : s === "neprezent"
+                            ? programareBadge("neprezent").className
+                            : programareBadge("programat").className,
+                      "border"
+                    );
+              return (
+                <button
+                  key={s}
+                  onClick={() => setStatusFilter(s)}
+                  className={cn(
+                    "px-3 py-1 rounded-full text-xs font-medium border transition-all",
+                    statusFilter === s
+                      ? activeClass
+                      : "bg-transparent text-[#9CA3AF] border-[#E5E7EB] hover:border-[#E5E7EB] hover:text-[#374151]"
+                  )}
+                >
+                  {STATUS_FILTER_LABELS[s]}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>

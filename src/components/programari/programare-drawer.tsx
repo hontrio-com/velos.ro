@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import { format, parseISO, differenceInDays } from "date-fns";
+import { format, parseISO, differenceInDays, addYears } from "date-fns";
 import { ro } from "date-fns/locale";
 import {
   X,
@@ -14,7 +14,6 @@ import {
   DollarSign,
   CheckCircle2,
   XCircle,
-  PlayCircle,
   AlertTriangle,
   FileText,
   ClipboardList,
@@ -28,7 +27,7 @@ import { toast } from "sonner";
 import { statusConfig } from "./programari-client";
 import { RezultatItpForm } from "./rezultat-itp-form";
 import { trimiteRecenzieAction } from "@/lib/actions/recenzii";
-import { deleteProgramareAction, updateProgramareStatusAction } from "@/lib/actions/programari";
+import { deleteProgramareAction, updateProgramareStatusAction, saveRezultatItpAction } from "@/lib/actions/programari";
 
 type Status = "programat" | "in_lucru" | "finalizat" | "anulat" | "neprezent";
 
@@ -144,20 +143,46 @@ export function ProgramareDrawer({
     onUpdate();
   }
 
-  async function updateStatus(newStatus: Status) {
+  // Admis / Respins: salvează rezultatul ITP (o singură apăsare) și finalizează.
+  async function handleRezultat(rez: "admis" | "respins") {
+    if (!programareId || !p) return;
+    setUpdatingStatus(true);
+    const today = format(new Date(), "yyyy-MM-dd");
+    const expirareNoua = rez === "admis" ? format(addYears(new Date(), 2), "yyyy-MM-dd") : null;
+
+    const res = await saveRezultatItpAction({
+      programareId,
+      vehiculId: p.vehicul?.id ?? "",
+      rezultat: rez,
+      dataInspectie: today,
+      expirareNoua,
+      inspector: angajatAsigned?.nume ?? null,
+      observatiiTehnice: null,
+    });
+
+    if ("error" in res) {
+      toast.error("Eroare la salvarea rezultatului");
+      setUpdatingStatus(false);
+      return;
+    }
+
+    await updateProgramareStatusAction(programareId, "finalizat");
+    trimiteRecenzieAction(programareId).catch(() => null);
+    toast.success(rez === "admis" ? "Marcat: Admis" : "Marcat: Respins");
+    invalidate();
+    setUpdatingStatus(false);
+  }
+
+  // Neprezentat: doar status, fără rezultat ITP (nu intră în venit).
+  async function handleNeprezent() {
     if (!programareId) return;
     setUpdatingStatus(true);
-    const result = await updateProgramareStatusAction(programareId, newStatus);
-
+    const result = await updateProgramareStatusAction(programareId, "neprezent");
     if ("error" in result) {
       toast.error("Eroare la actualizarea statusului");
     } else {
-      toast.success(`Status: ${statusConfig[newStatus].label}`);
+      toast.success("Marcat: Neprezentat");
       invalidate();
-      if (newStatus === "finalizat") {
-        setShowRezultatForm(true);
-        trimiteRecenzieAction(programareId).catch(() => null);
-      }
     }
     setUpdatingStatus(false);
   }
@@ -174,7 +199,9 @@ export function ProgramareDrawer({
       : null;
 
   const isFinished =
-    p?.status === "finalizat" || p?.status === "anulat";
+    p?.status === "finalizat" ||
+    p?.status === "anulat" ||
+    p?.status === "neprezent";
 
   return (
     <>
@@ -203,14 +230,20 @@ export function ProgramareDrawer({
           </div>
           <div className="flex items-center gap-2 shrink-0 ml-3">
             {p && (
-              <Badge
-                className={cn(
-                  "text-xs border",
-                  statusConfig[p.status as Status].className
-                )}
-              >
-                {statusConfig[p.status as Status].label}
-              </Badge>
+              rezultat ? (
+                <Badge className={cn("text-xs border-0", rezultatConfig[rezultat.rezultat].className)}>
+                  {rezultatConfig[rezultat.rezultat].label}
+                </Badge>
+              ) : (
+                <Badge
+                  className={cn(
+                    "text-xs border",
+                    statusConfig[p.status as Status].className
+                  )}
+                >
+                  {statusConfig[p.status as Status].label}
+                </Badge>
+              )
             )}
             <button
               type="button"
@@ -467,56 +500,38 @@ export function ProgramareDrawer({
         {p && !isFinished && (
           <div className="border-t border-border p-4 shrink-0 space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-              Schimba status
+              Rezultat inspecție
             </p>
-            <div className="grid grid-cols-2 gap-2">
-              {p.status === "programat" && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={updatingStatus}
-                  onClick={() => updateStatus("in_lucru")}
-                  className="gap-1.5 text-amber-600 border-amber-200 hover:bg-amber-50"
-                >
-                  <PlayCircle className="h-3.5 w-3.5" />
-                  Incepe lucrul
-                </Button>
-              )}
-              {(p.status === "programat" || p.status === "in_lucru") && (
-                <Button
-                  size="sm"
-                  disabled={updatingStatus}
-                  onClick={() => updateStatus("finalizat")}
-                  className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  Finalizeaza
-                </Button>
-              )}
-              {p.status === "programat" && (
-                <>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={updatingStatus}
-                    onClick={() => updateStatus("neprezent")}
-                    className="gap-1.5"
-                  >
-                    <AlertTriangle className="h-3.5 w-3.5" />
-                    Neprezent
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={updatingStatus}
-                    onClick={() => updateStatus("anulat")}
-                    className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/5"
-                  >
-                    <XCircle className="h-3.5 w-3.5" />
-                    Anuleaza
-                  </Button>
-                </>
-              )}
+            <div className="grid grid-cols-3 gap-2">
+              <Button
+                size="sm"
+                disabled={updatingStatus}
+                onClick={() => handleRezultat("admis")}
+                className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Admis
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={updatingStatus}
+                onClick={() => handleRezultat("respins")}
+                className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/5"
+              >
+                <XCircle className="h-3.5 w-3.5" />
+                Respins
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={updatingStatus}
+                onClick={handleNeprezent}
+                className="gap-1.5"
+              >
+                <AlertTriangle className="h-3.5 w-3.5" />
+                Neprezentat
+              </Button>
             </div>
           </div>
         )}

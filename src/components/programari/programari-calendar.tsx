@@ -51,9 +51,18 @@ const STATUS_COLORS: Record<string, { bg: string; border: string; text: string }
   programat:  { bg: "#EFF6FF", border: "#1877F2", text: "#1877F2" },
   in_lucru:   { bg: "#FFFBEB", border: "#D97706", text: "#B45309" },
   finalizat:  { bg: "#DCFCE7", border: "#16A34A", text: "#15803D" },
+  admis:      { bg: "#DCFCE7", border: "#16A34A", text: "#15803D" },
+  respins:    { bg: "#FEF2F2", border: "#EF4444", text: "#DC2626" },
   anulat:     { bg: "#F9FAFB", border: "#D1D5DB", text: "#9CA3AF" },
   neprezent:  { bg: "#FEF2F2", border: "#EF4444", text: "#DC2626" },
 };
+
+/** Cheia de culoare a unei programări: rezultat ITP dacă există, altfel status. */
+function badgeKey(status: string, rezultat?: string | null): string {
+  if (rezultat === "admis" || rezultat === "readmis") return "admis";
+  if (rezultat === "respins") return "respins";
+  return status;
+}
 
 interface ProgramareRow {
   id: string;
@@ -64,6 +73,7 @@ interface ProgramareRow {
   tip_serviciu: string;
   client: { id: string; nume: string; prenume: string | null } | null;
   vehicul: { id: string; nr_inmatriculare: string } | null;
+  rezultate_itp?: { rezultat: string }[] | { rezultat: string } | null;
 }
 
 interface CalendarEvent extends RBCEvent {
@@ -131,7 +141,7 @@ export function ProgramariCalendar({
       const { data, error } = await supabase
         .from("programari")
         .select(
-          "id, data_programare, ora_start, ora_sfarsit, status, tip_serviciu, client:clienti(id, nume, prenume), vehicul:vehicule(id, nr_inmatriculare)"
+          "id, data_programare, ora_start, ora_sfarsit, status, tip_serviciu, client:clienti(id, nume, prenume), vehicul:vehicule(id, nr_inmatriculare), rezultate_itp(rezultat)"
         )
         .eq("statie_id", statieId)
         .gte("data_programare", rangeStart)
@@ -157,7 +167,9 @@ export function ProgramariCalendar({
   });
 
   const eventStyleGetter = useCallback((event: CalendarEvent) => {
-    const c = STATUS_COLORS[event.resource.status] ?? STATUS_COLORS.programat;
+    const r = event.resource.rezultate_itp;
+    const rez = Array.isArray(r) ? r[0]?.rezultat ?? null : r?.rezultat ?? null;
+    const c = STATUS_COLORS[badgeKey(event.resource.status, rez)] ?? STATUS_COLORS.programat;
     return {
       style: {
         backgroundColor: c.bg,

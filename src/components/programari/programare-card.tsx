@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Phone, Car, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { statusConfig } from "./programari-client";
+import { programareBadge } from "./programari-client";
 
 type Status = "programat" | "in_lucru" | "finalizat" | "anulat" | "neprezent";
 
@@ -32,12 +32,16 @@ interface ProgramareCardProps {
       model: string | null;
       expirare_itp: string | null;
     } | null;
+    rezultate_itp?: { rezultat: string }[] | { rezultat: string } | null;
   };
   onClick: () => void;
 }
 
 export function ProgramareCard({ programare: p, onClick }: ProgramareCardProps) {
-  const status = statusConfig[p.status];
+  const rezultat = Array.isArray(p.rezultate_itp)
+    ? p.rezultate_itp[0]?.rezultat ?? null
+    : p.rezultate_itp?.rezultat ?? null;
+  const status = programareBadge(p.status, rezultat);
 
   const numeClient = p.client
     ? `${p.client.nume}${p.client.prenume ? " " + p.client.prenume : ""}`

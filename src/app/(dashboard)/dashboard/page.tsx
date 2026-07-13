@@ -92,7 +92,7 @@ export default async function DashboardPage() {
     supabase
       .from("programari")
       .select(
-        "id, ora_start, ora_sfarsit, status, tip_serviciu, client:clienti(id,nume,prenume,telefon), vehicul:vehicule(id,nr_inmatriculare,marca,model)"
+        "id, ora_start, ora_sfarsit, status, tip_serviciu, client:clienti(id,nume,prenume,telefon), vehicul:vehicule(id,nr_inmatriculare,marca,model), rezultate_itp(rezultat)"
       )
       .eq("statie_id", statie.id)
       .eq("data_programare", azi)

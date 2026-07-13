@@ -8,23 +8,19 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarDays, ArrowRight, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProgramareDrawer } from "@/components/programari/programare-drawer";
+import { programareBadge } from "@/components/programari/programari-client";
 
-const statusConfig = {
-  programat: { label: "Programat", className: "bg-primary/10 text-primary" },
-  in_lucru: { label: "In lucru", className: "bg-amber-100 text-amber-700" },
-  finalizat: { label: "Finalizat", className: "bg-emerald-100 text-emerald-700" },
-  anulat: { label: "Anulat", className: "bg-red-100 text-red-700" },
-  neprezent: { label: "Neprezent", className: "bg-gray-100 text-gray-600" },
-} as const;
+type StatusKey = "programat" | "in_lucru" | "finalizat" | "anulat" | "neprezent";
 
 interface Programare {
   id: string;
   ora_start: string;
   ora_sfarsit: string;
-  status: keyof typeof statusConfig;
+  status: StatusKey;
   tip_serviciu: string;
   client: { id: string; nume: string; prenume: string | null; telefon: string } | null;
   vehicul: { id: string; nr_inmatriculare: string; marca: string | null; model: string | null } | null;
+  rezultate_itp?: { rezultat: string }[] | { rezultat: string } | null;
 }
 
 export function ProgramariAzi({ programari }: { programari: Programare[] }) {
@@ -93,7 +89,10 @@ export function ProgramariAzi({ programari }: { programari: Programare[] }) {
         ) : (
           <ul className="divide-y divide-border">
             {programari.map((p) => {
-              const status = statusConfig[p.status];
+              const rez = Array.isArray(p.rezultate_itp)
+                ? p.rezultate_itp[0]?.rezultat ?? null
+                : p.rezultate_itp?.rezultat ?? null;
+              const status = programareBadge(p.status, rez);
               const isActive =
                 p.status === "programat" || p.status === "in_lucru";
               return (
