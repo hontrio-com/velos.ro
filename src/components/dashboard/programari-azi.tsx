@@ -1,10 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CalendarDays, ArrowRight, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ProgramareDrawer } from "@/components/programari/programare-drawer";
 
 const statusConfig = {
   programat: { label: "Programat", className: "bg-primary/10 text-primary" },
@@ -25,6 +28,8 @@ interface Programare {
 }
 
 export function ProgramariAzi({ programari }: { programari: Programare[] }) {
+  const router = useRouter();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const finalizate = programari.filter((p) => p.status === "finalizat").length;
   const active = programari.filter(
     (p) => p.status === "programat" || p.status === "in_lucru"
@@ -33,6 +38,7 @@ export function ProgramariAzi({ programari }: { programari: Programare[] }) {
     programari.length > 0 ? (finalizate / programari.length) * 100 : 0;
 
   return (
+    <>
     <Card className="border-border shadow-none h-full flex flex-col">
       <CardHeader className="pb-3 shrink-0">
         <div className="flex items-center justify-between">
@@ -93,9 +99,18 @@ export function ProgramariAzi({ programari }: { programari: Programare[] }) {
               return (
                 <li
                   key={p.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setSelectedId(p.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelectedId(p.id);
+                    }
+                  }}
                   className={cn(
-                    "flex items-center gap-3 px-5 py-3 transition-colors",
-                    isActive ? "hover:bg-muted/50" : "opacity-60"
+                    "flex items-center gap-3 px-5 py-3 transition-colors cursor-pointer hover:bg-muted/50 focus:outline-none focus-visible:bg-muted/50",
+                    !isActive && "opacity-60 hover:opacity-100"
                   )}
                 >
                   <div className="shrink-0 text-center">
@@ -142,5 +157,12 @@ export function ProgramariAzi({ programari }: { programari: Programare[] }) {
         )}
       </CardContent>
     </Card>
+
+    <ProgramareDrawer
+      programareId={selectedId}
+      onClose={() => setSelectedId(null)}
+      onUpdate={() => router.refresh()}
+    />
+    </>
   );
 }
