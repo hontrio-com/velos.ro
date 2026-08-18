@@ -6,15 +6,29 @@ import { createClient } from "@/lib/supabase/client";
 import {
   format,
   addDays,
+  addMonths,
   startOfWeek,
   startOfDay,
   isBefore,
   isSameDay,
+  isSameWeek,
   getDay,
 } from "date-fns";
 import { ro } from "date-fns/locale";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  CalendarDays,
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 const ZILE_MAP: Record<number, string> = {
@@ -37,7 +51,7 @@ interface WeekSlotGridProps {
   selectedSlot: string | null;
   /** Apelat la click pe un slot liber. */
   onSelect: (date: string, slot: string) => void;
-  /** Nu permite programări mai departe de atâtea zile. */
+  /** Nu permite programări mai departe de atâtea zile (implicit ~6 luni). */
   maxDaysAhead?: number;
   /** Programarea curentă (la editare) nu ocupă slot. */
   excludeProgramareId?: string;
@@ -61,7 +75,7 @@ export function WeekSlotGrid({
   selectedDate,
   selectedSlot,
   onSelect,
-  maxDaysAhead = 90,
+  maxDaysAhead = 180,
   excludeProgramareId,
 }: WeekSlotGridProps) {
   const supabase = createClient();
@@ -71,6 +85,12 @@ export function WeekSlotGrid({
   const [weekStart, setWeekStart] = useState(() =>
     startOfWeek(new Date(), { weekStartsOn: 1 })
   );
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  /** Sare la săptămâna care conține data dată. */
+  function jumpTo(d: Date) {
+    setWeekStart(startOfWeek(d, { weekStartsOn: 1 }));
+  }
 
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const rangeStart = format(days[0], "yyyy-MM-dd");
@@ -136,16 +156,42 @@ export function WeekSlotGrid({
 
   const label = `${format(days[0], "d")} – ${format(days[6], "d MMM yyyy", { locale: ro })}`;
 
+  // Câte sloturi mai pot fi rezervate în săptămâna afișată
+  let sloturiLibere = 0;
+  for (const d of days) {
+    const prog = programLucru?.[ZILE_MAP[getDay(d)]];
+    if (!prog || isBefore(d, today) || isBefore(maxDate, d)) continue;
+    const dateStr = format(d, "yyyy-MM-dd");
+    const esteAzi = isSameDay(d, today);
+    for (const t of rows) {
+      if (t < toMin(prog.start) || t + durata > toMin(prog.end)) continue;
+      if (esteAzi && t <= nowMin) continue;
+      sloturiLibere += Math.max(0, nrLinii - (counts[`${dateStr}|${fromMin(t)}`] ?? 0));
+    }
+  }
+
   return (
     <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden">
       {/* ── Toolbar ─────────────────────────────────────── */}
-      <div className="flex items-center gap-3 px-3 py-2.5 border-b border-[#E5E7EB]">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 px-3 py-2.5 border-b border-[#E5E7EB]">
+        {/* Navigare: « lună · ‹ săptămână · săptămână › · lună » */}
         <div className="flex items-center rounded-lg overflow-hidden bg-[#1F2A44]">
           <button
             type="button"
+            aria-label="Luna anterioară"
+            title="Luna anterioară"
+            onClick={() => setWeekStart((w) => startOfWeek(addMonths(w, -1), { weekStartsOn: 1 }))}
+            className="px-2 py-1.5 text-white hover:bg-[#33415C] transition-colors"
+          >
+            <ChevronsLeft className="h-4 w-4" />
+          </button>
+          <span className="w-px self-stretch bg-white/15" />
+          <button
+            type="button"
             aria-label="Săptămâna anterioară"
+            title="Săptămâna anterioară"
             onClick={() => setWeekStart((w) => addDays(w, -7))}
-            className="px-2.5 py-1.5 text-white hover:bg-[#33415C] transition-colors"
+            className="px-2 py-1.5 text-white hover:bg-[#33415C] transition-colors"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -153,27 +199,65 @@ export function WeekSlotGrid({
           <button
             type="button"
             aria-label="Săptămâna următoare"
+            title="Săptămâna următoare"
             onClick={() => setWeekStart((w) => addDays(w, 7))}
-            className="px-2.5 py-1.5 text-white hover:bg-[#33415C] transition-colors"
+            className="px-2 py-1.5 text-white hover:bg-[#33415C] transition-colors"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
+          <span className="w-px self-stretch bg-white/15" />
+          <button
+            type="button"
+            aria-label="Luna următoare"
+            title="Luna următoare"
+            onClick={() => setWeekStart((w) => startOfWeek(addMonths(w, 1), { weekStartsOn: 1 }))}
+            className="px-2 py-1.5 text-white hover:bg-[#33415C] transition-colors"
+          >
+            <ChevronsRight className="h-4 w-4" />
+          </button>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
-          className="rounded-lg bg-[#F3F4F6] px-3 py-1.5 text-xs font-medium text-[#374151] hover:bg-[#E5E7EB] transition-colors"
-        >
-          Astăzi
-        </button>
+        {!isSameWeek(weekStart, today, { weekStartsOn: 1 }) && (
+          <button
+            type="button"
+            onClick={() => jumpTo(new Date())}
+            className="rounded-lg bg-[#F3F4F6] px-3 py-1.5 text-xs font-medium text-[#374151] hover:bg-[#E5E7EB] transition-colors shrink-0"
+          >
+            Astăzi
+          </button>
+        )}
 
-        <div className="flex-1 text-center text-[13px] font-semibold text-[#111318] truncate">
-          {label}
+        {/* Titlu = selector de dată: salt direct la orice săptămână */}
+        <div className="flex-1 flex justify-center min-w-0">
+          <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+            <PopoverTrigger className="inline-flex items-center gap-1.5 rounded-lg border border-transparent px-2.5 py-1.5 text-[13px] font-semibold text-[#111318] hover:border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors cursor-pointer min-w-0">
+              <CalendarDays className="h-3.5 w-3.5 shrink-0 text-[#9CA3AF]" />
+              <span className="truncate">{label}</span>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="center">
+              <Calendar
+                mode="single"
+                selected={selectedDate ? new Date(`${selectedDate}T12:00:00`) : weekStart}
+                defaultMonth={weekStart}
+                onSelect={(d) => {
+                  if (d) {
+                    jumpTo(d);
+                    setPickerOpen(false);
+                  }
+                }}
+                disabled={(d) => isBefore(d, today) || isBefore(maxDate, d)}
+                captionLayout="dropdown"
+                startMonth={today}
+                endMonth={maxDate}
+                locale={ro}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
 
-        {/* spacer simetric cu grupul de navigare */}
-        <div className="w-[68px] shrink-0 hidden sm:block" />
+        <span className="hidden md:inline text-[11px] text-[#9CA3AF] shrink-0">
+          {sloturiLibere} {sloturiLibere === 1 ? "loc liber" : "locuri libere"}
+        </span>
       </div>
 
       {/* ── Grilă ───────────────────────────────────────── */}
