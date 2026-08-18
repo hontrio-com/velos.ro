@@ -181,6 +181,47 @@ export interface RaportAngajati {
   angajati: AngajatRow[];
 }
 
+export interface VehiculRow {
+  id: string;
+  nr_inmatriculare: string;
+  marca: string | null;
+  model: string | null;
+  tip_vehicul: string | null;
+  combustibil: string | null;
+  an_fabricatie: number | null;
+  client: string;
+  vizite: number;
+  ultima_vizita: string;
+  ultim_rezultat: string | null;
+  expirare_itp: string | null;
+}
+
+export interface CategorieStat {
+  cheie: string;
+  label: string;
+  count: number;
+  color: string;
+}
+
+export interface KpiVehicule {
+  vehicule_unice: number;
+  vizite_total: number;
+  vehicule_noi: number;
+  revenite: number;
+  vizite_medii: number;
+  varsta_medie: number;
+  trend_vehicule: number;
+}
+
+export interface RaportVehicule {
+  lista: VehiculRow[];
+  tipDist: CategorieStat[];
+  marci: CategorieStat[];
+  combustibil: CategorieStat[];
+  varsta: CategorieStat[];
+  kpi: KpiVehicule;
+}
+
 // ─── FINANCIAR ────────────────────────────────────────────────
 
 export async function getRaportFinanciarAction(
@@ -545,6 +586,228 @@ export async function getRaportSmsAction(
   );
 
   return { zilnic, tipDist, quotaHistory, lista, kpi: { total, livrate, erori, rata_livrare }, quota };
+}
+
+// ─── VEHICULE ─────────────────────────────────────────────────
+
+const TIP_VEHICUL_LABELS: Record<string, string> = {
+  autoturism: "Autoturism",
+  autoutilitara: "Autoutilitară",
+  camion: "Camion",
+  autobuz: "Autobuz",
+  motocicleta: "Motocicletă",
+  remorca: "Remorcă",
+  taxi: "Taxi",
+  tractor: "Tractor",
+};
+
+const PALETA = [
+  "#1877F2", "#16A34A", "#F59E0B", "#DC2626", "#8B5CF6",
+  "#0891B2", "#EA580C", "#DB2777", "#65A30D", "#6B7280",
+];
+
+function labelTip(tip: string): string {
+  if (tip === "necunoscut") return "Necunoscut";
+  return TIP_VEHICUL_LABELS[tip] ?? tip.charAt(0).toUpperCase() + tip.slice(1);
+}
+
+/** Transformă un dicționar de contorizări într-o listă sortată descrescător, colorată. */
+function toStats(
+  counts: Record<string, number>,
+  label: (k: string) => string,
+  limit?: number
+): CategorieStat[] {
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit ?? Infinity)
+    .map(([cheie, count], i) => ({
+      cheie,
+      label: label(cheie),
+      count,
+      color: PALETA[i % PALETA.length],
+    }));
+}
+
+interface VehiculJoin {
+  id: string;
+  nr_inmatriculare: string;
+  marca: string | null;
+  model: string | null;
+  tip_vehicul: string | null;
+  combustibil: string | null;
+  an_fabricatie: number | null;
+  expirare_itp: string | null;
+  created_at: string;
+  clienti?: { nume: string; prenume: string | null } | { nume: string; prenume: string | null }[] | null;
+}
+
+function unwrap<T>(v: T | T[] | null | undefined): T | null {
+  if (Array.isArray(v)) return v[0] ?? null;
+  return v ?? null;
+}
+
+/**
+ * Raport despre vehiculele care au trecut prin stație într-un interval:
+ * câte vehicule unice, câte vizite, structura parcului (tip / marcă /
+ * combustibil / vârstă) și lista detaliată.
+ */
+export async function getRaportVehiculeAction(
+  statieId: string,
+  from: string,
+  to: string
+): Promise<RaportVehicule | null> {
+  const supabase = await createClient();
+  const prev = getPrevRange(from, to);
+
+  const [{ data: rows }, { data: prevRows }] = await Promise.all([
+    supabase
+      .from("programari")
+      .select(
+        `data_programare, status, vehicul_id,
+         vehicule!inner(id, nr_inmatriculare, marca, model, tip_vehicul, combustibil, an_fabricatie, expirare_itp, created_at, clienti(nume, prenume)),
+         rezultate_itp(rezultat, data_inspectie)`
+      )
+      .eq("statie_id", statieId)
+      .gte("data_programare", from)
+      .lte("data_programare", to),
+    supabase
+      .from("programari")
+      .select("vehicul_id, status")
+      .eq("statie_id", statieId)
+      .gte("data_programare", prev.from)
+      .lte("data_programare", prev.to),
+  ]);
+
+  if (!rows) return null;
+
+  // Doar vizitele care au avut loc efectiv (nu anulate / neprezentări)
+  const vizite = rows.filter((r) => contorizeazaVenit(r.status));
+
+  const byVehicul: Record<string, VehiculRow> = {};
+  for (const r of vizite) {
+    const v = unwrap(r.vehicule as unknown as VehiculJoin | VehiculJoin[] | null);
+    if (!v) continue;
+
+    const rez = unwrap(
+      r.rezultate_itp as unknown as { rezultat: string } | { rezultat: string }[] | null
+    );
+
+    if (!byVehicul[v.id]) {
+      const c = unwrap(v.clienti);
+      byVehicul[v.id] = {
+        id: v.id,
+        nr_inmatriculare: v.nr_inmatriculare,
+        marca: v.marca,
+        model: v.model,
+        tip_vehicul: v.tip_vehicul,
+        combustibil: v.combustibil,
+        an_fabricatie: v.an_fabricatie,
+        client: c ? `${c.nume} ${c.prenume ?? ""}`.trim() : "—",
+        vizite: 0,
+        ultima_vizita: r.data_programare,
+        ultim_rezultat: rez?.rezultat ?? null,
+        expirare_itp: v.expirare_itp,
+      };
+    }
+
+    const entry = byVehicul[v.id];
+    entry.vizite++;
+    if (r.data_programare >= entry.ultima_vizita) {
+      entry.ultima_vizita = r.data_programare;
+      entry.ultim_rezultat = rez?.rezultat ?? entry.ultim_rezultat;
+    }
+  }
+
+  const lista = Object.values(byVehicul).sort((a, b) =>
+    b.ultima_vizita.localeCompare(a.ultima_vizita)
+  );
+
+  // ── Structura parcului ──────────────────────────────────────
+  const tipCounts: Record<string, number> = {};
+  const marcaCounts: Record<string, number> = {};
+  const combCounts: Record<string, number> = {};
+  const varstaCounts: Record<string, number> = {};
+
+  const anCurent = new Date().getFullYear();
+  let sumaVarste = 0;
+  let cuAn = 0;
+
+  for (const v of lista) {
+    const tip = v.tip_vehicul ?? "necunoscut";
+    tipCounts[tip] = (tipCounts[tip] ?? 0) + 1;
+
+    const marca = v.marca?.trim() || "Necunoscută";
+    marcaCounts[marca] = (marcaCounts[marca] ?? 0) + 1;
+
+    const comb = v.combustibil?.trim() || "necunoscut";
+    combCounts[comb] = (combCounts[comb] ?? 0) + 1;
+
+    if (v.an_fabricatie && v.an_fabricatie > 1900) {
+      const varsta = anCurent - v.an_fabricatie;
+      sumaVarste += varsta;
+      cuAn++;
+      const bucket =
+        varsta <= 3 ? "0-3 ani"
+        : varsta <= 7 ? "4-7 ani"
+        : varsta <= 12 ? "8-12 ani"
+        : varsta <= 20 ? "13-20 ani"
+        : "peste 20 ani";
+      varstaCounts[bucket] = (varstaCounts[bucket] ?? 0) + 1;
+    } else {
+      varstaCounts["Necunoscut"] = (varstaCounts["Necunoscut"] ?? 0) + 1;
+    }
+  }
+
+  const ORDINE_VARSTA = ["0-3 ani", "4-7 ani", "8-12 ani", "13-20 ani", "peste 20 ani", "Necunoscut"];
+  const varsta: CategorieStat[] = ORDINE_VARSTA.filter((b) => varstaCounts[b] > 0).map((b, i) => ({
+    cheie: b,
+    label: b,
+    count: varstaCounts[b],
+    color: PALETA[i % PALETA.length],
+  }));
+
+  // ── KPI ─────────────────────────────────────────────────────
+  const vehicule_unice = lista.length;
+  const vizite_total = vizite.length;
+
+  // Vehicul „nou" = înregistrat în sistem în perioada raportată
+  const vehicule_noi = vizite.reduce((set, r) => {
+    const v = unwrap(r.vehicule as unknown as VehiculJoin | VehiculJoin[] | null);
+    if (v) {
+      const creat = v.created_at.split("T")[0];
+      if (creat >= from && creat <= to) set.add(v.id);
+    }
+    return set;
+  }, new Set<string>()).size;
+
+  const revenite = lista.filter((v) => v.vizite > 1).length;
+  const vizite_medii =
+    vehicule_unice > 0 ? Math.round((vizite_total / vehicule_unice) * 10) / 10 : 0;
+  const varsta_medie = cuAn > 0 ? Math.round((sumaVarste / cuAn) * 10) / 10 : 0;
+
+  const prevUnice = new Set(
+    (prevRows ?? [])
+      .filter((r) => contorizeazaVenit(r.status))
+      .map((r) => r.vehicul_id)
+      .filter(Boolean)
+  ).size;
+
+  return {
+    lista,
+    tipDist: toStats(tipCounts, labelTip),
+    marci: toStats(marcaCounts, (m) => m, 8),
+    combustibil: toStats(combCounts, labelTip),
+    varsta,
+    kpi: {
+      vehicule_unice,
+      vizite_total,
+      vehicule_noi,
+      revenite,
+      vizite_medii,
+      varsta_medie,
+      trend_vehicule: calcTrend(vehicule_unice, prevUnice),
+    },
+  };
 }
 
 // ─── ANGAJAȚI ────────────────────────────────────────────────

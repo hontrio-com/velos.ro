@@ -4,14 +4,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import {
-  format,
-  addDays,
-  parseISO,
-  isBefore,
-  startOfDay,
-  getDay,
-} from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ro } from "date-fns/locale";
 import {
   CalendarDays,
@@ -31,26 +24,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { SlotPicker } from "./slot-picker";
+import { WeekSlotGrid } from "./week-slot-grid";
 import { createProgramareStaffAction } from "@/lib/actions/programari";
 import { capitalizeName } from "@/lib/format-name";
 
 type ProgramLucru = Record<string, { start: string; end: string } | null>;
-
-const ZILE_MAP: Record<number, string> = {
-  1: "luni",
-  2: "marti",
-  3: "miercuri",
-  4: "joi",
-  5: "vineri",
-  6: "sambata",
-  0: "duminica",
-};
-
-const LUNI_RO = [
-  "Ianuarie", "Februarie", "Martie", "Aprilie", "Mai", "Iunie",
-  "Iulie", "August", "Septembrie", "Octombrie", "Noiembrie", "Decembrie",
-];
 
 interface VehiculFound {
   id: string;
@@ -93,12 +71,6 @@ const STEPS = [
   { n: 3, label: "Confirmare", icon: CheckCircle2 },
 ] as const;
 
-function isStationOpenOnDate(date: Date, programLucru: ProgramLucru | null): boolean {
-  if (!programLucru) return true; // fallback: allow, SlotPicker will show closed
-  const dayKey = ZILE_MAP[getDay(date)];
-  return !!programLucru[dayKey];
-}
-
 export function ProgramareBookingFlow({
   statieId,
   onCreated,
@@ -108,10 +80,6 @@ export function ProgramareBookingFlow({
 
   const [step, setStep] = useState<Step>(1);
   const [isSaving, setIsSaving] = useState(false);
-
-  // Calendar
-  const [calYear, setCalYear] = useState(() => new Date().getFullYear());
-  const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
 
   // Selections
   const [selectedDate, setSelectedDate] = useState<string>("");
@@ -148,7 +116,6 @@ export function ProgramareBookingFlow({
       };
     },
   });
-  const programLucru = statieCfg?.programLucru ?? null;
   const tarife = statieCfg?.tarife ?? null;
 
   const { data: angajati = [] } = useQuery<{ id: string; nume: string; functie: string | null }[]>({
@@ -180,35 +147,6 @@ export function ProgramareBookingFlow({
     },
     enabled: plateSearch.length >= 2 && !selectedVehicul,
   });
-
-  // ── Calendar helpers ───────────────────────────────────────────────────────
-  const today = startOfDay(new Date());
-  const maxDate = addDays(today, 90);
-
-  function calDays(): (Date | null)[] {
-    const first = new Date(calYear, calMonth, 1);
-    const last = new Date(calYear, calMonth + 1, 0);
-    const startDow = (getDay(first) + 6) % 7; // Mon=0
-    const days: (Date | null)[] = [];
-    for (let i = 0; i < startDow; i++) days.push(null);
-    for (let d = 1; d <= last.getDate(); d++) days.push(new Date(calYear, calMonth, d));
-    return days;
-  }
-
-  function prevMonth() {
-    if (calMonth === 0) { setCalYear((y) => y - 1); setCalMonth(11); }
-    else setCalMonth((m) => m - 1);
-  }
-
-  function nextMonth() {
-    if (calMonth === 11) { setCalYear((y) => y + 1); setCalMonth(0); }
-    else setCalMonth((m) => m + 1);
-  }
-
-  function selectDate(date: Date) {
-    setSelectedDate(format(date, "yyyy-MM-dd"));
-    setSelectedSlot(null);
-  }
 
   // Select a vehicle and auto-fill the price from station tarife (if empty)
   function chooseVehicul(v: VehiculFound) {
@@ -363,89 +301,23 @@ export function ProgramareBookingFlow({
       {/* ── STEP 1: Date & Slot ── */}
       {step === 1 && (
         <div className="space-y-5">
-          {/* Calendar */}
-          <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 sm:p-5">
-            <div className="flex items-center justify-between mb-4">
-              <button
-                type="button"
-                onClick={prevMonth}
-                className="h-8 w-8 flex items-center justify-center rounded-md border border-[#E5E7EB] hover:bg-[#F7F8FA] transition-colors"
-              >
-                <ChevronLeft className="h-4 w-4 text-[#374151]" />
-              </button>
-              <span className="text-sm font-semibold text-[#111318]">
-                {LUNI_RO[calMonth]} {calYear}
+          {/* Grilă săptămânală: alege data și ora dintr-un singur click */}
+          <WeekSlotGrid
+            statieId={statieId}
+            selectedDate={selectedDate}
+            selectedSlot={selectedSlot}
+            onSelect={(date, slot) => {
+              setSelectedDate(date);
+              setSelectedSlot(slot);
+            }}
+          />
+
+          {step1Valid && (
+            <div className="flex items-center gap-2 rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] px-4 py-2.5 text-sm">
+              <Clock className="h-4 w-4 text-[#1877F2] shrink-0" />
+              <span className="text-[#1877F2] font-medium">
+                {selectedDateFormatted} · {selectedSlot}
               </span>
-              <button
-                type="button"
-                onClick={nextMonth}
-                className="h-8 w-8 flex items-center justify-center rounded-md border border-[#E5E7EB] hover:bg-[#F7F8FA] transition-colors"
-              >
-                <ChevronRight className="h-4 w-4 text-[#374151]" />
-              </button>
-            </div>
-
-            {/* Weekday headers */}
-            <div className="grid grid-cols-7 mb-2">
-              {["Lu", "Ma", "Mi", "Jo", "Vi", "Sâ", "Du"].map((z) => (
-                <div key={z} className="text-center text-[11px] font-medium text-[#9CA3AF] py-1">
-                  {z}
-                </div>
-              ))}
-            </div>
-
-            {/* Days */}
-            <div className="grid grid-cols-7 gap-1">
-              {calDays().map((date, i) => {
-                if (!date) return <div key={`empty-${i}`} />;
-
-                const dateStr = format(date, "yyyy-MM-dd");
-                const isPast = isBefore(date, today);
-                const isTooFar = isBefore(maxDate, date);
-                const isClosed = !isStationOpenOnDate(date, programLucru);
-                const isDisabled = isPast || isTooFar || isClosed;
-                const isSelected = selectedDate === dateStr;
-                const isToday = format(today, "yyyy-MM-dd") === dateStr;
-
-                return (
-                  <button
-                    key={dateStr}
-                    type="button"
-                    disabled={isDisabled}
-                    onClick={() => selectDate(date)}
-                    className={cn(
-                      "h-10 w-full rounded-md text-sm font-medium transition-all",
-                      isSelected
-                        ? "bg-[#1877F2] text-white font-bold"
-                        : isDisabled
-                        ? "text-[#D1D5DB] cursor-not-allowed"
-                        : isToday
-                        ? "border border-[#1877F2] text-[#1877F2]"
-                        : "hover:bg-[#EFF6FF] text-[#374151]"
-                    )}
-                  >
-                    {date.getDate()}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Slots */}
-          {selectedDate && (
-            <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 sm:p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <Clock className="h-4 w-4 text-[#6B7280]" />
-                <span className="text-sm font-semibold text-[#111318]">
-                  Ore disponibile — {selectedDateFormatted}
-                </span>
-              </div>
-              <SlotPicker
-                statieId={statieId}
-                date={selectedDate}
-                selected={selectedSlot}
-                onSelect={setSelectedSlot}
-              />
             </div>
           )}
 

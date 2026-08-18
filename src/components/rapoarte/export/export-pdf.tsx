@@ -13,6 +13,7 @@ import type {
   RaportFinanciar,
   RaportProgramari,
   RaportItp,
+  RaportVehicule,
   RaportSms,
   RaportAngajati,
 } from "@/lib/actions/rapoarte";
@@ -78,6 +79,7 @@ interface RaportPdfProps {
   financiar: RaportFinanciar | null;
   programari: RaportProgramari | null;
   itp: RaportItp | null;
+  vehicule: RaportVehicule | null;
   sms: RaportSms | null;
   angajati: RaportAngajati | null;
 }
@@ -89,6 +91,7 @@ export function RaportPdfDocument({
   financiar,
   programari,
   itp,
+  vehicule,
   sms,
   angajati,
 }: RaportPdfProps) {
@@ -235,6 +238,62 @@ export function RaportPdfDocument({
                 <Text style={[styles.td, styles.flex2]}>{r.client}</Text>
                 <Text style={[styles.td, styles.flex1]}>{r.rezultat}</Text>
                 <Text style={[styles.td, styles.flex1]}>{r.inspector ?? "—"}</Text>
+              </View>
+            ))}
+          </View>
+          <Footer statie={statie} from={from} to={to} />
+        </Page>
+      )}
+
+      {/* ── VEHICULE ── */}
+      {vehicule && vehicule.lista.length > 0 && (
+        <Page size="A4" style={styles.page}>
+          <Text style={styles.sectionTitle}>Vehicule</Text>
+          <View style={styles.kpiRow}>
+            <View style={styles.kpiBox}><Text style={styles.kpiValue}>{vehicule.kpi.vehicule_unice}</Text><Text style={styles.kpiLabel}>Vehicule la ITP</Text></View>
+            <View style={styles.kpiBox}><Text style={styles.kpiValue}>{vehicule.kpi.vizite_total}</Text><Text style={styles.kpiLabel}>Total vizite</Text></View>
+            <View style={styles.kpiBox}><Text style={styles.kpiValue}>{vehicule.kpi.vehicule_noi}</Text><Text style={styles.kpiLabel}>Vehicule noi</Text></View>
+            <View style={styles.kpiBox}><Text style={styles.kpiValue}>{vehicule.kpi.varsta_medie > 0 ? `${vehicule.kpi.varsta_medie} ani` : "—"}</Text><Text style={styles.kpiLabel}>Vârstă medie</Text></View>
+          </View>
+
+          <Text style={[styles.th, styles.mt8]}>Distribuție pe tip vehicul</Text>
+          <View style={[styles.table, styles.mt8]}>
+            <View style={styles.tableHeader}>
+              <Text style={[styles.th, styles.flex2]}>Tip</Text>
+              <Text style={[styles.th, styles.flex1]}>Vehicule</Text>
+              <Text style={[styles.th, styles.flex1]}>Pondere</Text>
+            </View>
+            {vehicule.tipDist.map((t) => (
+              <View key={t.cheie} style={styles.tableRow}>
+                <Text style={[styles.td, styles.flex2]}>{t.label}</Text>
+                <Text style={[styles.td, styles.flex1]}>{t.count}</Text>
+                <Text style={[styles.td, styles.flex1]}>
+                  {vehicule.kpi.vehicule_unice > 0
+                    ? Math.round((t.count / vehicule.kpi.vehicule_unice) * 100)
+                    : 0}%
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          <Text style={[styles.th, styles.mt16]}>Lista vehicule</Text>
+          <View style={[styles.table, styles.mt8]}>
+            <View style={styles.tableHeader}>
+              <Text style={[styles.th, { flex: 1.5 }]}>Nr. înmatriculare</Text>
+              <Text style={[styles.th, styles.flex2]}>Marcă / Model</Text>
+              <Text style={[styles.th, styles.flex2]}>Client</Text>
+              <Text style={[styles.th, styles.flex1]}>Vizite</Text>
+              <Text style={[styles.th, { flex: 1.5 }]}>Ultima vizită</Text>
+            </View>
+            {vehicule.lista.slice(0, 40).map((v) => (
+              <View key={v.id} style={styles.tableRow}>
+                <Text style={[styles.td, { flex: 1.5 }]}>{v.nr_inmatriculare}</Text>
+                <Text style={[styles.td, styles.flex2]}>
+                  {[v.marca, v.model].filter(Boolean).join(" ") || "—"}
+                </Text>
+                <Text style={[styles.td, styles.flex2]}>{v.client}</Text>
+                <Text style={[styles.td, styles.flex1]}>{v.vizite}</Text>
+                <Text style={[styles.td, { flex: 1.5 }]}>{fmtDate(v.ultima_vizita)}</Text>
               </View>
             ))}
           </View>

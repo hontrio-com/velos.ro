@@ -4,24 +4,28 @@ import { useState } from "react";
 import { useQueryState } from "nuqs";
 import { format, parseISO, differenceInDays, isValid } from "date-fns";
 import { ro } from "date-fns/locale";
-import { Download, FileText, Loader2, DollarSign, CalendarDays, ShieldCheck, MessageSquare, Users } from "lucide-react";
+import { Download, FileText, Loader2, DollarSign, CalendarDays, ShieldCheck, MessageSquare, Users, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { DateRangePicker } from "./date-range-picker";
 import { TabFinanciar } from "./tab-financiar";
 import { TabProgramari } from "./tab-programari";
 import { TabItp } from "./tab-itp";
+import { TabVehicule } from "./tab-vehicule";
 import { TabSms } from "./tab-sms";
 import { TabAngajati } from "./tab-angajati";
 import {
   useRaportFinanciar,
   useRaportProgramari,
   useRaportItp,
+  useRaportVehicule,
   useRaportSms,
 } from "@/hooks/use-rapoarte";
 import { getRaportAngajatiAction } from "@/lib/actions/rapoarte";
 
-type Tab = "financiar" | "programari" | "itp" | "sms" | "angajati";
+type Tab = "financiar" | "programari" | "itp" | "vehicule" | "sms" | "angajati";
+
+const TABS: Tab[] = ["financiar", "programari", "itp", "vehicule", "sms", "angajati"];
 
 interface RapoarteClientProps {
   statieId: string;
@@ -40,7 +44,7 @@ export function RapoarteClient({
   const [toParam] = useQueryState("to");
   const [tab, setTab] = useQueryState<Tab>("tab", {
     defaultValue: "financiar",
-    parse: (v) => (["financiar", "programari", "itp", "sms", "angajati"].includes(v) ? (v as Tab) : "financiar"),
+    parse: (v) => (TABS.includes(v as Tab) ? (v as Tab) : "financiar"),
     serialize: (v) => v,
   });
 
@@ -58,6 +62,7 @@ export function RapoarteClient({
   const { data: finData } = useRaportFinanciar(statieId, from, to);
   const { data: progData } = useRaportProgramari(statieId, from, to);
   const { data: itpData } = useRaportItp(statieId, from, to);
+  const { data: vehData } = useRaportVehicule(statieId, from, to);
   const { data: smsData } = useRaportSms(statieId, profileId, from, to);
 
   async function handleExportCsv() {
@@ -73,6 +78,9 @@ export function RapoarteClient({
     } else if (tab === "itp" && itpData?.lista) {
       const { exportCsvItp } = await import("./export/export-csv");
       exportCsvItp(itpData.lista, slug, range);
+    } else if (tab === "vehicule" && vehData?.lista) {
+      const { exportCsvVehicule } = await import("./export/export-csv");
+      exportCsvVehicule(vehData.lista, slug, range);
     } else if (tab === "sms" && smsData?.lista) {
       const { exportCsvSms } = await import("./export/export-csv");
       exportCsvSms(smsData.lista, slug, range);
@@ -105,6 +113,7 @@ export function RapoarteClient({
           financiar: finData ?? null,
           programari: progData ?? null,
           itp: itpData ?? null,
+          vehicule: vehData ?? null,
           sms: smsData ?? null,
           angajati: angData,
         })
@@ -174,6 +183,7 @@ export function RapoarteClient({
             { value: "financiar",  label: "Financiar",  icon: DollarSign  },
             { value: "programari", label: "Programări", icon: CalendarDays },
             { value: "itp",        label: "ITP",         icon: ShieldCheck  },
+            { value: "vehicule",   label: "Vehicule",    icon: Car          },
             { value: "sms",        label: "SMS",         icon: MessageSquare },
             { value: "angajati",   label: "Angajați",   icon: Users        },
           ] as const).map(({ value, label, icon: Icon }) => {
@@ -201,6 +211,7 @@ export function RapoarteClient({
           {(tab ?? "financiar") === "financiar"  && <TabFinanciar statieId={statieId} from={from} to={to} />}
           {(tab ?? "financiar") === "programari" && <TabProgramari statieId={statieId} from={from} to={to} />}
           {(tab ?? "financiar") === "itp"        && <TabItp statieId={statieId} from={from} to={to} />}
+          {(tab ?? "financiar") === "vehicule"   && <TabVehicule statieId={statieId} from={from} to={to} />}
           {(tab ?? "financiar") === "sms"        && <TabSms statieId={statieId} profileId={profileId} from={from} to={to} />}
           {(tab ?? "financiar") === "angajati"   && <TabAngajati statieId={statieId} from={from} to={to} />}
         </div>

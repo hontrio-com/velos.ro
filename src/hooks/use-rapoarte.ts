@@ -5,6 +5,7 @@ import {
   getRaportItpAction,
   getRaportSmsAction,
   getRaportAngajatiAction,
+  getRaportVehiculeAction,
 } from "@/lib/actions/rapoarte";
 
 const STALE = 5 * 60 * 1000;
@@ -33,6 +34,16 @@ export function useRaportItp(statieId: string, from: string, to: string) {
   return useQuery({
     queryKey: ["raport-itp", statieId, from, to],
     queryFn: () => getRaportItpAction(statieId, from, to),
+    staleTime: STALE,
+    placeholderData: keepPreviousData,
+    enabled: !!statieId && !!from && !!to,
+  });
+}
+
+export function useRaportVehicule(statieId: string, from: string, to: string) {
+  return useQuery({
+    queryKey: ["raport-vehicule", statieId, from, to],
+    queryFn: () => getRaportVehiculeAction(statieId, from, to),
     staleTime: STALE,
     placeholderData: keepPreviousData,
     enabled: !!statieId && !!from && !!to,

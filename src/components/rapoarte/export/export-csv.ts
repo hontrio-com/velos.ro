@@ -67,6 +67,24 @@ export function exportCsvItp(data: any[], statie: string, range: CsvRange) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function exportCsvVehicule(data: any[], statie: string, range: CsvRange) {
+  const rows = data.map((v) => ({
+    "Nr. inmatriculare": v.nr_inmatriculare,
+    Marca: v.marca ?? "",
+    Model: v.model ?? "",
+    Tip: v.tip_vehicul ?? "",
+    Combustibil: v.combustibil ?? "",
+    "An fabricatie": v.an_fabricatie ?? "",
+    Client: v.client,
+    Vizite: v.vizite,
+    "Ultima vizita": fmtDate(v.ultima_vizita),
+    "Ultim rezultat": v.ultim_rezultat ?? "",
+    "Expira ITP": v.expirare_itp ? fmtDate(v.expirare_itp) : "",
+  }));
+  downloadCsv(rows, `vehicule-${statie}-${range.from}-${range.to}.csv`);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function exportCsvSms(data: any[], statie: string, range: CsvRange) {
   const rows = data.map((r) => ({
     "Data trimitere": r.created_at ? fmtDate(r.created_at.split("T")[0]) : "",
