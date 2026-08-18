@@ -10,20 +10,22 @@ import {
   CalendarDays,
   Clock,
   Car,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   Loader2,
   Search,
   Plus,
   X,
-  User,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { WeekSlotGrid } from "./week-slot-grid";
 import { createProgramareStaffAction } from "@/lib/actions/programari";
 import { capitalizeName } from "@/lib/format-name";
@@ -63,14 +65,6 @@ interface ProgramareBookingFlowProps {
   onCreated?: (savedDate: string) => void;
 }
 
-type Step = 1 | 2 | 3 | 4;
-
-const STEPS = [
-  { n: 1, label: "Dată & Oră", icon: CalendarDays },
-  { n: 2, label: "Vehicul", icon: Car },
-  { n: 3, label: "Confirmare", icon: CheckCircle2 },
-] as const;
-
 export function ProgramareBookingFlow({
   statieId,
   onCreated,
@@ -78,14 +72,13 @@ export function ProgramareBookingFlow({
   const supabase = createClient();
   const queryClient = useQueryClient();
 
-  const [step, setStep] = useState<Step>(1);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Selections
+  // Slotul ales din grilă — dacă e setat, popup-ul e deschis
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
 
-  // Vehicle
+  // Vehicul
   const [plateSearch, setPlateSearch] = useState("");
   const [selectedVehicul, setSelectedVehicul] = useState<VehiculFound | null>(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -96,13 +89,15 @@ export function ProgramareBookingFlow({
   const [newNume, setNewNume] = useState("");
   const [newTelefon, setNewTelefon] = useState("");
 
-  // Details
+  // Detalii
   const [tipServiciu, setTipServiciu] = useState("ITP");
   const [pret, setPret] = useState("");
   const [observatii, setObservatii] = useState("");
   const [angajatId, setAngajatId] = useState<string | null>(null);
 
-  // ── Data: station work schedule (closed days) + tarife (auto price) ────────
+  const dialogOpen = !!selectedDate && !!selectedSlot;
+
+  // ── Data: tarife (preț automat) ────────────────────────────────────────────
   const { data: statieCfg } = useQuery<{ programLucru: ProgramLucru | null; tarife: TarifeMap | null }>({
     queryKey: ["statie-config", statieId],
     queryFn: async () => {
@@ -148,14 +143,14 @@ export function ProgramareBookingFlow({
     enabled: plateSearch.length >= 2 && !selectedVehicul,
   });
 
-  // Select a vehicle and auto-fill the price from station tarife (if empty)
+  // Selectează un vehicul și precompletează prețul din tarifele stației
   function chooseVehicul(v: VehiculFound) {
     setSelectedVehicul(v);
     setPlateSearch("");
     setPret((prev) => (prev ? prev : suggestedPret(v, tarife)));
   }
 
-  // ── Vehicle create ─────────────────────────────────────────────────────────
+  // ── Creare vehicul + client ────────────────────────────────────────────────
   async function createVehiculAndClient(): Promise<VehiculFound | null> {
     const { data: existing } = await supabase
       .from("clienti")
@@ -185,69 +180,15 @@ export function ProgramareBookingFlow({
         model: newModel || null,
         an_fabricatie: newAn ? parseInt(newAn) : null,
       })
-      .select("id, nr_inmatriculare, marca, model, an_fabricatie, expirare_itp")
+      .select("id, nr_inmatriculare, marca, model, an_fabricatie, tip_vehicul, expirare_itp")
       .single();
 
     if (error || !vehicul) return null;
     return { ...vehicul, client } as VehiculFound;
   }
 
-  async function handleVehiculNext() {
-    if (!selectedVehicul && !showCreate) {
-      toast.error("Selectează sau adaugă un vehicul");
-      return;
-    }
-    if (showCreate) {
-      if (!newNr || !newNume || !newTelefon) {
-        toast.error("Completează nr. înmatriculare, proprietarul și telefonul");
-        return;
-      }
-      setIsSaving(true);
-      const v = await createVehiculAndClient();
-      setIsSaving(false);
-      if (!v) { toast.error("Eroare la adăugarea vehiculului"); return; }
-      setSelectedVehicul(v);
-      setShowCreate(false);
-      queryClient.invalidateQueries({ queryKey: ["vehicule-search"] });
-    }
-    setStep(3);
-  }
-
-  // ── Save ───────────────────────────────────────────────────────────────────
-  async function handleSave() {
-    if (!selectedVehicul || !selectedSlot || !selectedDate) return;
-    if (!selectedVehicul.client?.id) {
-      toast.error("Vehiculul nu are un proprietar asociat");
-      return;
-    }
-    setIsSaving(true);
-    const result = await createProgramareStaffAction({
-      statieId,
-      clientId: selectedVehicul.client.id,
-      vehiculId: selectedVehicul.id,
-      date: selectedDate,
-      slot: selectedSlot,
-      tipServiciu: tipServiciu || "ITP",
-      pret: pret ? parseFloat(pret) : null,
-      observatii: observatii || null,
-      angajatId: angajatId || null,
-    });
-    setIsSaving(false);
-    if ("error" in result) {
-      toast.error(`Eroare la salvare: ${result.error}`);
-    } else {
-      toast.success("Programare adăugată!");
-      queryClient.invalidateQueries({ queryKey: ["programari"] });
-      queryClient.invalidateQueries({ queryKey: ["programari-stats"] });
-      queryClient.invalidateQueries({ queryKey: ["programari-calendar"] });
-      queryClient.invalidateQueries({ queryKey: ["slots"] });
-      onCreated?.(selectedDate);
-      setStep(4);
-    }
-  }
-
-  function resetFlow() {
-    setStep(1);
+  // ── Reset / închidere popup ────────────────────────────────────────────────
+  function closeDialog() {
     setSelectedDate("");
     setSelectedSlot(null);
     setPlateSearch("");
@@ -258,86 +199,105 @@ export function ProgramareBookingFlow({
     setTipServiciu("ITP"); setPret(""); setObservatii(""); setAngajatId(null);
   }
 
+  // ── Salvare ────────────────────────────────────────────────────────────────
+  async function handleSave() {
+    if (!selectedDate || !selectedSlot) return;
+
+    let vehicul = selectedVehicul;
+
+    // Vehicul nou completat direct în popup
+    if (!vehicul && showCreate) {
+      if (!newNr || !newNume || !newTelefon) {
+        toast.error("Completează nr. înmatriculare, proprietarul și telefonul");
+        return;
+      }
+      setIsSaving(true);
+      vehicul = await createVehiculAndClient();
+      if (!vehicul) {
+        setIsSaving(false);
+        toast.error("Eroare la adăugarea vehiculului");
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: ["vehicule-search"] });
+    }
+
+    if (!vehicul) {
+      toast.error("Selectează sau adaugă un vehicul");
+      return;
+    }
+    if (!vehicul.client?.id) {
+      setIsSaving(false);
+      toast.error("Vehiculul nu are un proprietar asociat");
+      return;
+    }
+
+    setIsSaving(true);
+    const result = await createProgramareStaffAction({
+      statieId,
+      clientId: vehicul.client.id,
+      vehiculId: vehicul.id,
+      date: selectedDate,
+      slot: selectedSlot,
+      tipServiciu: tipServiciu || "ITP",
+      pret: pret ? parseFloat(pret) : null,
+      observatii: observatii || null,
+      angajatId: angajatId || null,
+    });
+    setIsSaving(false);
+
+    if ("error" in result) {
+      toast.error(`Eroare la salvare: ${result.error}`);
+      return;
+    }
+
+    const savedDate = selectedDate;
+    toast.success(
+      `Programare adăugată — ${format(parseISO(savedDate), "d MMMM", { locale: ro })}, ora ${selectedSlot}`
+    );
+    queryClient.invalidateQueries({ queryKey: ["programari"] });
+    queryClient.invalidateQueries({ queryKey: ["programari-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["programari-calendar"] });
+    queryClient.invalidateQueries({ queryKey: ["slots"] });
+    queryClient.invalidateQueries({ queryKey: ["week-slots"] });
+    onCreated?.(savedDate);
+    closeDialog();
+  }
+
   const selectedDateFormatted = selectedDate
     ? format(parseISO(selectedDate), "EEEE, d MMMM yyyy", { locale: ro })
     : "";
 
-  const step1Valid = !!selectedDate && !!selectedSlot;
-
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      {/* Step indicator */}
-      {step < 4 && (
-        <div className="flex items-center gap-2">
-          {STEPS.map((s, i) => {
-            const Icon = s.icon;
-            const done = step > s.n;
-            const active = step === s.n;
-            return (
-              <div key={s.n} className="flex items-center gap-2 flex-1">
-                <div className={cn(
-                  "flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold shrink-0 transition-colors",
-                  done ? "bg-[#1877F2] text-white" :
-                  active ? "bg-[#EFF6FF] text-[#1877F2] border-2 border-[#1877F2]" :
-                  "bg-[#F7F8FA] text-[#9CA3AF]"
-                )}>
-                  {done ? <CheckCircle2 className="h-4 w-4" /> : <Icon className="h-3.5 w-3.5" />}
-                </div>
-                <span className={cn(
-                  "text-xs font-medium hidden sm:block",
-                  active ? "text-[#1877F2]" : done ? "text-[#374151]" : "text-[#9CA3AF]"
-                )}>
-                  {s.label}
-                </span>
-                {i < STEPS.length - 1 && (
-                  <div className={cn("flex-1 h-px", done ? "bg-[#1877F2]" : "bg-[#E5E7EB]")} />
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+    <>
+      {/* Grilă săptămânală — click pe slot deschide direct popup-ul */}
+      <WeekSlotGrid
+        statieId={statieId}
+        selectedDate={selectedDate}
+        selectedSlot={selectedSlot}
+        onSelect={(date, slot) => {
+          setSelectedDate(date);
+          setSelectedSlot(slot);
+        }}
+      />
 
-      {/* ── STEP 1: Date & Slot ── */}
-      {step === 1 && (
-        <div className="space-y-5">
-          {/* Grilă săptămânală: alege data și ora dintr-un singur click */}
-          <WeekSlotGrid
-            statieId={statieId}
-            selectedDate={selectedDate}
-            selectedSlot={selectedSlot}
-            onSelect={(date, slot) => {
-              setSelectedDate(date);
-              setSelectedSlot(slot);
-            }}
-          />
-
-          {step1Valid && (
-            <div className="flex items-center gap-2 rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] px-4 py-2.5 text-sm">
-              <Clock className="h-4 w-4 text-[#1877F2] shrink-0" />
-              <span className="text-[#1877F2] font-medium">
-                {selectedDateFormatted} · {selectedSlot}
+      <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) closeDialog(); }}>
+        <DialogContent className="sm:max-w-[560px] max-h-[90dvh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-base">Programare nouă</DialogTitle>
+            <DialogDescription className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[#1877F2]">
+              <span className="inline-flex items-center gap-1.5">
+                <CalendarDays className="h-3.5 w-3.5" />
+                {selectedDateFormatted}
               </span>
-            </div>
-          )}
+              <span className="inline-flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5" />
+                {selectedSlot}
+              </span>
+            </DialogDescription>
+          </DialogHeader>
 
-          <Button
-            className="w-full bg-[#1877F2] hover:bg-[#1565D8] h-10"
-            disabled={!step1Valid}
-            onClick={() => setStep(2)}
-          >
-            Continuă
-            <ChevronRight className="h-4 w-4 ml-1" />
-          </Button>
-        </div>
-      )}
-
-      {/* ── STEP 2: Vehicle ── */}
-      {step === 2 && (
-        <div className="space-y-5">
-          <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 sm:p-5 space-y-4">
-            <h3 className="text-sm font-semibold text-[#111318]">Selectează vehiculul</h3>
-
+          <div className="space-y-4">
+            {/* ── Vehicul ── */}
             {selectedVehicul ? (
               <div className="flex items-center gap-3 rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] px-4 py-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#DBEAFE] shrink-0">
@@ -360,19 +320,20 @@ export function ProgramareBookingFlow({
                   type="button"
                   onClick={() => { setSelectedVehicul(null); setPlateSearch(""); }}
                   className="shrink-0 text-[#9CA3AF] hover:text-[#374151]"
+                  aria-label="Schimbă vehiculul"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
             ) : !showCreate ? (
-              <>
+              <div className="space-y-3">
                 <div className="space-y-1.5">
-                  <Label className="text-[#374151]">Caută după nr. înmatriculare</Label>
+                  <Label className="text-[#374151]">Vehicul</Label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9CA3AF]" />
                     <Input
                       className="pl-9 border-[#E5E7EB] focus-visible:ring-[#1877F2]/20"
-                      placeholder="B 123 ABC..."
+                      placeholder="Caută după nr. înmatriculare — B 123 ABC..."
                       value={plateSearch}
                       onChange={(e) => setPlateSearch(e.target.value.toUpperCase())}
                       autoFocus
@@ -390,7 +351,7 @@ export function ProgramareBookingFlow({
                         key={v.id}
                         type="button"
                         onClick={() => chooseVehicul(v)}
-                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F9FAFB] transition-colors text-left border-b border-[#E5E7EB] last:border-0"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#F9FAFB] transition-colors text-left border-b border-[#E5E7EB] last:border-0"
                       >
                         <Car className="h-4 w-4 text-[#9CA3AF] shrink-0" />
                         <div className="min-w-0">
@@ -408,9 +369,10 @@ export function ProgramareBookingFlow({
                 )}
 
                 {plateSearch.length >= 2 && !searchLoading && vehiculeGasite?.length === 0 && (
-                  <div className="rounded-xl border border-dashed border-[#E5E7EB] px-4 py-5 text-center space-y-2">
+                  <div className="rounded-xl border border-dashed border-[#E5E7EB] px-4 py-4 text-center space-y-2">
                     <p className="text-sm text-[#6B7280]">
-                      Niciun vehicul găsit pentru <strong className="text-[#111318]">{plateSearch}</strong>
+                      Niciun vehicul găsit pentru{" "}
+                      <strong className="text-[#111318]">{plateSearch}</strong>
                     </p>
                     <Button
                       type="button"
@@ -429,16 +391,16 @@ export function ProgramareBookingFlow({
                   <button
                     type="button"
                     onClick={() => setShowCreate(true)}
-                    className="w-full rounded-xl border border-dashed border-[#E5E7EB] px-4 py-3 text-sm text-[#6B7280] hover:border-[#1877F2]/50 hover:text-[#1877F2] transition-colors flex items-center justify-center gap-1.5"
+                    className="w-full rounded-xl border border-dashed border-[#E5E7EB] px-4 py-2.5 text-sm text-[#6B7280] hover:border-[#1877F2]/50 hover:text-[#1877F2] transition-colors flex items-center justify-center gap-1.5"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     Adaugă vehicul nou
                   </button>
                 )}
-              </>
+              </div>
             ) : (
-              /* Create form */
-              <div className="space-y-4">
+              /* Vehicul nou — se creează odată cu salvarea programării */
+              <div className="space-y-3 rounded-xl border border-[#E5E7EB] p-3.5">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold text-[#111318]">Vehicul nou</p>
                   <button
@@ -450,128 +412,79 @@ export function ProgramareBookingFlow({
                   </button>
                 </div>
 
-                <div className="space-y-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF]">
-                    Proprietar
-                  </p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label className="text-[#374151]">
-                        Nume <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        value={newNume}
-                        onChange={(e) => setNewNume(e.target.value)}
-                        placeholder="Ion Popescu"
-                        className="border-[#E5E7EB]"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-[#374151]">
-                        Telefon <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        value={newTelefon}
-                        onChange={(e) => setNewTelefon(e.target.value)}
-                        placeholder="0712 345 678"
-                        className="border-[#E5E7EB]"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF]">
-                    Vehicul
-                  </p>
+                <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label className="text-[#374151]">
-                      Nr. înmatriculare <span className="text-red-500">*</span>
+                      Proprietar <span className="text-red-500">*</span>
                     </Label>
                     <Input
-                      value={newNr}
-                      onChange={(e) => setNewNr(e.target.value.toUpperCase())}
-                      placeholder="B 123 ABC"
+                      value={newNume}
+                      onChange={(e) => setNewNume(e.target.value)}
+                      placeholder="Ion Popescu"
                       className="border-[#E5E7EB]"
                     />
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="space-y-1.5">
-                      <Label className="text-[#374151]">Marcă</Label>
-                      <Input
-                        value={newMarca}
-                        onChange={(e) => setNewMarca(e.target.value)}
-                        placeholder="Dacia"
-                        className="border-[#E5E7EB]"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-[#374151]">Model</Label>
-                      <Input
-                        value={newModel}
-                        onChange={(e) => setNewModel(e.target.value)}
-                        placeholder="Logan"
-                        className="border-[#E5E7EB]"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-[#374151]">An</Label>
-                      <Input
-                        type="number"
-                        value={newAn}
-                        onChange={(e) => setNewAn(e.target.value)}
-                        placeholder="2020"
-                        min={1980}
-                        max={new Date().getFullYear() + 1}
-                        className="border-[#E5E7EB]"
-                      />
-                    </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[#374151]">
+                      Telefon <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      value={newTelefon}
+                      onChange={(e) => setNewTelefon(e.target.value)}
+                      placeholder="0712 345 678"
+                      className="border-[#E5E7EB]"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-[#374151]">
+                    Nr. înmatriculare <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    value={newNr}
+                    onChange={(e) => setNewNr(e.target.value.toUpperCase())}
+                    placeholder="B 123 ABC"
+                    className="border-[#E5E7EB]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-[#374151]">Marcă</Label>
+                    <Input
+                      value={newMarca}
+                      onChange={(e) => setNewMarca(e.target.value)}
+                      placeholder="Dacia"
+                      className="border-[#E5E7EB]"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[#374151]">Model</Label>
+                    <Input
+                      value={newModel}
+                      onChange={(e) => setNewModel(e.target.value)}
+                      placeholder="Logan"
+                      className="border-[#E5E7EB]"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[#374151]">An</Label>
+                    <Input
+                      type="number"
+                      value={newAn}
+                      onChange={(e) => setNewAn(e.target.value)}
+                      placeholder="2020"
+                      min={1980}
+                      max={new Date().getFullYear() + 1}
+                      className="border-[#E5E7EB]"
+                    />
                   </div>
                 </div>
               </div>
             )}
-          </div>
 
-          <div className="flex gap-3">
-            <Button variant="outline" className="flex-1 h-10 border-[#E5E7EB]" onClick={() => setStep(1)} disabled={isSaving}>
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Înapoi
-            </Button>
-            <Button
-              className="flex-1 bg-[#1877F2] hover:bg-[#1565D8] h-10"
-              onClick={handleVehiculNext}
-              disabled={isSaving || (!selectedVehicul && !showCreate)}
-            >
-              {isSaving && <Loader2 className="h-4 w-4 animate-spin mr-1.5" />}
-              Continuă
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* ── STEP 3: Details & confirmation ── */}
-      {step === 3 && (
-        <div className="space-y-5">
-          <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-xl p-4 space-y-3">
-            <h3 className="text-sm font-semibold text-[#1877F2]">Rezumat programare</h3>
-            <Row icon={CalendarDays} label="Data" value={selectedDateFormatted} />
-            <Row icon={Clock} label="Ora" value={selectedSlot ?? "—"} />
-            <Row
-              icon={Car}
-              label="Vehicul"
-              value={`${selectedVehicul?.nr_inmatriculare ?? "—"}${selectedVehicul?.marca ? ` · ${[selectedVehicul.marca, selectedVehicul.model].filter(Boolean).join(" ")}` : ""}`}
-            />
-            {selectedVehicul?.client && (
-              <Row
-                icon={User}
-                label="Proprietar"
-                value={`${selectedVehicul.client.nume} · ${selectedVehicul.client.telefon}`}
-              />
-            )}
-          </div>
-
-          <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 sm:p-5 space-y-4">
+            {/* ── Detalii ── */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-[#374151]">Tip serviciu</Label>
@@ -599,7 +512,7 @@ export function ProgramareBookingFlow({
               </div>
             </div>
 
-            {angajati.length > 0 ? (
+            {angajati.length > 0 && (
               <div className="space-y-1.5">
                 <Label className="text-[#374151]">Inspector / Angajat (opțional)</Label>
                 <select
@@ -615,97 +528,46 @@ export function ProgramareBookingFlow({
                   ))}
                 </select>
               </div>
-            ) : null}
+            )}
 
             <div className="space-y-1.5">
               <Label className="text-[#374151]">Observații (opțional)</Label>
               <Textarea
-                rows={3}
+                rows={2}
                 placeholder="..."
                 value={observatii}
                 onChange={(e) => setObservatii(e.target.value)}
                 className="border-[#E5E7EB] resize-none"
               />
             </div>
-          </div>
 
-          <div className="flex gap-3">
-            <Button variant="outline" className="flex-1 h-10 border-[#E5E7EB]" onClick={() => setStep(2)} disabled={isSaving}>
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Înapoi
-            </Button>
-            <Button
-              className="flex-1 bg-[#1877F2] hover:bg-[#1565D8] h-10"
-              onClick={handleSave}
-              disabled={isSaving}
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Se salvează...
-                </>
-              ) : (
-                "Confirmă programarea"
-              )}
-            </Button>
+            <div className="flex gap-3 pt-1">
+              <Button
+                variant="outline"
+                className="flex-1 h-10 border-[#E5E7EB]"
+                onClick={closeDialog}
+                disabled={isSaving}
+              >
+                Anulează
+              </Button>
+              <Button
+                className="flex-1 bg-[#1877F2] hover:bg-[#1565D8] h-10"
+                onClick={handleSave}
+                disabled={isSaving || (!selectedVehicul && !showCreate)}
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Se salvează...
+                  </>
+                ) : (
+                  "Salvează programarea"
+                )}
+              </Button>
+            </div>
           </div>
-        </div>
-      )}
-
-      {/* ── STEP 4: Success ── */}
-      {step === 4 && (
-        <div className="bg-white border border-[#E5E7EB] rounded-xl p-8 flex flex-col items-center text-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#DCFCE7]">
-            <CheckCircle2 className="h-8 w-8 text-[#16A34A]" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-[#111318]">Programare confirmată!</h2>
-            <p className="text-sm text-[#6B7280] mt-1">
-              Programarea a fost înregistrată cu succes.
-            </p>
-          </div>
-          <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg px-4 py-3 w-full max-w-sm text-left space-y-1.5">
-            <p className="text-xs text-[#6B7280]">
-              <span className="font-medium text-[#374151]">Data:</span> {selectedDateFormatted}
-            </p>
-            <p className="text-xs text-[#6B7280]">
-              <span className="font-medium text-[#374151]">Ora:</span> {selectedSlot}
-            </p>
-            <p className="text-xs text-[#6B7280]">
-              <span className="font-medium text-[#374151]">Vehicul:</span> {selectedVehicul?.nr_inmatriculare}
-            </p>
-          </div>
-          <Button
-            className="bg-[#1877F2] hover:bg-[#1565D8] h-10 mt-1"
-            onClick={resetFlow}
-          >
-            <Plus className="h-4 w-4 mr-1.5" />
-            Programare nouă
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-function Row({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex items-start gap-2.5">
-      <Icon className="h-4 w-4 text-[#1877F2] mt-0.5 shrink-0" />
-      <div className="min-w-0">
-        <span className="text-xs font-medium text-[#374151]">{label}: </span>
-        <span className="text-xs text-[#111318]">{value}</span>
-      </div>
-    </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

@@ -185,9 +185,9 @@ export function WeekSlotGrid({
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <div className="min-w-[640px]">
+          <div className="min-w-[860px]">
             {/* Header zile */}
-            <div className="grid grid-cols-[52px_repeat(7,minmax(0,1fr))] bg-[#FAFBFC] border-b border-[#E5E7EB]">
+            <div className="grid grid-cols-[64px_repeat(7,minmax(0,1fr))] bg-[#FAFBFC] border-b border-[#E5E7EB]">
               <div />
               {days.map((d) => {
                 const isToday = isSameDay(d, today);
@@ -195,7 +195,7 @@ export function WeekSlotGrid({
                   <div
                     key={d.toISOString()}
                     className={cn(
-                      "py-2 text-center text-[11px] font-medium border-l border-[#F3F4F6]",
+                      "py-2.5 text-center text-xs font-medium border-l border-[#F3F4F6]",
                       isToday ? "text-[#1877F2] font-semibold" : "text-[#6B7280]"
                     )}
                   >
@@ -213,11 +213,11 @@ export function WeekSlotGrid({
                 <div
                   key={slot}
                   className={cn(
-                    "grid grid-cols-[52px_repeat(7,minmax(0,1fr))]",
+                    "grid grid-cols-[64px_repeat(7,minmax(0,1fr))]",
                     isHourMark ? "border-t border-[#E5E7EB]" : "border-t border-dashed border-[#F3F4F6]"
                   )}
                 >
-                  <div className="py-1.5 pr-2 text-right text-[10px] font-medium text-[#1877F2]">
+                  <div className="py-2 pr-2.5 text-right text-[11px] font-medium text-[#1877F2]">
                     {isHourMark ? slot : ""}
                   </div>
 
@@ -253,7 +253,7 @@ export function WeekSlotGrid({
                               : `${slot} — ${libere}/${nrLinii} liber`
                         }
                         className={cn(
-                          "h-9 border-l border-[#F3F4F6] text-[11px] font-medium transition-colors",
+                          "h-11 border-l border-[#F3F4F6] text-xs font-medium transition-colors",
                           isSelected
                             ? "bg-[#1877F2] text-white"
                             : !inProgram
