@@ -48,6 +48,7 @@ export async function scanVehiculAction(input: ScanVehiculInput) {
     const configs = [
       { tip: "30_zile" as const, days: 30, label: "30 de zile" },
       { tip: "7_zile" as const,  days: 7,  label: "7 zile" },
+      { tip: "3_zile" as const,  days: 3,  label: "3 zile" },
       { tip: "1_zi" as const,    days: 1,  label: "mâine" },
     ];
 

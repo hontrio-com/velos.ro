@@ -55,6 +55,7 @@ const SMS_VARS = ["{{nume_client}}", "{{nr_inmatriculare}}", "{{data}}", "{{ora}
 const SMS_TEMPLATES_DEF = [
   { key: "template_itp_30_zile", label: "ITP expiră în 30 de zile" },
   { key: "template_itp_7_zile", label: "ITP expiră în 7 zile" },
+  { key: "template_itp_3_zile", label: "ITP expiră în 3 zile" },
   { key: "template_itp_1_zi", label: "ITP expiră mâine" },
   { key: "template_confirmare", label: "Confirmare programare" },
   { key: "template_reminder_zi", label: "Reminder ziua programării" },
@@ -128,15 +129,19 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
   // SMS state
   const [smsActiv, setSmsActiv] = useState(setari?.sms_activ ?? false);
   const [smsToggles, setSmsToggles] = useState({
-    reminder_30_zile: setari?.reminder_30_zile ?? true,
-    reminder_7_zile: setari?.reminder_7_zile ?? true,
-    reminder_1_zi: setari?.reminder_1_zi ?? true,
+    reminder_30_zile: setari?.reminder_30_zile ?? false,
+    reminder_15_zile: setari?.reminder_15_zile ?? false,
+    reminder_7_zile: setari?.reminder_7_zile ?? false,
+    reminder_3_zile: setari?.reminder_3_zile ?? true,
+    reminder_1_zi: setari?.reminder_1_zi ?? false,
+    reminder_expirat: setari?.reminder_expirat ?? false,
     reminder_confirmare: setari?.reminder_confirmare ?? true,
     reminder_ziua_programarii: setari?.reminder_ziua_programarii ?? true,
   });
   const [smsTemplates, setSmsTemplates] = useState({
     template_itp_30_zile: setari?.template_itp_30_zile ?? "",
     template_itp_7_zile: setari?.template_itp_7_zile ?? "",
+    template_itp_3_zile: setari?.template_itp_3_zile ?? "",
     template_itp_1_zi: setari?.template_itp_1_zi ?? "",
     template_confirmare: setari?.template_confirmare ?? "",
     template_reminder_zi: setari?.template_reminder_zi ?? "",
@@ -498,8 +503,11 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
               <p className="text-xs font-semibold uppercase tracking-wider text-[#9CA3AF]">Reminder ITP expirat</p>
               {[
                 { key: "reminder_30_zile", label: "Cu 30 de zile înainte" },
+                { key: "reminder_15_zile", label: "Cu 15 zile înainte" },
                 { key: "reminder_7_zile", label: "Cu 7 zile înainte" },
+                { key: "reminder_3_zile", label: "Cu 3 zile înainte" },
                 { key: "reminder_1_zi", label: "Cu 1 zi înainte" },
+                { key: "reminder_expirat", label: "După expirare (primele 7 zile)" },
               ].map(({ key, label }) => (
                 <div key={key} className="flex items-center justify-between">
                   <Label className="text-sm font-normal cursor-pointer">{label}</Label>

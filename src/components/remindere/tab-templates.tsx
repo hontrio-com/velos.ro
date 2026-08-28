@@ -28,6 +28,7 @@ export function TabTemplates({ templates, onUpdate }: TabTemplatesProps) {
     "30_zile",
     "15_zile",
     "7_zile",
+    "3_zile",
     "1_zi",
     "expirat",
     "confirmare_programare",

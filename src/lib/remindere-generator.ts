@@ -9,8 +9,9 @@ export const TIP_CONFIG: Record<
   "30_zile":             { label: "ITP · 30 zile",          labelShort: "30z",  colorClass: "text-blue-600",   bgClass: "bg-blue-50",   urgency: 1 },
   "15_zile":             { label: "ITP · 15 zile",          labelShort: "15z",  colorClass: "text-blue-600",   bgClass: "bg-blue-50",   urgency: 2 },
   "7_zile":              { label: "ITP · 7 zile",           labelShort: "7z",   colorClass: "text-amber-600",  bgClass: "bg-amber-50",  urgency: 3 },
-  "1_zi":                { label: "ITP · 1 zi",             labelShort: "1z",   colorClass: "text-red-600",    bgClass: "bg-red-50",    urgency: 4 },
-  "expirat":             { label: "ITP · Expirat",          labelShort: "exp",  colorClass: "text-red-700",    bgClass: "bg-red-100",   urgency: 5 },
+  "3_zile":              { label: "ITP · 3 zile",           labelShort: "3z",   colorClass: "text-amber-700",  bgClass: "bg-amber-100", urgency: 4 },
+  "1_zi":                { label: "ITP · 1 zi",             labelShort: "1z",   colorClass: "text-red-600",    bgClass: "bg-red-50",    urgency: 5 },
+  "expirat":             { label: "ITP · Expirat",          labelShort: "exp",  colorClass: "text-red-700",    bgClass: "bg-red-100",   urgency: 6 },
   "confirmare_programare": { label: "Confirmare",           labelShort: "conf", colorClass: "text-green-600",  bgClass: "bg-green-50",  urgency: 0 },
   "ziua_programarii":    { label: "Ziua programării",       labelShort: "azi",  colorClass: "text-[#1877F2]",  bgClass: "bg-[#EFF6FF]", urgency: 0 },
 };
@@ -33,6 +34,8 @@ export const DEFAULT_TEMPLATES: Record<TipReminder, string> = {
     "Buna ziua, {{nume}}! ITP-ul vehiculului {{nr_inmatriculare}} expira pe {{data_expirare}} ({{zile_ramase}} zile). Programati-va: {{link_programare}} | {{telefon_statie}}",
   "7_zile":
     "URGENT: ITP-ul vehiculului {{nr_inmatriculare}} expira pe {{data_expirare}} ({{zile_ramase}} zile). Programati-va acum: {{link_programare}}",
+  "3_zile":
+    "Buna ziua, {{nume}}! ITP-ul vehiculului {{nr_inmatriculare}} expira pe {{data_expirare}} ({{zile_ramase}} zile). Programati-va: {{link_programare}} sau {{telefon_statie}}",
   "1_zi":
     "URGENT: ITP-ul vehiculului {{nr_inmatriculare}} expira MAINE! Programati-va acum: {{link_programare}} sau {{telefon_statie}}",
   "expirat":

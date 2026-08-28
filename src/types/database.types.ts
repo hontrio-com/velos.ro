@@ -643,8 +643,11 @@ export type Database = {
           id: string
           recenzii_activ: boolean | null
           reminder_1_zi: boolean
+          reminder_15_zile: boolean
           reminder_30_zile: boolean
+          reminder_3_zile: boolean
           reminder_7_zile: boolean
+          reminder_expirat: boolean
           reminder_confirmare: boolean
           reminder_ziua_programarii: boolean
           sms_activ: boolean
@@ -653,6 +656,7 @@ export type Database = {
           template_confirmare: string | null
           template_itp_1_zi: string | null
           template_itp_30_zile: string | null
+          template_itp_3_zile: string | null
           template_itp_7_zile: string | null
           template_reminder_zi: string | null
           updated_at: string
@@ -663,8 +667,11 @@ export type Database = {
           id?: string
           recenzii_activ?: boolean | null
           reminder_1_zi?: boolean
+          reminder_15_zile?: boolean
           reminder_30_zile?: boolean
+          reminder_3_zile?: boolean
           reminder_7_zile?: boolean
+          reminder_expirat?: boolean
           reminder_confirmare?: boolean
           reminder_ziua_programarii?: boolean
           sms_activ?: boolean
@@ -673,6 +680,7 @@ export type Database = {
           template_confirmare?: string | null
           template_itp_1_zi?: string | null
           template_itp_30_zile?: string | null
+          template_itp_3_zile?: string | null
           template_itp_7_zile?: string | null
           template_reminder_zi?: string | null
           updated_at?: string
@@ -683,8 +691,11 @@ export type Database = {
           id?: string
           recenzii_activ?: boolean | null
           reminder_1_zi?: boolean
+          reminder_15_zile?: boolean
           reminder_30_zile?: boolean
+          reminder_3_zile?: boolean
           reminder_7_zile?: boolean
+          reminder_expirat?: boolean
           reminder_confirmare?: boolean
           reminder_ziua_programarii?: boolean
           sms_activ?: boolean
@@ -693,6 +704,7 @@ export type Database = {
           template_confirmare?: string | null
           template_itp_1_zi?: string | null
           template_itp_30_zile?: string | null
+          template_itp_3_zile?: string | null
           template_itp_7_zile?: string | null
           template_reminder_zi?: string | null
           updated_at?: string
@@ -1222,6 +1234,7 @@ export type Database = {
         | "30_zile"
         | "15_zile"
         | "7_zile"
+        | "3_zile"
         | "1_zi"
         | "expirat"
         | "confirmare_programare"
@@ -1373,6 +1386,7 @@ export const Constants = {
       tip_reminder: [
         "30_zile",
         "15_zile",
+        "3_zile",
         "7_zile",
         "1_zi",
         "expirat",

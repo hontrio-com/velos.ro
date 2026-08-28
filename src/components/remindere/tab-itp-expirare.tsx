@@ -94,7 +94,13 @@ export function TabItpExpirare({ vehicule, statieId, isLoading, onUpdate }: TabI
 
   const bulkPayload: BulkReminder[] = selectedVehicule.map((v) => {
     const days = differenceInDays(parseISO(v.expirare_itp + "T12:00:00"), today);
-    const tip = days < 0 ? "expirat" : days <= 1 ? "1_zi" : days <= 7 ? "7_zile" : days <= 15 ? "15_zile" : "30_zile";
+    const tip =
+      days < 0 ? "expirat"
+      : days <= 1 ? "1_zi"
+      : days <= 3 ? "3_zile"
+      : days <= 7 ? "7_zile"
+      : days <= 15 ? "15_zile"
+      : "30_zile";
     const statieInfo = v.statie;
     const vars = buildTemplateVars({
       clientNume: v.client?.nume ?? "",

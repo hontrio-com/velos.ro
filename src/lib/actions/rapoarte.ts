@@ -529,6 +529,7 @@ const TIP_REMINDER_LABELS: Record<string, string> = {
   "30_zile": "ITP 30 zile",
   "15_zile": "ITP 15 zile",
   "7_zile": "ITP 7 zile",
+  "3_zile": "ITP 3 zile",
   "1_zi": "ITP 1 zi",
   "expirat": "ITP Expirat",
   "confirmare_programare": "Confirmare programare",
