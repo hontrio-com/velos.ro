@@ -3,9 +3,10 @@
 import { useState, useTransition } from "react";
 import { format } from "date-fns";
 import { ro } from "date-fns/locale";
-import { Search, Shield, ChevronDown, Plus, Check, X, Ban, CheckCircle2 } from "lucide-react";
+import { Search, Shield, ChevronDown, Plus, Check, X, Ban, CheckCircle2, LogIn } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { updateUserPlan, addSmsCredit, setSmsCredit, toggleAdminRole, suspendUser, unsuspendUser } from "@/lib/actions/admin";
+import { startImpersonation } from "@/lib/actions/impersonation";
 
 const PLAN_COLORS: Record<string, string> = {
   trial: "#6B7280",
@@ -97,6 +98,23 @@ export function UtilizatoriClient({ users: initialUsers }: { users: User[] }) {
       }
       setEditState(null);
       setCreditInput("");
+    });
+  }
+
+  function handleImpersonate(user: User) {
+    if (
+      !window.confirm(
+        `Te conectezi în contul ${user.full_name ?? user.email}?\n\n` +
+          "Vei vedea platforma exact ca acest utilizator, timp de maximum 60 de minute. " +
+          "Acțiunea este înregistrată în audit log, iar SMS-urile trimise consumă creditul lui."
+      )
+    ) return;
+    startTransition(async () => {
+      try {
+        await startImpersonation(user.id);
+      } catch (e) {
+        showMsg(user.id, e instanceof Error ? e.message : "Eroare la conectare", false);
+      }
     });
   }
 
@@ -310,6 +328,17 @@ export function UtilizatoriClient({ users: initialUsers }: { users: User[] }) {
 
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5">
+                        {!user.is_admin && (
+                          <button
+                            onClick={() => handleImpersonate(user)}
+                            disabled={isPending}
+                            title="Conectare temporară în acest cont (60 min)"
+                            className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-md font-medium bg-[#B45309]/10 text-[#B45309] hover:bg-[#B45309]/20 transition-colors"
+                          >
+                            <LogIn className="h-3 w-3" />
+                            Conectare
+                          </button>
+                        )}
                         <button
                           onClick={() => handleToggleAdmin(user.id, user.is_admin)}
                           disabled={isPending}

@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { IMPERSONARE_COOKIE, parseImpersonareCookie } from "@/lib/impersonation-shared";
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -30,6 +31,12 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
+
+  // Impersonare expirată → ieșire forțată, restaurând sesiunea de admin.
+  const impersonare = parseImpersonareCookie(request.cookies.get(IMPERSONARE_COOKIE)?.value);
+  if (impersonare && Date.now() > impersonare.expires_at) {
+    return NextResponse.redirect(new URL("/api/admin/impersonare/stop", request.url));
+  }
 
   const protectedRoutes = [
     "/dashboard",

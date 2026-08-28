@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { TrialBanner } from "@/components/dashboard/trial-banner";
+import { ImpersonationBanner } from "@/components/layout/impersonation-banner";
+import { getImpersonare } from "@/lib/impersonation";
 import type { SubscriptionStatus } from "@/lib/stripe";
 
 // Routes that are accessible even when trial expired / subscription canceled
@@ -23,6 +25,16 @@ export default async function DashboardLayout({
   } = await supabase.auth.getUser();
 
   if (!user) redirect("/login");
+
+  const impersonare = await getImpersonare();
+  const impersonareBanner = impersonare ? (
+    <ImpersonationBanner
+      targetEmail={impersonare.target_email}
+      targetName={impersonare.target_name}
+      adminEmail={impersonare.admin_email}
+      expiresAt={impersonare.expires_at}
+    />
+  ) : null;
 
   const { data: profileRaw } = await (supabase as any)
     .from("profiles")
@@ -103,6 +115,7 @@ export default async function DashboardLayout({
         permisiuni={permisiuni}
         role="angajat"
       >
+        {impersonareBanner}
         {children}
       </DashboardShell>
     );
@@ -149,6 +162,7 @@ export default async function DashboardLayout({
       role="owner"
       isAdmin={profile?.is_admin === true}
     >
+      {impersonareBanner}
       <TrialBanner
         subscriptionStatus={effectiveStatus}
         trialEndsAt={trialEndsAt}

@@ -4,6 +4,8 @@ import { ShieldOff, Mail } from "lucide-react";
 import { format } from "date-fns";
 import { ro } from "date-fns/locale";
 import Image from "next/image";
+import { ImpersonationBanner } from "@/components/layout/impersonation-banner";
+import { getImpersonare } from "@/lib/impersonation";
 
 export default async function SuspendatPage() {
   const supabase = await createClient();
@@ -18,7 +20,18 @@ export default async function SuspendatPage() {
 
   if (!profile?.suspended_at) redirect("/dashboard");
 
+  const impersonare = await getImpersonare();
+
   return (
+    <>
+      {impersonare && (
+        <ImpersonationBanner
+          targetEmail={impersonare.target_email}
+          targetName={impersonare.target_name}
+          adminEmail={impersonare.admin_email}
+          expiresAt={impersonare.expires_at}
+        />
+      )}
     <div className="min-h-screen bg-[#F7F8FA] flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
@@ -62,5 +75,6 @@ export default async function SuspendatPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }
