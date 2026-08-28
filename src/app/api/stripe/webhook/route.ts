@@ -6,6 +6,23 @@ import { sendMetaEvent } from "@/lib/meta-conversions";
 
 export const dynamic = "force-dynamic";
 import { createServiceClient } from "@/lib/supabase/service";
+import { getPeriodStart, getPeriodEnd, getInvoiceSubscriptionId, getInvoicePriceId } from "@/lib/stripe-compat";
+
+/** Cauta profilul dupa metadata sau, in lipsa, dupa stripe_customer_id. */
+async function resolveProfileId(
+  supabase: ReturnType<typeof createServiceClient>,
+  metadataProfileId: string | undefined,
+  customerId: string | null
+): Promise<string | null> {
+  if (metadataProfileId) return metadataProfileId;
+  if (!customerId) return null;
+  const { data } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("stripe_customer_id" as never, customerId)
+    .maybeSingle();
+  return (data as any)?.id ?? null;
+}
 
 // ── SmartBill helpers ──────────────────────────────────────────────────────
 
@@ -65,35 +82,41 @@ async function emiteFacturaIdempotent(
     currency: string;
   }
 ) {
-  // Verifică dacă factura a fost deja emisă (idempotență)
-  const { data: existing } = await (supabase as any)
-    .from("facturi")
-    .select("id")
-    .eq("referinta", params.referinta)
-    .maybeSingle();
+  // Facturarea nu trebuie să blocheze niciodată activarea abonamentului:
+  // orice eroare SmartBill este logată, nu propagată.
+  try {
+    // Verifică dacă factura a fost deja emisă (idempotență)
+    const { data: existing } = await (supabase as any)
+      .from("facturi")
+      .select("id")
+      .eq("referinta", params.referinta)
+      .maybeSingle();
 
-  if (existing) return; // deja procesată
+    if (existing) return; // deja procesată
 
-  const result = await emiteFactura({
-    client: params.client,
-    productName: params.productName,
-    amount: params.amount,
-    currency: params.currency,
-  });
+    const result = await emiteFactura({
+      client: params.client,
+      productName: params.productName,
+      amount: params.amount,
+      currency: params.currency,
+    });
 
-  await (supabase as any).from("facturi").insert({
-    profile_id: params.profileId,
-    tip: params.tip,
-    referinta: params.referinta,
-    smartbill_serie: result.serie ?? null,
-    smartbill_numar: result.numar ?? null,
-    suma: params.amount,
-    moneda: params.currency.toUpperCase(),
-    eroare: result.success ? null : (result.error ?? "Eroare necunoscuta"),
-  });
+    await (supabase as any).from("facturi").insert({
+      profile_id: params.profileId,
+      tip: params.tip,
+      referinta: params.referinta,
+      smartbill_serie: result.serie ?? null,
+      smartbill_numar: result.numar ?? null,
+      suma: params.amount,
+      moneda: params.currency.toUpperCase(),
+      eroare: result.success ? null : (result.error ?? "Eroare necunoscuta"),
+    });
+  } catch (err) {
+    console.error("[stripe/webhook] Emitere factura esuata:", params.referinta, err);
+  }
 }
 
-export async function POST(request: NextRequest) {
+async function handleWebhook(request: NextRequest) {
   const body = await request.text();
   const sig = request.headers.get("stripe-signature");
 
@@ -175,16 +198,23 @@ export async function POST(request: NextRequest) {
     // Subscription checkout completed — subscription will be activated via
     // customer.subscription.updated, but we can also set it here immediately
     if (session.mode === "subscription") {
-      const profileId = session.metadata?.profile_id;
+      const profileId = await resolveProfileId(supabase, session.metadata?.profile_id, session.customer as string);
       const plan = session.metadata?.plan;
       const cycle = session.metadata?.cycle ?? "monthly";
       const subscriptionId = session.subscription as string;
       const customerId = session.customer as string;
 
       if (profileId && plan && subscriptionId) {
-        // Fetch subscription to get period dates
-        const sub = await stripe.subscriptions.retrieve(subscriptionId) as any;
-        const periodEnd = new Date(sub.current_period_end * 1000).toISOString();
+        // Datele de perioadă sunt utile, dar lipsa lor nu trebuie să blocheze
+        // activarea — abonamentul e plătit, contul trebuie deblocat oricum.
+        let sub: any = null;
+        try {
+          sub = await stripe.subscriptions.retrieve(subscriptionId);
+        } catch (err) {
+          console.error("[stripe/webhook] Nu s-a putut citi abonamentul", subscriptionId, err);
+        }
+        const periodEnd = getPeriodEnd(sub);
+        const periodStart = getPeriodStart(sub);
 
         await supabase
           .from("profiles")
@@ -194,7 +224,7 @@ export async function POST(request: NextRequest) {
             stripe_customer_id: customerId,
             stripe_subscription_id: subscriptionId,
             billing_cycle: cycle,
-            subscription_ends_at: periodEnd,
+            ...(periodEnd ? { subscription_ends_at: periodEnd } : {}),
             onboarding_completed: true,
           } as never)
           .eq("id", profileId);
@@ -208,7 +238,7 @@ export async function POST(request: NextRequest) {
             plan,
             billing_cycle: cycle,
             status: "active",
-            current_period_start: new Date(sub.current_period_start * 1000).toISOString(),
+            current_period_start: periodStart,
             current_period_end: periodEnd,
             updated_at: new Date().toISOString(),
           },
@@ -259,10 +289,13 @@ export async function POST(request: NextRequest) {
   // ── Subscription updated (upgrade/downgrade/renewal) ──────────────────
   if (event.type === "customer.subscription.updated") {
     const sub = event.data.object as any;
-    const profileId = sub.metadata?.profile_id;
-    if (!profileId) return NextResponse.json({ received: true });
+    const profileId = await resolveProfileId(supabase, sub.metadata?.profile_id, sub.customer as string);
+    if (!profileId) {
+      console.warn("[stripe/webhook] subscription.updated fara profil identificabil:", sub.id);
+      return NextResponse.json({ received: true });
+    }
 
-    const priceId = sub.items.data[0]?.price.id;
+    const priceId = sub.items?.data?.[0]?.price?.id;
     const planInfo = priceId ? getPlanFromPriceId(priceId) : null;
 
     const stripeStatus = sub.status; // active | past_due | canceled | trialing | incomplete | ...
@@ -273,7 +306,8 @@ export async function POST(request: NextRequest) {
       : stripeStatus === "trialing" ? "trial"
       : "active"; // incomplete, incomplete_expired, unpaid → treat as active (Stripe will follow up)
 
-    const periodEnd = new Date(sub.current_period_end * 1000).toISOString();
+    const periodEnd = getPeriodEnd(sub);
+    const periodStart = getPeriodStart(sub);
 
     await supabase
       .from("profiles")
@@ -281,7 +315,7 @@ export async function POST(request: NextRequest) {
         ...(planInfo ? { plan: planInfo.plan, billing_cycle: planInfo.cycle } : {}),
         subscription_status: subscriptionStatus,
         stripe_subscription_id: sub.id,
-        subscription_ends_at: periodEnd,
+        ...(periodEnd ? { subscription_ends_at: periodEnd } : {}),
       } as never)
       .eq("id", profileId);
 
@@ -293,7 +327,7 @@ export async function POST(request: NextRequest) {
         plan: planInfo?.plan ?? "basic",
         billing_cycle: planInfo?.cycle ?? "monthly",
         status: stripeStatus,
-        current_period_start: new Date(sub.current_period_start * 1000).toISOString(),
+        current_period_start: periodStart,
         current_period_end: periodEnd,
         updated_at: new Date().toISOString(),
       },
@@ -304,8 +338,13 @@ export async function POST(request: NextRequest) {
   // ── Subscription canceled/deleted ─────────────────────────────────────
   if (event.type === "customer.subscription.deleted") {
     const sub = event.data.object as any;
-    const profileId = sub.metadata?.profile_id;
-    if (!profileId) return NextResponse.json({ received: true });
+    const profileId = await resolveProfileId(supabase, sub.metadata?.profile_id, sub.customer as string);
+    if (!profileId) {
+      console.warn("[stripe/webhook] subscription.deleted fara profil identificabil:", sub.id);
+      return NextResponse.json({ received: true });
+    }
+
+    const periodEnd = getPeriodEnd(sub);
 
     await supabase
       .from("profiles")
@@ -313,7 +352,7 @@ export async function POST(request: NextRequest) {
         plan: "trial",
         subscription_status: "canceled",
         stripe_subscription_id: null,
-        subscription_ends_at: new Date(sub.current_period_end * 1000).toISOString(),
+        ...(periodEnd ? { subscription_ends_at: periodEnd } : {}),
       } as never)
       .eq("id", profileId);
 
@@ -339,20 +378,25 @@ export async function POST(request: NextRequest) {
 
     if (profile) {
       const profileId = (profile as any).id as string;
-      const subId = invoice.subscription as string;
+      const subId = getInvoiceSubscriptionId(invoice);
       if (subId) {
-        const sub = await stripe.subscriptions.retrieve(subId) as any;
-        const periodEnd = new Date(sub.current_period_end * 1000).toISOString();
+        let sub: any = null;
+        try {
+          sub = await stripe.subscriptions.retrieve(subId);
+        } catch (err) {
+          console.error("[stripe/webhook] Nu s-a putut citi abonamentul la reinnoire", subId, err);
+        }
+        const periodEnd = getPeriodEnd(sub);
         await supabase
           .from("profiles")
           .update({
             subscription_status: "active",
-            subscription_ends_at: periodEnd,
+            ...(periodEnd ? { subscription_ends_at: periodEnd } : {}),
           } as never)
           .eq("id", profileId);
 
         // Factură SmartBill pentru reînnoire
-        const priceId = invoice.lines?.data?.[0]?.price?.id as string | undefined;
+        const priceId = getInvoicePriceId(invoice);
         const planInfo = priceId ? getPlanFromPriceId(priceId) : null;
         const planConfig = planInfo ? (PLAN_CONFIG as any)[planInfo.plan] : null;
         const planName = planConfig?.name ?? planInfo?.plan ?? "unknown";
@@ -383,4 +427,22 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ received: true });
+}
+
+/**
+ * Wrapper cu logare: orice eroare netratata este scrisa in loguri impreuna cu
+ * tipul evenimentului, apoi propagata ca 500 pentru ca Stripe sa reincerce.
+ * Fara asta, o schimbare de API Stripe trece neobservata (abonamente neactivate,
+ * fara nicio urma in loguri).
+ */
+export async function POST(request: NextRequest) {
+  try {
+    return await handleWebhook(request);
+  } catch (err) {
+    console.error("[stripe/webhook] Eroare netratata:", err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Eroare interna" },
+      { status: 500 }
+    );
+  }
 }
