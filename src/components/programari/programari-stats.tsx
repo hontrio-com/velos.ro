@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { fetchAll } from "@/lib/fetch-all";
 import { CalendarDays, CheckCircle2, Clock, TrendingUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -16,11 +17,15 @@ export function ProgramariStats({ statieId, date }: ProgramariStatsProps) {
   const { data, isLoading } = useQuery({
     queryKey: ["programari-stats", statieId, date],
     queryFn: async () => {
-      const { data: rows } = await supabase
-        .from("programari")
-        .select("status")
-        .eq("statie_id", statieId)
-        .eq("data_programare", date);
+      const rows = await fetchAll<{ status: string }>((from, to) =>
+        supabase
+          .from("programari")
+          .select("status")
+          .eq("statie_id", statieId)
+          .eq("data_programare", date)
+          .order("id", { ascending: true })
+          .range(from, to)
+      );
 
       const all = rows ?? [];
       const total = all.filter((r) => r.status !== "anulat").length;

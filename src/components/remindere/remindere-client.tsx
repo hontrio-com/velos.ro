@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { fetchAll } from "@/lib/fetch-all";
 import { differenceInDays, parseISO } from "date-fns";
 import { Sparkles, Loader2, Clock, Bell, ShieldAlert, FileText } from "lucide-react";
 import { useState } from "react";
@@ -36,16 +37,20 @@ export function RemindereClient({ statieId }: RemindereClientProps) {
   const { data: allRemindere = [], isLoading: loadingAll } = useQuery({
     queryKey: ["remindere", statieId],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("remindere")
-        .select(`
-          id, tip, status, mesaj, programat_la, trimis_la, eroare,
-          client:clienti(id, nume, telefon, sms_optin),
-          vehicul:vehicule(nr_inmatriculare, expirare_itp, marca, model)
-        `)
-        .eq("statie_id", statieId)
-        .order("programat_la", { ascending: true });
-      return (data ?? []).map((r) => ({
+      const data = await fetchAll((from, to) =>
+        supabase
+          .from("remindere")
+          .select(`
+            id, tip, status, mesaj, programat_la, trimis_la, eroare,
+            client:clienti(id, nume, telefon, sms_optin),
+            vehicul:vehicule(nr_inmatriculare, expirare_itp, marca, model)
+          `)
+          .eq("statie_id", statieId)
+          .order("programat_la", { ascending: true })
+          .order("id", { ascending: true })
+          .range(from, to)
+      );
+      return data.map((r) => ({
         ...r,
         client: Array.isArray(r.client) ? r.client[0] : r.client,
         vehicul: Array.isArray(r.vehicul) ? r.vehicul[0] : r.vehicul,
@@ -67,17 +72,21 @@ export function RemindereClient({ statieId }: RemindereClientProps) {
         .eq("id", statieId)
         .single();
 
-      const { data: vehicule } = await supabase
-        .from("vehicule")
-        .select(`
-          id, nr_inmatriculare, expirare_itp, marca, model,
-          client:clienti(id, nume, telefon, sms_optin)
-        `)
-        .eq("statie_id", statieId)
-        .not("expirare_itp", "is", null)
-        .lte("expirare_itp", thirtyDaysLater.toISOString().split("T")[0]);
+      const vehicule = await fetchAll((from, to) =>
+        supabase
+          .from("vehicule")
+          .select(`
+            id, nr_inmatriculare, expirare_itp, marca, model,
+            client:clienti(id, nume, telefon, sms_optin)
+          `)
+          .eq("statie_id", statieId)
+          .not("expirare_itp", "is", null)
+          .lte("expirare_itp", thirtyDaysLater.toISOString().split("T")[0])
+          .order("id", { ascending: true })
+          .range(from, to)
+      );
 
-      return (vehicule ?? []).map((v) => ({
+      return vehicule.map((v) => ({
         ...v,
         expirare_itp: v.expirare_itp!,
         client: Array.isArray(v.client) ? v.client[0] : v.client,

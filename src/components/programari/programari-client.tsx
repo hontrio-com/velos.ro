@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { fetchAll } from "@/lib/fetch-all";
 import { format } from "date-fns";
 import { CalendarDays, Search, Plus, LayoutList, CalendarPlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -99,21 +100,22 @@ export function ProgramariClient({ statieId }: ProgramariClientProps) {
   const { data: programari, isLoading } = useQuery({
     queryKey: ["programari", statieId, selectedDate],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("programari")
-        .select(`
-          id, ora_start, ora_sfarsit, status, tip_serviciu, pret, observatii,
-          sms_confirmare_trimis, sms_reminder_trimis,
-          client:clienti(id, nume, prenume, telefon, email),
-          vehicul:vehicule(id, nr_inmatriculare, marca, model, expirare_itp),
-          rezultate_itp(rezultat)
-        `)
-        .eq("statie_id", statieId)
-        .eq("data_programare", selectedDate)
-        .order("ora_start");
-
-      if (error) throw error;
-      return data;
+      return fetchAll((from, to) =>
+        supabase
+          .from("programari")
+          .select(`
+            id, ora_start, ora_sfarsit, status, tip_serviciu, pret, observatii,
+            sms_confirmare_trimis, sms_reminder_trimis,
+            client:clienti(id, nume, prenume, telefon, email),
+            vehicul:vehicule(id, nr_inmatriculare, marca, model, expirare_itp),
+            rezultate_itp(rezultat)
+          `)
+          .eq("statie_id", statieId)
+          .eq("data_programare", selectedDate)
+          .order("ora_start")
+          .order("id", { ascending: true })
+          .range(from, to)
+      );
     },
     enabled: viewMode === "lista",
   });

@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { fetchAll } from "@/lib/fetch-all";
 import { format, parseISO, differenceInDays, subDays } from "date-fns";
 
 // ─── Helpers ──────────────────────────────────────────────────
@@ -232,19 +233,28 @@ export async function getRaportFinanciarAction(
   const supabase = await createClient();
   const prev = getPrevRange(from, to);
 
-  const [{ data: rows }, { data: prevRows }] = await Promise.all([
-    supabase
-      .from("programari")
-      .select("data_programare, status, pret, vehicule!inner(tip_vehicul)")
-      .eq("statie_id", statieId)
-      .gte("data_programare", from)
-      .lte("data_programare", to),
-    supabase
-      .from("programari")
-      .select("status, pret")
-      .eq("statie_id", statieId)
-      .gte("data_programare", prev.from)
-      .lte("data_programare", prev.to),
+  const [rows, prevRows] = await Promise.all([
+
+    fetchAll((pFrom, pTo) =>
+      supabase
+        .from("programari")
+        .select("data_programare, status, pret, vehicule!inner(tip_vehicul)")
+        .eq("statie_id", statieId)
+        .gte("data_programare", from)
+        .lte("data_programare", to)
+        .order("id", { ascending: true })
+        .range(pFrom, pTo)
+    ),
+    fetchAll((pFrom, pTo) =>
+      supabase
+        .from("programari")
+        .select("status, pret")
+        .eq("statie_id", statieId)
+        .gte("data_programare", prev.from)
+        .lte("data_programare", prev.to)
+        .order("id", { ascending: true })
+        .range(pFrom, pTo)
+    ),
   ]);
 
   if (!rows) return null;
@@ -308,19 +318,28 @@ export async function getRaportProgramariAction(
   const supabase = await createClient();
   const prev = getPrevRange(from, to);
 
-  const [{ data: rows }, { data: prevRows }] = await Promise.all([
-    supabase
-      .from("programari")
-      .select("data_programare, status, pret")
-      .eq("statie_id", statieId)
-      .gte("data_programare", from)
-      .lte("data_programare", to),
-    supabase
-      .from("programari")
-      .select("status")
-      .eq("statie_id", statieId)
-      .gte("data_programare", prev.from)
-      .lte("data_programare", prev.to),
+  const [rows, prevRows] = await Promise.all([
+
+    fetchAll((pFrom, pTo) =>
+      supabase
+        .from("programari")
+        .select("data_programare, status, pret")
+        .eq("statie_id", statieId)
+        .gte("data_programare", from)
+        .lte("data_programare", to)
+        .order("id", { ascending: true })
+        .range(pFrom, pTo)
+    ),
+    fetchAll((pFrom, pTo) =>
+      supabase
+        .from("programari")
+        .select("status")
+        .eq("statie_id", statieId)
+        .gte("data_programare", prev.from)
+        .lte("data_programare", prev.to)
+        .order("id", { ascending: true })
+        .range(pFrom, pTo)
+    ),
   ]);
 
   if (!rows) return null;
@@ -391,31 +410,51 @@ export async function getRaportItpAction(
   const prev = getPrevRange(from, to);
 
   // Get programare IDs in range
-  const { data: progIds } = await supabase
-    .from("programari")
-    .select("id, data_programare, clienti!inner(nume, prenume), vehicule!inner(nr_inmatriculare, marca, model)")
-    .eq("statie_id", statieId)
-    .gte("data_programare", from)
-    .lte("data_programare", to);
-
-  if (!progIds) return null;
+  const progIds = await fetchAll((pFrom, pTo) =>
+    supabase
+      .from("programari")
+      .select("id, data_programare, clienti!inner(nume, prenume), vehicule!inner(nr_inmatriculare, marca, model)")
+      .eq("statie_id", statieId)
+      .gte("data_programare", from)
+      .lte("data_programare", to)
+      .order("id", { ascending: true })
+      .range(pFrom, pTo)
+  );
 
   const ids = progIds.map((p) => p.id);
 
-  const [{ data: rezultate }, { data: prevProgIds }] = await Promise.all([
-    ids.length > 0
-      ? supabase
-          .from("rezultate_itp")
-          .select("id, rezultat, inspector, data_inspectie, programare_id")
-          .in("programare_id", ids)
-      : Promise.resolve({ data: [] }),
-    supabase
-      .from("programari")
-      .select("id")
-      .eq("statie_id", statieId)
-      .gte("data_programare", prev.from)
-      .lte("data_programare", prev.to),
+  // `in(...)` intra in URL, deci lista de id-uri se imparte in transe:
+  // cu mii de programari, un singur request ar depasi lungimea maxima a URL-ului.
+  const LOT_IDS = 300;
+  const loturiIds: string[][] = [];
+  for (let i = 0; i < ids.length; i += LOT_IDS) loturiIds.push(ids.slice(i, i + LOT_IDS));
+
+  const [rezultateLoturi, prevProgIds] = await Promise.all([
+    Promise.all(
+      loturiIds.map((lot) =>
+        fetchAll((pFrom, pTo) =>
+          supabase
+            .from("rezultate_itp")
+            .select("id, rezultat, inspector, data_inspectie, programare_id")
+            .in("programare_id", lot)
+            .order("id", { ascending: true })
+            .range(pFrom, pTo)
+        )
+      )
+    ),
+    fetchAll((pFrom, pTo) =>
+      supabase
+        .from("programari")
+        .select("id")
+        .eq("statie_id", statieId)
+        .gte("data_programare", prev.from)
+        .lte("data_programare", prev.to)
+        .order("id", { ascending: true })
+        .range(pFrom, pTo)
+    ),
   ]);
+
+  const rezultate = rezultateLoturi.flat();
 
   const r = rezultate ?? [];
 
@@ -506,21 +545,30 @@ export async function getRaportSmsAction(
   const fromTs = from + "T00:00:00";
   const toTs = to + "T23:59:59";
 
-  const [{ data: mesaje }, { data: remindereData }, quotaResult] = await Promise.all([
-    supabase
-      .from("mesaje")
-      .select("id, created_at, status, tip, telefon, mesaj, clienti(nume, prenume)")
-      .eq("statie_id", statieId)
-      .eq("directie", "trimis")
-      .gte("created_at", fromTs)
-      .lte("created_at", toTs),
-    supabase
-      .from("remindere")
-      .select("tip, status, trimis_la")
-      .eq("statie_id", statieId)
-      .not("trimis_la", "is", null)
-      .gte("trimis_la", fromTs)
-      .lte("trimis_la", toTs),
+  const [mesaje, remindereData, quotaResult] = await Promise.all([
+
+    fetchAll((pFrom, pTo) =>
+      supabase
+        .from("mesaje")
+        .select("id, created_at, status, tip, telefon, mesaj, clienti(nume, prenume)")
+        .eq("statie_id", statieId)
+        .eq("directie", "trimis")
+        .gte("created_at", fromTs)
+        .lte("created_at", toTs)
+        .order("id", { ascending: true })
+        .range(pFrom, pTo)
+    ),
+    fetchAll((pFrom, pTo) =>
+      supabase
+        .from("remindere")
+        .select("tip, status, trimis_la")
+        .eq("statie_id", statieId)
+        .not("trimis_la", "is", null)
+        .gte("trimis_la", fromTs)
+        .lte("trimis_la", toTs)
+        .order("id", { ascending: true })
+        .range(pFrom, pTo)
+    ),
     supabase.rpc("get_sms_quota", { p_profile_id: profileId }),
   ]);
 
@@ -659,23 +707,32 @@ export async function getRaportVehiculeAction(
   const supabase = await createClient();
   const prev = getPrevRange(from, to);
 
-  const [{ data: rows }, { data: prevRows }] = await Promise.all([
-    supabase
-      .from("programari")
-      .select(
-        `data_programare, status, vehicul_id,
-         vehicule!inner(id, nr_inmatriculare, marca, model, tip_vehicul, combustibil, an_fabricatie, expirare_itp, created_at, clienti(nume, prenume)),
-         rezultate_itp(rezultat, data_inspectie)`
-      )
-      .eq("statie_id", statieId)
-      .gte("data_programare", from)
-      .lte("data_programare", to),
-    supabase
-      .from("programari")
-      .select("vehicul_id, status")
-      .eq("statie_id", statieId)
-      .gte("data_programare", prev.from)
-      .lte("data_programare", prev.to),
+  const [rows, prevRows] = await Promise.all([
+
+    fetchAll((pFrom, pTo) =>
+      supabase
+        .from("programari")
+        .select(
+          `data_programare, status, vehicul_id,
+           vehicule!inner(id, nr_inmatriculare, marca, model, tip_vehicul, combustibil, an_fabricatie, expirare_itp, created_at, clienti(nume, prenume)),
+           rezultate_itp(rezultat, data_inspectie)`
+        )
+        .eq("statie_id", statieId)
+        .gte("data_programare", from)
+        .lte("data_programare", to)
+        .order("id", { ascending: true })
+        .range(pFrom, pTo)
+    ),
+    fetchAll((pFrom, pTo) =>
+      supabase
+        .from("programari")
+        .select("vehicul_id, status")
+        .eq("statie_id", statieId)
+        .gte("data_programare", prev.from)
+        .lte("data_programare", prev.to)
+        .order("id", { ascending: true })
+        .range(pFrom, pTo)
+    ),
   ]);
 
   if (!rows) return null;
@@ -819,20 +876,29 @@ export async function getRaportAngajatiAction(
 ): Promise<RaportAngajati | null> {
   const supabase = await createClient();
 
-  const [{ data: angajatiRaw }, { data: programariRaw }] = await Promise.all([
-    supabase
-      .from("angajati")
-      .select("id, nume, functie, email, telefon, activ")
-      .eq("statie_id", statieId)
-      .order("activ", { ascending: false })
-      .order("nume"),
-    supabase
-      .from("programari")
-      .select("angajat_id, status, pret")
-      .eq("statie_id", statieId)
-      .not("angajat_id", "is", null)
-      .gte("data_programare", from ?? "2000-01-01")
-      .lte("data_programare", to ?? "2099-12-31"),
+  const [angajatiRaw, programariRaw] = await Promise.all([
+
+    fetchAll((pFrom, pTo) =>
+      supabase
+        .from("angajati")
+        .select("id, nume, functie, email, telefon, activ")
+        .eq("statie_id", statieId)
+        .order("activ", { ascending: false })
+        .order("nume")
+        .order("id", { ascending: true })
+        .range(pFrom, pTo)
+    ),
+    fetchAll((pFrom, pTo) =>
+      supabase
+        .from("programari")
+        .select("angajat_id, status, pret")
+        .eq("statie_id", statieId)
+        .not("angajat_id", "is", null)
+        .gte("data_programare", from ?? "2000-01-01")
+        .lte("data_programare", to ?? "2099-12-31")
+        .order("id", { ascending: true })
+        .range(pFrom, pTo)
+    ),
   ]);
 
   if (!angajatiRaw) return null;

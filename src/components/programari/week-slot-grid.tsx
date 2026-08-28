@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { fetchAll } from "@/lib/fetch-all";
 import {
   format,
   addDays,
@@ -99,22 +100,26 @@ export function WeekSlotGrid({
   const { data, isLoading } = useQuery({
     queryKey: ["week-slots", statieId, rangeStart, rangeEnd, excludeProgramareId],
     queryFn: async () => {
-      const [{ data: statie }, { data: rawProgramari }] = await Promise.all([
+      const [{ data: statie }, rawProgramari] = await Promise.all([
         supabase
           .from("statii")
           .select("program_lucru, durata_slot_minute, nr_linii")
           .eq("id", statieId)
           .single(),
-        supabase
-          .from("programari")
-          .select("id, data_programare, ora_start, status")
-          .eq("statie_id", statieId)
-          .gte("data_programare", rangeStart)
-          .lte("data_programare", rangeEnd)
-          .neq("status", "anulat"),
+        fetchAll<{ id: string; data_programare: string; ora_start: string; status: string }>((pFrom, pTo) =>
+          supabase
+            .from("programari")
+            .select("id, data_programare, ora_start, status")
+            .eq("statie_id", statieId)
+            .gte("data_programare", rangeStart)
+            .lte("data_programare", rangeEnd)
+            .neq("status", "anulat")
+            .order("id", { ascending: true })
+            .range(pFrom, pTo)
+        ),
       ]);
 
-      const programari = (rawProgramari ?? []).filter(
+      const programari = rawProgramari.filter(
         (p) => p.id !== excludeProgramareId
       );
       return { statie, programari };

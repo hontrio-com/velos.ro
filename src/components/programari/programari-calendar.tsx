@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { fetchAll } from "@/lib/fetch-all";
 import {
   format,
   parse,
@@ -199,16 +200,19 @@ export function ProgramariCalendar({
   const { data: programari } = useQuery<ProgramareRow[]>({
     queryKey: ["programari-calendar", statieId, rangeStart, rangeEnd],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("programari")
-        .select(
-          "id, data_programare, ora_start, ora_sfarsit, status, tip_serviciu, client:clienti(id, nume, prenume), vehicul:vehicule(id, nr_inmatriculare), rezultate_itp(rezultat)"
-        )
-        .eq("statie_id", statieId)
-        .gte("data_programare", rangeStart)
-        .lte("data_programare", rangeEnd);
-      if (error) throw error;
-      return (data ?? []) as ProgramareRow[];
+      const data = await fetchAll((pFrom, pTo) =>
+        supabase
+          .from("programari")
+          .select(
+            "id, data_programare, ora_start, ora_sfarsit, status, tip_serviciu, client:clienti(id, nume, prenume), vehicul:vehicule(id, nr_inmatriculare), rezultate_itp(rezultat)"
+          )
+          .eq("statie_id", statieId)
+          .gte("data_programare", rangeStart)
+          .lte("data_programare", rangeEnd)
+          .order("id", { ascending: true })
+          .range(pFrom, pTo)
+      );
+      return data as unknown as ProgramareRow[];
     },
   });
 

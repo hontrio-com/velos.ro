@@ -1,6 +1,7 @@
 "use server";
 import { sendBookingOnlineEmail, sendConfirmareProgramareEmail } from "@/lib/actions/email";
 import { createServiceClient } from "@/lib/supabase/service";
+import { fetchAll } from "@/lib/fetch-all";
 import { parseISO, getDay, format } from "date-fns";
 import { ro } from "date-fns/locale";
 import { capitalizeName, capitalizeNameOrNull } from "@/lib/format-name";
@@ -34,19 +35,23 @@ export async function getBookingAvailabilityAction(
   try {
     const supabase = createServiceClient();
 
-    const [{ data: statie }, { data: rawProgramari }] = await Promise.all([
+    const [{ data: statie }, rawProgramari] = await Promise.all([
       supabase
         .from("statii")
         .select("program_lucru, durata_slot_minute, nr_linii")
         .eq("id", statieId)
         .eq("activa", true)
         .single(),
-      supabase
-        .from("programari")
-        .select("ora_start")
-        .eq("statie_id", statieId)
-        .eq("data_programare", date)
-        .neq("status", "anulat"),
+      fetchAll<{ ora_start: string }>((pFrom, pTo) =>
+        supabase
+          .from("programari")
+          .select("ora_start")
+          .eq("statie_id", statieId)
+          .eq("data_programare", date)
+          .neq("status", "anulat")
+          .order("id", { ascending: true })
+          .range(pFrom, pTo)
+      ),
     ]);
 
     if (!statie) return { slots: [], inchis: true, error: "Stația nu a fost găsită" };
@@ -77,7 +82,7 @@ export async function getBookingAvailabilityAction(
     }
 
     const counts: Record<string, number> = {};
-    for (const p of rawProgramari ?? []) {
+    for (const p of rawProgramari) {
       const key = p.ora_start.slice(0, 5);
       counts[key] = (counts[key] ?? 0) + 1;
     }

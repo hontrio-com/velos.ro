@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { fetchAll } from "@/lib/fetch-all";
 import { parseISO, getDay } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -36,21 +37,25 @@ export function SlotPicker({
   const { data, isLoading } = useQuery({
     queryKey: ["slots", statieId, date, excludeProgramareId],
     queryFn: async () => {
-      const [{ data: statie }, { data: rawProgramari }] = await Promise.all([
+      const [{ data: statie }, rawProgramari] = await Promise.all([
         supabase
           .from("statii")
           .select("program_lucru, durata_slot_minute, nr_linii")
           .eq("id", statieId)
           .single(),
-        supabase
-          .from("programari")
-          .select("id, ora_start, status")
-          .eq("statie_id", statieId)
-          .eq("data_programare", date)
-          .neq("status", "anulat"),
+        fetchAll<{ id: string; ora_start: string; status: string }>((pFrom, pTo) =>
+          supabase
+            .from("programari")
+            .select("id, ora_start, status")
+            .eq("statie_id", statieId)
+            .eq("data_programare", date)
+            .neq("status", "anulat")
+            .order("id", { ascending: true })
+            .range(pFrom, pTo)
+        ),
       ]);
 
-      const programari = (rawProgramari ?? []).filter(
+      const programari = rawProgramari.filter(
         (p) => p.id !== excludeProgramareId
       );
 

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { ClientiTable } from "@/components/clienti/clienti-table";
 import type { ClientRow } from "@/components/clienti/clienti-columns";
 import { FadeUp } from "@/components/layout/fade-up";
+import { fetchAll } from "@/lib/fetch-all";
 
 export const metadata: Metadata = { title: "Clienți" };
 
@@ -18,17 +19,21 @@ export default async function ClientiPage() {
   if (!statie) redirect("/dashboard");
 
   // Fetch clients with aggregate data
-  const { data: clientiRaw } = await supabase
-    .from("clienti")
-    .select(`
-      id, statie_id, nume, prenume, telefon, email, sms_optin, created_at,
-      vehicule!client_id(id),
-      programari!client_id(id, status, pret, data_programare, statie_id)
-    `)
-    .eq("statie_id", statie.id)
-    .order("created_at", { ascending: false });
+  const clientiRaw = await fetchAll((from, to) =>
+    supabase
+      .from("clienti")
+      .select(`
+        id, statie_id, nume, prenume, telefon, email, sms_optin, created_at,
+        vehicule!client_id(id),
+        programari!client_id(id, status, pret, data_programare, statie_id)
+      `)
+      .eq("statie_id", statie.id)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: true })
+      .range(from, to)
+  );
 
-  const clienti: ClientRow[] = (clientiRaw ?? []).map((c) => {
+  const clienti: ClientRow[] = clientiRaw.map((c) => {
     const vehicule = Array.isArray(c.vehicule) ? c.vehicule : [];
     const programari = (Array.isArray(c.programari) ? c.programari : []).filter(
       (p) => p.statie_id === statie.id

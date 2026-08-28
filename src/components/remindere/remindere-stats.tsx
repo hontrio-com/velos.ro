@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { fetchAll } from "@/lib/fetch-all";
 import { Bell, Clock, CheckCircle2, AlertCircle, MessageSquare } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
@@ -25,10 +26,14 @@ export function RemindereStats({ statieId }: RemindereStatsProps) {
   const { data, isLoading } = useQuery({
     queryKey: ["remindere-stats", statieId],
     queryFn: async () => {
-      const { data: rows } = await supabase
-        .from("remindere")
-        .select("status")
-        .eq("statie_id", statieId);
+      const rows = await fetchAll<{ status: string }>((from, to) =>
+        supabase
+          .from("remindere")
+          .select("status")
+          .eq("statie_id", statieId)
+          .order("id", { ascending: true })
+          .range(from, to)
+      );
 
       const all = rows ?? [];
       return {

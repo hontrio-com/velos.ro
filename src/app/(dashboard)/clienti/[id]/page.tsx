@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { fetchAll } from "@/lib/fetch-all";
 import { getStatieForUser } from "@/lib/get-user-statie";
 import { ClientProfilHeader } from "@/components/clienti/profil/client-profil-header";
 import { ClientProfilTabs } from "@/components/clienti/profil/client-profil-tabs";
@@ -46,36 +47,48 @@ export default async function ClientProfilPage({ params }: Props) {
   if (!client) notFound();
 
   // Vehicule
-  const { data: vehiculeRaw } = await supabase
-    .from("vehicule")
-    .select(
-      "id, nr_inmatriculare, marca, model, an_fabricatie, culoare, tip_vehicul, combustibil, expirare_itp, expirare_rca, expirare_rovinieta, serie_sasiu, observatii, created_at"
-    )
-    .eq("client_id", client.id)
-    .eq("statie_id", statie.id)
-    .order("created_at", { ascending: false });
+  const vehiculeRaw = await fetchAll((pFrom, pTo) =>
+    supabase
+      .from("vehicule")
+      .select(
+        "id, nr_inmatriculare, marca, model, an_fabricatie, culoare, tip_vehicul, combustibil, expirare_itp, expirare_rca, expirare_rovinieta, serie_sasiu, observatii, created_at"
+      )
+      .eq("client_id", client.id)
+      .eq("statie_id", statie.id)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: true })
+      .range(pFrom, pTo)
+  );
 
   // Programari with vehicul
-  const { data: programariRaw } = await supabase
-    .from("programari")
-    .select(
-      "id, data_programare, ora_start, status, tip_serviciu, pret, observatii, vehicul:vehicule(id, nr_inmatriculare, marca, model)"
-    )
-    .eq("client_id", client.id)
-    .eq("statie_id", statie.id)
-    .order("data_programare", { ascending: false });
+  const programariRaw = await fetchAll((pFrom, pTo) =>
+    supabase
+      .from("programari")
+      .select(
+        "id, data_programare, ora_start, status, tip_serviciu, pret, observatii, vehicul:vehicule(id, nr_inmatriculare, marca, model)"
+      )
+      .eq("client_id", client.id)
+      .eq("statie_id", statie.id)
+      .order("data_programare", { ascending: false })
+      .order("id", { ascending: true })
+      .range(pFrom, pTo)
+  );
 
   // Mesaje
-  const { data: mesajeRaw } = await supabase
-    .from("mesaje")
-    .select("id, mesaj, tip, directie, status, created_at, telefon")
-    .eq("client_id", client.id)
-    .eq("statie_id", statie.id)
-    .order("created_at", { ascending: false });
+  const mesajeRaw = await fetchAll((pFrom, pTo) =>
+    supabase
+      .from("mesaje")
+      .select("id, mesaj, tip, directie, status, created_at, telefon")
+      .eq("client_id", client.id)
+      .eq("statie_id", statie.id)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: true })
+      .range(pFrom, pTo)
+  );
 
   // Normalize
-  const vehicule = vehiculeRaw ?? [];
-  const programari = (programariRaw ?? []).map((p) => ({
+  const vehicule = vehiculeRaw;
+  const programari = programariRaw.map((p) => ({
     ...p,
     vehicul: Array.isArray(p.vehicul) ? (p.vehicul[0] ?? null) : p.vehicul,
   }));

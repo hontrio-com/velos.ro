@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { fetchAll } from "@/lib/fetch-all";
 import {
   Car,
   Search,
@@ -102,18 +103,21 @@ export function VehiculeClient({ statieId }: VehiculeClientProps) {
   const { data: vehicule, isLoading } = useQuery({
     queryKey: ["vehicule-list", statieId],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("vehicule")
-        .select(
+      return fetchAll((from, to) =>
+        supabase
+          .from("vehicule")
+          .select(
+            `
+            id, nr_inmatriculare, marca, model, an_fabricatie,
+            culoare, expirare_itp, created_at,
+            client:clienti(id, nume, prenume, telefon)
           `
-          id, nr_inmatriculare, marca, model, an_fabricatie,
-          culoare, expirare_itp, created_at,
-          client:clienti(id, nume, prenume, telefon)
-        `
-        )
-        .eq("statie_id", statieId)
-        .order("created_at", { ascending: false });
-      return data ?? [];
+          )
+          .eq("statie_id", statieId)
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: true })
+          .range(from, to)
+      );
     },
   });
 

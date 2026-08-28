@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { fetchAll } from "@/lib/fetch-all";
 import { differenceInDays, parseISO } from "date-fns";
 import { Car, AlertTriangle, Clock, ShieldCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,10 +19,14 @@ export function VehiculeStats({ statieId }: VehiculeStatsProps) {
   const { data, isLoading } = useQuery({
     queryKey: ["vehicule-stats", statieId],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("vehicule")
-        .select("expirare_itp")
-        .eq("statie_id", statieId);
+      const data = await fetchAll<{ expirare_itp: string | null }>((from, to) =>
+        supabase
+          .from("vehicule")
+          .select("expirare_itp")
+          .eq("statie_id", statieId)
+          .order("id", { ascending: true })
+          .range(from, to)
+      );
 
       const today = new Date();
       let expirati = 0;

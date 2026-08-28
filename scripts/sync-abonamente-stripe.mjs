@@ -79,10 +79,18 @@ for (const p of profiles) {
     continue;
   }
 
-  const priceId = activ.items?.data?.[0]?.price?.id;
+  // Planul se deduce, in ordine: price id configurat -> metadata abonamentului
+  // (pusa la checkout) -> suma+intervalul pretului.
+  const item = activ.items?.data?.[0];
+  const priceId = item?.price?.id;
   const info = PRICE_MAP[priceId];
-  const plan = info?.plan ?? p.plan;
-  const cycle = info?.cycle ?? p.billing_cycle ?? 'monthly';
+
+  const SUME = { 149: 'basic', 119: 'basic', 249: 'pro', 199: 'pro', 449: 'enterprise', 359: 'enterprise' };
+  const dinSuma = SUME[(item?.price?.unit_amount ?? 0) / 100];
+
+  const plan = info?.plan ?? activ.metadata?.plan ?? dinSuma ?? p.plan;
+  const cycle = info?.cycle ?? activ.metadata?.cycle
+    ?? (item?.price?.recurring?.interval === 'year' ? 'yearly' : 'monthly');
   const status = activ.status === 'past_due' ? 'past_due' : 'active';
   const ends = periodEnd(activ);
 

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { fetchAll } from "@/lib/fetch-all";
 import { Users, Search, Phone, Mail, Car } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,15 +23,18 @@ export function ClientiClient({ statieId }: ClientiClientProps) {
   const { data: clienti, isLoading } = useQuery({
     queryKey: ["clienti-list", statieId],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("clienti")
-        .select(`
-          id, nume, prenume, telefon, email, created_at,
-          vehicule(id, nr_inmatriculare, expirare_itp)
-        `)
-        .eq("statie_id", statieId)
-        .order("created_at", { ascending: false });
-      return data ?? [];
+      return fetchAll((from, to) =>
+        supabase
+          .from("clienti")
+          .select(`
+            id, nume, prenume, telefon, email, created_at,
+            vehicule(id, nr_inmatriculare, expirare_itp)
+          `)
+          .eq("statie_id", statieId)
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: true })
+          .range(from, to)
+      );
     },
   });
 
