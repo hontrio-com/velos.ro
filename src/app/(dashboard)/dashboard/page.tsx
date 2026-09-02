@@ -12,6 +12,7 @@ import {
 import { ro } from "date-fns/locale";
 import { KpiCards } from "@/components/dashboard/kpi-cards";
 import { ProgramariAzi } from "@/components/dashboard/programari-azi";
+import { CalendarProgramari } from "@/components/dashboard/calendar-programari";
 import { ExpirareCurande } from "@/components/dashboard/expirare-curande";
 import { GraficLunar, type ZiData } from "@/components/dashboard/grafic-lunar";
 import { ActivitateRecenta } from "@/components/dashboard/activitate-recenta";
@@ -309,6 +310,11 @@ export default async function DashboardPage() {
         trendVenit={trendVenit}
         lunaCurenta={lunaLabelCap}
       />
+
+      {/* Calendar programări — vezi programările existente și fă altele noi */}
+      <FadeUp delay={0.26}>
+        <CalendarProgramari statieId={statie.id} />
+      </FadeUp>
 
       {/* Programări azi + ITP atenție */}
       <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
