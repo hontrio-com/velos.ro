@@ -102,7 +102,7 @@ export function ProfilForm({ initialData }: ProfilFormProps) {
             <Input
               id="phone"
               {...register("phone")}
-              placeholder="07XX XXX XXX"
+              placeholder="0722 123 456 sau +39 333 1234567"
               className="pl-9"
             />
           </div>

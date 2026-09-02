@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { esteTelefonValid } from "@/lib/phone";
 import { format, addDays, parseISO, isBefore, startOfDay, getDay } from "date-fns";
 import { ro } from "date-fns/locale";
 import {
@@ -149,7 +150,7 @@ export function BookingMockup() {
     return (
       form.prenume.trim().length >= 2 &&
       form.nume.trim().length >= 2 &&
-      /^07[0-9]{8}$/.test(form.telefon.replace(/\s/g, "")) &&
+      esteTelefonValid(form.telefon) &&
       form.nrInmatriculare.trim().length >= 2
     );
   }
@@ -363,7 +364,7 @@ export function BookingMockup() {
                         <Field label="Prenume *" value={form.prenume} onChange={v => setField("prenume", v)} placeholder="Ion" />
                         <Field label="Nume *"    value={form.nume}    onChange={v => setField("nume", v)}    placeholder="Popescu" />
                       </div>
-                      <Field label="Telefon *"        value={form.telefon}  onChange={v => setField("telefon", v)}  placeholder="07xx xxx xxx" type="tel" hint="Format: 07xx xxx xxx" />
+                      <Field label="Telefon *"        value={form.telefon}  onChange={v => setField("telefon", v)}  placeholder="0722 123 456 sau +39 333 1234567" type="tel" hint="Format: 07xx xxx xxx" />
                       <Field label="Email (opțional)" value={form.email}    onChange={v => setField("email", v)}    placeholder="exemplu@email.ro" type="email" />
                     </div>
                     <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 space-y-4">

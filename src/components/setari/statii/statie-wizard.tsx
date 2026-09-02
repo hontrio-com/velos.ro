@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { esteTelefonValid } from "@/lib/phone";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, Loader2, Check, AlertCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -70,7 +71,7 @@ const pas1Schema = z.object({
     .regex(/^[a-z0-9-]+$/, "Doar litere mici, cifre și cratime"),
   telefon: z
     .string()
-    .regex(/^(\+40|0)[0-9]{9}$/, "Format: 0712345678")
+    .refine(esteTelefonValid, "Număr invalid (ex: 0712345678 sau +39 333 1234567)")
     .or(z.literal(""))
     .optional(),
   email: z.string().email("Email invalid").or(z.literal("")).optional(),
@@ -435,7 +436,7 @@ export function StatieWizard() {
                     <Label>Telefon</Label>
                     <Input
                       {...pas1.register("telefon")}
-                      placeholder="0712 345 678"
+                      placeholder="0722 123 456 sau +39 333 1234567"
                     />
                     {pas1.formState.errors.telefon && (
                       <p className="text-xs text-destructive flex items-center gap-1">

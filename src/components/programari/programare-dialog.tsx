@@ -438,7 +438,7 @@ export function ProgramareDialog({
                       <Input
                         value={newTelefon}
                         onChange={(e) => setNewTelefon(e.target.value)}
-                        placeholder="0712 345 678"
+                        placeholder="0722 123 456 sau +39 333 1234567"
                       />
                     </div>
                   </div>

@@ -355,7 +355,7 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Telefon <span className="text-destructive">*</span></Label>
-              <Input {...baseForm.register("telefon")} placeholder="0712 345 678" />
+              <Input {...baseForm.register("telefon")} placeholder="0722 123 456 sau +39 333 1234567" />
               {baseForm.formState.errors.telefon && (
                 <p className="text-xs text-destructive flex items-center gap-1">
                   <AlertTriangle className="h-3 w-3 shrink-0" />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { esteTelefonValid } from "@/lib/phone";
 import { format, addDays, parseISO, isBefore, startOfDay, getDay } from "date-fns";
 import { ro } from "date-fns/locale";
 import {
@@ -137,7 +138,7 @@ export function BookingForm({ statieId, programLucru }: BookingFormProps) {
     return (
       form.nume.trim().length >= 2 &&
       form.prenume.trim().length >= 2 &&
-      /^07[0-9]{8}$/.test(form.telefon.replace(/\s/g, "")) &&
+      esteTelefonValid(form.telefon) &&
       form.nrInmatriculare.trim().length >= 2
     );
   }
@@ -371,7 +372,7 @@ export function BookingForm({ statieId, programLucru }: BookingFormProps) {
               label="Telefon *"
               value={form.telefon}
               onChange={(v) => setField("telefon", v)}
-              placeholder="07xx xxx xxx"
+              placeholder="0722 123 456 sau +39 333 1234567"
               type="tel"
               hint="Format: 07xx xxx xxx"
             />

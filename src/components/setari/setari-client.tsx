@@ -151,7 +151,7 @@ export function SetariClient({ profile, statii, userId }: SetariClientProps) {
                 <div className="space-y-1.5">
                   <Label>Telefon</Label>
                   <Input
-                    placeholder="0712345678"
+                    placeholder="0722 123 456 sau +39 333 1234567"
                     {...profileForm.register("phone")}
                   />
                 </div>
@@ -266,7 +266,7 @@ export function SetariClient({ profile, statii, userId }: SetariClientProps) {
                       <div className="space-y-1.5">
                         <Label>Telefon</Label>
                         <Input
-                          placeholder="0712345678"
+                          placeholder="0722 123 456 sau +39 333 1234567"
                           {...statieForm.register("telefon")}
                         />
                       </div>

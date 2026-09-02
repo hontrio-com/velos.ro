@@ -122,7 +122,7 @@ export function QuickAddVehiculModal({ statieId, prefillPlate = "", onClose, onS
               <Input
                 value={telefon}
                 onChange={(e) => setTelefon(e.target.value)}
-                placeholder="07xx xxx xxx"
+                placeholder="0722 123 456 sau +39 333 1234567"
                 type="tel"
               />
             </div>

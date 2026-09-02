@@ -2,6 +2,7 @@
 // Cheia SMSO este în .env și nu ajunge niciodată în browser.
 
 import { createServiceClient } from "@/lib/supabase/service";
+import { telefonE164 } from "@/lib/phone";
 
 export {
   formatPhoneForSmso,
@@ -68,8 +69,13 @@ export async function sendSms(params: SendSmsParams): Promise<SmsResult> {
 
   // ── Trimitere SMSO ─────────────────────────────────────────────
   try {
+    const destinatar = telefonE164(telefon);
+    if (!destinatar) {
+      throw new Error(`Numar de telefon invalid: ${telefon}`);
+    }
+
     const payload: Record<string, string> = {
-      to: formatPhoneRaw(telefon),
+      to: destinatar,
       body: mesaj,
     };
     const sender = process.env.SMSO_SENDER_NAME;
@@ -144,12 +150,7 @@ export async function getProfileIdForStatie(statieId: string): Promise<string | 
   return data?.owner_id ?? null;
 }
 
-function formatPhoneRaw(telefon: string): string {
-  const clean = telefon.replace(/\D/g, "");
-  if (clean.startsWith("40")) return "+" + clean;
-  if (clean.startsWith("0")) return "+4" + clean;
-  return "+4" + clean;
-}
+// Formatarea numerelor traieste in @/lib/phone (suporta orice tara, nu doar RO).
 
 // Legacy — pentru backward compat
 export async function sendSmsConfirmare(

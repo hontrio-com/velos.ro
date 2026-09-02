@@ -137,7 +137,7 @@ export function ClientDrawer({ open, onClose, onSuccess, initial }: ClientDrawer
                     Telefon <span className="text-red-500">*</span>
                   </Label>
                   <Input
-                    placeholder="0712345678"
+                    placeholder="0722 123 456 sau +39 333 1234567"
                     type="tel"
                     className="border-[#E5E7EB]"
                     {...register("telefon")}

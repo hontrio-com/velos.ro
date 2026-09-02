@@ -1,11 +1,13 @@
 import { z } from "zod";
+import { esteTelefonValid, normalizeazaTelefon } from "@/lib/phone";
 
 export const clientSchema = z.object({
   nume: z.string().min(3, "Minim 3 caractere").max(100),
   prenume: z.string().max(100).optional().or(z.literal("")),
   telefon: z
     .string()
-    .regex(/^(\+40|0)[0-9]{9}$/, "Format: 07XX XXX XXX sau +40XXXXXXXXX"),
+    .refine(esteTelefonValid, "Număr invalid. Pentru alte țări folosiți prefixul, ex. +39 333 1234567")
+    .transform((v) => normalizeazaTelefon(v) ?? v),
   email: z
     .string()
     .email("Email invalid")

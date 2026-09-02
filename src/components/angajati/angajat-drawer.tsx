@@ -360,7 +360,7 @@ export function AngajatDrawer({
                   type="tel"
                   value={form.telefon}
                   onChange={(e) => setField("telefon", e.target.value)}
-                  placeholder="07xx xxx xxx"
+                  placeholder="0722 123 456 sau +39 333 1234567"
                   autoComplete="off"
                   className="w-full text-sm rounded-lg border border-[#E5E7EB] px-3 py-2 outline-none focus:border-[#1877F2] focus:ring-2 focus:ring-[#1877F2]/20 transition-all"
                 />

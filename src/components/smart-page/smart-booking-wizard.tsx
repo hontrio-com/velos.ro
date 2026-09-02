@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { esteTelefonValid } from "@/lib/phone";
 import { format, addDays, parseISO, isBefore, startOfDay, getDay } from "date-fns";
 import { ro } from "date-fns/locale";
 import {
@@ -100,7 +101,7 @@ export function SmartBookingWizard({ statieId, programLucru, accent }: Props) {
   function step2Valid() {
     return (
       form.nume.trim().length >= 2 && form.prenume.trim().length >= 2 &&
-      /^07[0-9]{8}$/.test(form.telefon.replace(/\s/g, "")) &&
+      esteTelefonValid(form.telefon) &&
       form.nrInmatriculare.trim().length >= 2
     );
   }
@@ -312,7 +313,7 @@ export function SmartBookingWizard({ statieId, programLucru, accent }: Props) {
               <Field label="Prenume *" value={form.prenume} onChange={(v) => setField("prenume", v)} placeholder="Ion" accent={accent} />
               <Field label="Nume *" value={form.nume} onChange={(v) => setField("nume", v)} placeholder="Popescu" accent={accent} />
             </div>
-            <Field label="Telefon *" value={form.telefon} onChange={(v) => setField("telefon", v)} placeholder="07xx xxx xxx" type="tel" hint="Format: 07xx xxx xxx" accent={accent} />
+            <Field label="Telefon *" value={form.telefon} onChange={(v) => setField("telefon", v)} placeholder="0722 123 456 sau +39 333 1234567" type="tel" hint="Format: 07xx xxx xxx" accent={accent} />
             <Field label="Email (opțional)" value={form.email} onChange={(v) => setField("email", v)} placeholder="exemplu@email.ro" type="email" accent={accent} />
           </div>
           <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 space-y-4">

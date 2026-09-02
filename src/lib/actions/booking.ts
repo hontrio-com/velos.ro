@@ -1,6 +1,7 @@
 "use server";
 import { sendBookingOnlineEmail, sendConfirmareProgramareEmail } from "@/lib/actions/email";
 import { createServiceClient } from "@/lib/supabase/service";
+import { normalizeazaTelefon } from "@/lib/phone";
 import { fetchAll } from "@/lib/fetch-all";
 import { parseISO, getDay, format } from "date-fns";
 import { ro } from "date-fns/locale";
@@ -142,7 +143,10 @@ export async function createBookingAction(
     }
 
     // Find or create client by phone under station owner
-    const normalizedPhone = input.telefon.replace(/\s/g, "");
+    const normalizedPhone = normalizeazaTelefon(input.telefon);
+    if (!normalizedPhone) {
+      return { success: false, error: "Numărul de telefon nu este valid" };
+    }
     let clientId: string;
 
     const { data: existingClient } = await supabase

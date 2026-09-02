@@ -1,6 +1,7 @@
 "use server";
 
 import { createServiceClient } from "@/lib/supabase/service";
+import { telefonE164 } from "@/lib/phone";
 import { revalidatePath } from "next/cache";
 
 export type StatusCrm =
@@ -78,7 +79,11 @@ export async function sendProspectareBulkSms(
       continue;
     }
 
-    const telefon = formatPhone(statie.telefon);
+    const telefon = telefonE164(statie.telefon);
+    if (!telefon) {
+      results.push({ statieRarId: statie.id, telefon: statie.telefon, success: false, error: "Numar invalid" });
+      continue;
+    }
 
     try {
       const payload: Record<string, string> = { to: telefon, body: mesaj };
@@ -143,9 +148,4 @@ export async function sendProspectareBulkSms(
   return { trimise, erori, results };
 }
 
-function formatPhone(telefon: string): string {
-  const clean = telefon.replace(/\D/g, "");
-  if (clean.startsWith("40")) return "+" + clean;
-  if (clean.startsWith("0")) return "+4" + clean;
-  return "+4" + clean;
-}
+// Formatarea numerelor traieste in @/lib/phone.
