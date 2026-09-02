@@ -6,6 +6,7 @@ import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { TrialBanner } from "@/components/dashboard/trial-banner";
 import { ImpersonationBanner } from "@/components/layout/impersonation-banner";
 import { getImpersonare } from "@/lib/impersonation";
+import { getStatieForUser } from "@/lib/get-user-statie";
 import type { SubscriptionStatus } from "@/lib/stripe";
 
 // Routes that are accessible even when trial expired / subscription canceled
@@ -129,6 +130,10 @@ export default async function DashboardLayout({
     .eq("owner_id", user.id)
     .order("created_at");
 
+  // Statia efectiv folosita de paginile randate pe server — comutatorul trebuie
+  // sa arate exact statia ale carei date sunt afisate.
+  const statieActiva = await getStatieForUser();
+
   // Redirect to onboarding if not completed yet
   if (!profile?.onboarding_completed) redirect("/onboarding");
 
@@ -158,6 +163,7 @@ export default async function DashboardLayout({
       userEmail={user.email}
       userName={profile?.full_name ?? undefined}
       statii={statii ?? []}
+      statieActivaId={statieActiva?.id ?? null}
       permisiuni={null}
       role="owner"
       isAdmin={profile?.is_admin === true}

@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
@@ -24,7 +24,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useAppStore } from "@/stores/app-store";
+import { selecteazaStatieAction } from "@/lib/actions/statii";
 import { SmsQuotaWidget } from "./sms-quota-widget";
 
 interface Statie {
@@ -110,11 +110,13 @@ function StatieSwitcher({
   selectedId,
   onSelect,
   isEmployee,
+  schimbaInCurs = false,
 }: {
   statii: Statie[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   isEmployee: boolean;
+  schimbaInCurs?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const current =
@@ -165,11 +167,12 @@ function StatieSwitcher({
           <button
             key={s.id}
             type="button"
+            disabled={schimbaInCurs}
             onClick={() => {
               onSelect(s.id);
               setOpen(false);
             }}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted transition-colors text-left"
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted transition-colors text-left disabled:opacity-50"
           >
             <span
               className={cn(
@@ -202,6 +205,7 @@ function StatieSwitcher({
 
 interface SidebarProps {
   statii?: Statie[];
+  statieActivaId?: string | null;
   isOpen?: boolean;
   onClose?: () => void;
   permisiuni?: Record<string, boolean> | null;
@@ -211,6 +215,7 @@ interface SidebarProps {
 
 export function Sidebar({
   statii = [],
+  statieActivaId = null,
   isOpen = false,
   onClose,
   permisiuni = null,
@@ -218,8 +223,19 @@ export function Sidebar({
   isAdmin = false,
 }: SidebarProps) {
   const pathname = usePathname();
-  const { statieActivaId, setStatieActivaId } = useAppStore();
+  const router = useRouter();
+  const [schimbaStatie, startSchimbareStatie] = useTransition();
   const isEmployee = role === "angajat";
+
+  // Selectia trebuie sa ajunga pe server (cookie), altfel paginile randate
+  // pe server continua sa arate prima statie.
+  function onSelectStatie(id: string) {
+    if (id === statieActivaId) return;
+    startSchimbareStatie(async () => {
+      await selecteazaStatieAction(id);
+      router.refresh();
+    });
+  }
 
   function isItemVisible(item: NavItem): boolean {
     if (item.ownerOnly) return !isEmployee;
@@ -281,7 +297,8 @@ export function Sidebar({
             <StatieSwitcher
               statii={statii}
               selectedId={statieActivaId}
-              onSelect={setStatieActivaId}
+              onSelect={onSelectStatie}
+              schimbaInCurs={schimbaStatie}
               isEmployee={isEmployee}
             />
           </div>

@@ -15,6 +15,7 @@ interface DashboardShellProps {
   userEmail?: string;
   userName?: string;
   statii?: Statie[];
+  statieActivaId?: string | null;
   permisiuni?: Record<string, boolean> | null;
   role?: "owner" | "angajat";
   isAdmin?: boolean;
@@ -25,6 +26,7 @@ export function DashboardShell({
   userEmail,
   userName,
   statii = [],
+  statieActivaId = null,
   permisiuni = null,
   role = "owner",
   isAdmin = false,
@@ -60,6 +62,7 @@ export function DashboardShell({
     <div className="min-h-screen bg-white">
       <Sidebar
         statii={statii}
+        statieActivaId={statieActivaId}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         permisiuni={permisiuni}

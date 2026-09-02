@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { getStatieActivaId } from "@/lib/statie-activa";
 
 export interface UserStatie {
   id: string;
@@ -22,7 +23,24 @@ export async function getStatieForUser(): Promise<UserStatie | null> {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  // Owner path — regular client with RLS
+  // Owner path — statia aleasa din comutator, daca este a lui si este activa.
+  const statieActivaId = await getStatieActivaId();
+
+  if (statieActivaId) {
+    const { data: aleasa } = await supabase
+      .from("statii")
+      .select("id, nume, slug, telefon")
+      .eq("id", statieActivaId)
+      .eq("owner_id", user.id)
+      .eq("activa", true)
+      .maybeSingle();
+
+    if (aleasa) {
+      return { ...(aleasa as Omit<UserStatie, "owner_profile_id">), owner_profile_id: user.id };
+    }
+    // Cookie invechit (statie stearsa, dezactivata sau a altui cont) — cadem pe prima.
+  }
+
   const { data: ownerStatie } = await supabase
     .from("statii")
     .select("id, nume, slug, telefon")

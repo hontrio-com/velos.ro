@@ -3,6 +3,7 @@ import { sendStatieNouaEmail } from "@/lib/actions/email";
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { setStatieActivaId } from "@/lib/statie-activa";
 import { redirect } from "next/navigation";
 import { statieBaseSchema, locatieSchema, programSchema } from "@/lib/validations/statie";
 import type { Json } from "@/types/database.types";
@@ -414,5 +415,33 @@ export async function updateRecenziiAction(
 
   if (error) return { error: error.message };
   revalidatePath(`/setari/statii/${statieId}`);
+  return { success: true };
+}
+
+// ── selecteazaStatieAction ───────────────────────────────────────────────
+/**
+ * Schimba statia activa pentru proprietarul cu mai multe statii.
+ * Selectia se pastreaza intr-un cookie citit pe server la fiecare cerere,
+ * pentru ca paginile randate pe server sa arate datele statiei alese.
+ */
+export async function selecteazaStatieAction(
+  statieId: string
+): Promise<{ success: true } | { error: string }> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Neautentificat" };
+
+  const { data: statie } = await supabase
+    .from("statii")
+    .select("id")
+    .eq("id", statieId)
+    .eq("owner_id", user.id)
+    .maybeSingle();
+
+  if (!statie) return { error: "Stație inexistentă sau fără acces" };
+
+  await setStatieActivaId(statieId);
+  revalidatePath("/", "layout");
   return { success: true };
 }
