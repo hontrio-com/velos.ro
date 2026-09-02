@@ -146,7 +146,7 @@ export async function forgotPasswordAction(
     type: "recovery",
     email: parsed.data.email,
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`,
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/reset-password`,
     },
   });
 

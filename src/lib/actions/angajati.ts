@@ -377,6 +377,21 @@ export async function deleteContAngajatAction(
 
     const adminDb = createServiceClient();
 
+    // Contul sters trebuie sa fie chiar al unui angajat al acestei statii.
+    // Fara verificarea asta, orice proprietar putea trimite un profileId arbitrar
+    // (de exemplu owner_id-ul altei statii) si stergea contul acelui utilizator,
+    // cu tot ce atarna de el prin CASCADE: statii, clienti, vehicule, programari.
+    const { data: angajat } = await adminDb
+      .from("angajati")
+      .select("id")
+      .eq("profile_id", profileId)
+      .eq("statie_id", statieId)
+      .maybeSingle();
+
+    if (!angajat) {
+      return { success: false, error: "Contul nu aparține unui angajat al acestei stații" };
+    }
+
     // Șterge din auth (profilul se șterge prin CASCADE din trigger)
     const { error: authErr } = await adminDb.auth.admin.deleteUser(profileId);
     if (authErr) return { success: false, error: authErr.message };

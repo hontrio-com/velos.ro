@@ -1,4 +1,5 @@
 import LandingNavbar from "@/components/landing/navbar";
+import { RecoveryHashRedirect } from "@/components/auth/recovery-hash-redirect";
 import LandingHero from "@/components/landing/hero";
 import LandingFeatures from "@/components/landing/features";
 import LandingSmartPage from "@/components/landing/smart-page-section";
@@ -16,6 +17,7 @@ export const metadata = {
 export default function LandingPage() {
   return (
     <div className="bg-white">
+      <RecoveryHashRedirect />
       <LandingNavbar />
       <LandingHero />
       <LandingFeatures />

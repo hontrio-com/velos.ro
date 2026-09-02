@@ -26,6 +26,21 @@ export const forgotPasswordSchema = z.object({
   email: z.string().email("Email invalid"),
 });
 
+export const resetPasswordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, "Minim 8 caractere")
+      .regex(/[A-Z]/, "Cel puțin o literă mare")
+      .regex(/[0-9]/, "Cel puțin o cifră"),
+    confirm_password: z.string(),
+  })
+  .refine((d) => d.password === d.confirm_password, {
+    message: "Parolele nu coincid",
+    path: ["confirm_password"],
+  });
+
 export type LoginInput = z.infer<typeof loginSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;

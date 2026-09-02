@@ -1,8 +1,30 @@
 "use server";
 
 import { createServiceClient } from "@/lib/supabase/service";
+import { createClient } from "@/lib/supabase/server";
 import { telefonE164 } from "@/lib/phone";
 import { revalidatePath } from "next/cache";
+
+/**
+ * Server actions sunt endpoint-uri publice: oricine afla id-ul actiunii din
+ * bundle-ul JS o poate apela. Actiunile de aici trimit SMS-uri pe cheia SMSO a
+ * platformei si scriu in CRM-ul comercial, deci fiecare trebuie sa verifice
+ * singura ca apelantul este administrator — interfata /admin nu e o protectie.
+ */
+async function cereAdmin(): Promise<{ id: string; email: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Neautentificat");
+
+  const { data: profil } = await supabase
+    .from("profiles")
+    .select("is_admin, email")
+    .eq("id", user.id)
+    .single();
+
+  if (!profil?.is_admin) throw new Error("Acces interzis");
+  return { id: user.id, email: profil.email };
+}
 
 export type StatusCrm =
   | "necontactat"
@@ -23,6 +45,8 @@ export interface CrmUpdatePayload {
 }
 
 export async function updateCrmStatus(payload: CrmUpdatePayload) {
+  await cereAdmin();
+
   const supabase = createServiceClient();
 
   const { error } = await (supabase as any).from("statii_rar_crm").upsert(
@@ -56,6 +80,19 @@ export async function sendProspectareBulkSms(
   statieIds: string[],
   mesaj: string
 ): Promise<{ trimise: number; erori: number; results: SmsSendResult[] }> {
+  const admin = await cereAdmin();
+
+  // Plafon de siguranta: o singura apasare nu poate declansa mii de SMS-uri.
+  const LIMITA_PE_TRIMITERE = 250;
+  if (statieIds.length > LIMITA_PE_TRIMITERE) {
+    throw new Error(
+      `Prea multe destinatii intr-o singura trimitere (${statieIds.length}). ` +
+      `Maxim ${LIMITA_PE_TRIMITERE} — trimite in transe.`
+    );
+  }
+
+  console.info(`[prospectare] ${admin.email} trimite ${statieIds.length} SMS-uri`);
+
   const apiKey = process.env.SMSO_API_KEY;
   if (!apiKey) throw new Error("SMSO_API_KEY lipsă");
 

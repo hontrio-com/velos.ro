@@ -33,12 +33,16 @@ interface AdminSessionCookie {
   admin_email: string;
 }
 
+// Cookie-ul trebuie sa supravietuiasca ferestrei de impersonare: daca expira
+// exact la 60 de minute, middleware-ul nu mai vede nimic de expirat si sesiunea
+// impersonata ramane activa fara banner. Il tinem de 4x mai mult si lasam
+// verificarea expirarii pe seama campului expires_at.
 export const cookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
   sameSite: "lax" as const,
   path: "/",
-  maxAge: DURATA_MINUTE * 60,
+  maxAge: DURATA_MINUTE * 60 * 4,
 };
 
 function safeParse<T>(raw: string | undefined): T | null {

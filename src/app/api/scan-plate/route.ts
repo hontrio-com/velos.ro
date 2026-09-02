@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 
 let _anthropic: import("@anthropic-ai/sdk").default | null = null;
 function getAnthropic() {
@@ -9,12 +10,31 @@ function getAnthropic() {
   return _anthropic!;
 }
 
+// Fiecare apel este un apel platit catre Anthropic. Ruta era complet deschisa:
+// oricine de pe internet putea rula un curl in bucla pe cheia platformei.
+const DIMENSIUNE_MAXIMA = 8 * 1024 * 1024; // 8 MB
+const TIPURI_PERMISE = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+
 export async function POST(request: NextRequest) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ plate: null, error: "Neautorizat" }, { status: 401 });
+  }
+
   const formData = await request.formData();
   const image = formData.get("image") as File | null;
 
   if (!image) {
     return NextResponse.json({ plate: null, error: "No image provided" }, { status: 400 });
+  }
+
+  if (image.size > DIMENSIUNE_MAXIMA) {
+    return NextResponse.json({ plate: null, error: "Imagine prea mare (max 8 MB)" }, { status: 413 });
+  }
+
+  if (image.type && !TIPURI_PERMISE.includes(image.type)) {
+    return NextResponse.json({ plate: null, error: "Format de imagine nesuportat" }, { status: 415 });
   }
 
   const bytes = await image.arrayBuffer();

@@ -63,8 +63,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  response.headers.set("x-pathname", pathname);
-  return response;
+  // Pathname-ul trebuie sa ajunga in headerele CERERII, ca sa fie citibil cu
+  // headers() in layout-uri; setat pe raspuns (cum era) nu ajunge niciodata la
+  // componente, iar verificarea permisiunilor de angajat ramanea fara efect.
+  const antete = new Headers(request.headers);
+  antete.set("x-pathname", pathname);
+
+  const raspunsFinal = NextResponse.next({ request: { headers: antete } });
+  response.cookies.getAll().forEach((c) => raspunsFinal.cookies.set(c));
+  raspunsFinal.headers.set("x-pathname", pathname);
+  return raspunsFinal;
 }
 
 export const config = {
