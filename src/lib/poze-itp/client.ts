@@ -547,18 +547,22 @@ function put(url: string, blob: Blob, laProgres: (incarcat: number) => void): Pr
 }
 
 /**
- * Până la 3 încercări la erori de rețea / 5xx / 429. Un 4xx (URL expirat, semnătură) nu se reîncearcă.
+ * Până la 3 încercări la erori de rețea / 5xx / 429. Un 4xx (URL expirat, semnătură) nu se reîncearcă. Odată ce
+ * `oprit()` întoarce true (programarea ștearsă din sertar), nu mai pornește nicio încercare.
  * Întoarce null dacă PUT-ul a reușit, altfel statusul ultimei încercări (0 = rețea).
  */
 async function putCuReincercare(
   url: string,
   blob: Blob,
+  oprit: () => boolean,
   laProgres: (incarcat: number) => void
 ): Promise<number | null> {
   let status = 0;
   for (let incercare = 0; incercare < 3; incercare++) {
     if (incercare > 0) {
+      if (oprit()) return status;
       await asteapta(800 * incercare);
+      if (oprit()) return status;
       laProgres(0);
     }
     try {
@@ -677,7 +681,8 @@ const renuntari = new Map<string, number>();
 /**
  * Programarea a fost ștearsă (sertarul, după confirmare): încărcările ei ies din store, copiile locale se
  * șterg, iar lucrătorul ei se oprește la următorul pas — fără cereri la server și fără toast-uri, ca la
- * schimbarea contului. Un PUT deja pornit se termină (obiectul rămâne orfan, șters de regula de lifecycle).
+ * schimbarea contului. Un PUT deja pornit se termină, fără reîncercări (dacă reușește, obiectul rămâne orfan,
+ * șters de regula de lifecycle).
  */
 export function renuntaLaIncarcarileProgramarii(programareId: string) {
   renuntari.set(programareId, (renuntari.get(programareId) ?? 0) + 1);
@@ -748,10 +753,12 @@ function refuzuriDejaAnuntate(ids: string[], refuz: string): number {
 
 async function proceseazaCoada(programareId: string, queryClient: QueryClient, eticheta: string | null) {
   // Alt cont conectat între timp în tab (vezi generatieCont) sau programarea ștearsă din sertar (vezi
-  // renuntari): lucrătorul se oprește.
+  // renuntari): lucrătorul se oprește. Un PUT eșuat se mai reîncearcă după schimbarea contului (poza urcată își
+  // păstrează cheile în copia contului ei, vezi urca), dar nu și după ștergere (programareStearsa).
   const generatie = generatieCont;
   const renuntare = renuntari.get(programareId) ?? 0;
-  const contSchimbat = () => generatieCont !== generatie || (renuntari.get(programareId) ?? 0) !== renuntare;
+  const programareStearsa = () => (renuntari.get(programareId) ?? 0) !== renuntare;
+  const contSchimbat = () => generatieCont !== generatie || programareStearsa();
   let salvate = 0;
   let esuate = 0;
   // Din eșecuri: la comprimare (fără „Reîncearcă”), din cauza unei versiuni vechi a aplicației și
@@ -822,7 +829,7 @@ async function proceseazaCoada(programareId: string, queryClient: QueryClient, e
 
     if (pregatite.length) {
       try {
-        const r = await trimiteLot(programareId, pregatite, queryClient, contSchimbat);
+        const r = await trimiteLot(programareId, pregatite, queryClient, contSchimbat, programareStearsa);
         salvate += r.salvate;
         esuate += r.esuate;
         esuateActualizare += r.actualizare;
@@ -880,7 +887,8 @@ async function trimiteLot(
   programareId: string,
   lot: IncarcarePoza[],
   queryClient: QueryClient,
-  contSchimbat: () => boolean
+  contSchimbat: () => boolean,
+  programareStearsa: () => boolean
 ): Promise<{
   salvate: number;
   esuate: number;
@@ -908,7 +916,7 @@ async function trimiteLot(
   }
 
   // Refuzuri de durată anunțate deja de poze (vezi refuzuriDejaAnuntate).
-  let anuntate = deUrcat.length ? await urca(programareId, deUrcat, urcate, mesaje, contSchimbat) : 0;
+  let anuntate = deUrcat.length ? await urca(programareId, deUrcat, urcate, mesaje, contSchimbat, programareStearsa) : 0;
   if (contSchimbat()) return { salvate: 0, esuate: 0, actualizare: 0, anuntate: 0, listaNeactualizata: false, mesaje: [] };
 
   let esuate = lot.length - urcate.length;
@@ -1022,7 +1030,8 @@ async function urca(
   lot: IncarcarePoza[],
   urcate: Urcata[],
   mesaje: Set<string>,
-  contSchimbat: () => boolean
+  contSchimbat: () => boolean,
+  programareStearsa: () => boolean
 ): Promise<number> {
   let pregatire: Awaited<ReturnType<typeof pregatesteIncarcarePozeAction>>;
   let aplicatieVeche = false;
@@ -1083,12 +1092,12 @@ async function urca(
       };
 
       const [eroareFull, okThumb] = await Promise.all([
-        putCuReincercare(tinta.urlPut, imagine.full, (n) => {
+        putCuReincercare(tinta.urlPut, imagine.full, programareStearsa, (n) => {
           urcatFull = n;
           raporteaza();
         }),
         tinta.urlPutThumb && imagine.thumb
-          ? putCuReincercare(tinta.urlPutThumb, imagine.thumb, (n) => {
+          ? putCuReincercare(tinta.urlPutThumb, imagine.thumb, programareStearsa, (n) => {
               urcatThumb = n;
               raporteaza();
             }).then((eroare) => eroare === null)
@@ -1099,7 +1108,8 @@ async function urca(
       const urcata = { cheie: tinta.cheie, cheieThumb: okThumb ? tinta.cheieThumb : null };
       if (contSchimbat()) {
         // Alt cont între timp: nimic în store; o poză urcată își păstrează cheile în copia contului ei
-        // (la următoarea lui conectare doar se reconfirmă).
+        // (la următoarea lui conectare doar se reconfirmă). Programarea ștearsă: copia ei nu mai există,
+        // iar salveazaUrcata nu o recreează.
         if (eroareFull === null) void salveazaUrcata(incarcare.id, urcata);
         return;
       }
