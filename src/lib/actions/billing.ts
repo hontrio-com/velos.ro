@@ -3,16 +3,23 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { stripe } from "@/lib/stripe";
-import { emiteFactura } from "@/lib/smartbill";
+import { crediteazaAchizitieSms } from "@/lib/sms-achizitii";
 
 /**
  * Fulfills an SMS purchase session idempotently.
  * Called from the success page as a fallback in case the webhook failed.
- * Uses stripe_session_id as unique key to prevent double-crediting.
+ *
+ * Creditarea trece prin adauga_credit_sms_achizitie (migrația 012): webhook-ul și
+ * această funcție pot rula simultan, dar contul se creditează o singură dată.
+ * Aici DOAR se creditează (soldul apare imediat pe pagina de succes); factura o
+ * emite exclusiv webhook-ul, la fiecare sesiune plătită.
+ *
+ * `pending: true` — sesiune finalizată, dar plata asincronă (ex. debit SEPA) nu a
+ * fost încă confirmată; creditul vine din webhook la async_payment_succeeded.
  */
 export async function fulfillSmsSessionAction(
   sessionId: string
-): Promise<{ success: boolean; cantitate?: number; alreadyFulfilled?: boolean }> {
+): Promise<{ success: boolean; cantitate?: number; alreadyFulfilled?: boolean; pending?: boolean }> {
   if (!sessionId?.startsWith("cs_")) {
     return { success: false };
   }
@@ -23,15 +30,16 @@ export async function fulfillSmsSessionAction(
 
   const serviceClient = createServiceClient();
 
-  // Check if already fulfilled (idempotency guard)
-  const { data: existing } = await (serviceClient as any)
+  // Scurtătură: webhook-ul a ajuns deja — nu mai întrebăm Stripe.
+  // Doar achizițiile proprii: cantitatea întoarsă ajunge în bannerul paginii.
+  const { data: existing } = await serviceClient
     .from("sms_purchases")
-    .select("cantitate, profile_id")
+    .select("cantitate")
     .eq("stripe_session_id", sessionId)
+    .eq("profile_id", user.id)
     .maybeSingle();
 
   if (existing) {
-    // Already fulfilled — just return success (guard against double-credit)
     return { success: true, cantitate: existing.cantitate, alreadyFulfilled: true };
   }
 
@@ -44,7 +52,13 @@ export async function fulfillSmsSessionAction(
   }
 
   if (session.payment_status !== "paid" || session.mode !== "payment") {
-    return { success: false };
+    // Plată asincronă în curs: sesiunea e finalizată, dar banii nu au ajuns încă.
+    const inAsteptare =
+      session.mode === "payment" &&
+      session.status === "complete" &&
+      session.payment_status === "unpaid" &&
+      session.metadata?.profile_id === user.id;
+    return inAsteptare ? { success: false, pending: true } : { success: false };
   }
 
   // Verify the session belongs to the logged-in user
@@ -56,87 +70,25 @@ export async function fulfillSmsSessionAction(
   const cantitate = parseInt(session.metadata?.cantitate ?? "0", 10);
   if (!cantitate || cantitate <= 0) return { success: false };
 
-  // Credit SMS to profile
-  const { data: prof } = await serviceClient
-    .from("profiles")
-    .select("sms_credit" as any)
-    .eq("id", user.id)
-    .single();
-
-  const currentCredit = (prof as any)?.sms_credit ?? 0;
-
-  await serviceClient
-    .from("profiles")
-    .update({ sms_credit: currentCredit + cantitate } as never)
-    .eq("id", user.id);
-
-  // Record in sms_purchases to prevent double-fulfillment
-  await (serviceClient as any).from("sms_purchases").insert({
-    profile_id: user.id,
-    stripe_session_id: session.id,
-    stripe_payment_intent: session.payment_intent ?? null,
-    cantitate,
-    pret_total: (session.amount_total ?? 0) / 100,
-    status: "completed",
-    completed_at: new Date().toISOString(),
-  });
-
-  // Factură SmartBill (idempotentă — verifică dacă a fost deja emisă de webhook)
-  const { data: facturaExisting } = await (serviceClient as any)
-    .from("facturi")
-    .select("id")
-    .eq("referinta", session.id)
-    .maybeSingle();
-
-  if (!facturaExisting) {
-    // Date client: stație activă sau fallback pe profil
-    const { data: statie } = await serviceClient
-      .from("statii")
-      .select("nume, cui, adresa, oras, judet, email")
-      .eq("owner_id", user.id)
-      .eq("activa", true)
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-
-    const { data: profile } = !statie
-      ? await serviceClient.from("profiles").select("full_name, email").eq("id", user.id).single()
-      : { data: null };
-
-    const s = statie as any;
-    const clientInfo = statie
-      ? {
-          name: s.nume ?? "Client Velos CRM",
-          vatCode: s.cui ?? undefined,
-          isTaxPayer: !!s.cui,
-          address: s.adresa ?? undefined,
-          city: s.oras ?? undefined,
-          county: s.judet ?? undefined,
-          email: s.email ?? undefined,
-        }
-      : {
-          name: (profile as any)?.full_name ?? "Client Velos CRM",
-          email: (profile as any)?.email ?? undefined,
-        };
-
-    const facturaResult = await emiteFactura({
-      client: clientInfo,
-      productName: `${cantitate} SMS-uri Velos CRM`,
-      amount: (session.amount_total ?? 0) / 100,
-      currency: session.currency ?? "eur",
+  let creditat: boolean;
+  try {
+    creditat = await crediteazaAchizitieSms(serviceClient, {
+      sessionId: session.id,
+      profileId: user.id,
+      cantitate,
+      pretTotal: (session.amount_total ?? 0) / 100,
+      paymentIntent:
+        typeof session.payment_intent === "string"
+          ? session.payment_intent
+          : session.payment_intent?.id ?? null,
     });
-
-    await (serviceClient as any).from("facturi").insert({
-      profile_id: user.id,
-      tip: "sms_purchase",
-      referinta: session.id,
-      smartbill_serie: facturaResult.serie ?? null,
-      smartbill_numar: facturaResult.numar ?? null,
-      suma: (session.amount_total ?? 0) / 100,
-      moneda: (session.currency ?? "eur").toUpperCase(),
-      eroare: facturaResult.success ? null : (facturaResult.error ?? "Eroare necunoscuta"),
-    });
+  } catch (err) {
+    console.error("[billing] Creditare SMS eșuată (rămâne pe seama webhook-ului):", sessionId, err);
+    return { success: false };
   }
+
+  // Webhook-ul a creditat între timp.
+  if (!creditat) return { success: true, cantitate, alreadyFulfilled: true };
 
   return { success: true, cantitate };
 }

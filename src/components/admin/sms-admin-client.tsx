@@ -21,8 +21,18 @@ interface UserSms {
   plan: string;
   sms_credit: number;
   trial_expires_at: string;
+  /** Proprietar din trialul nou (fără SMS incluse, migrația 012). */
+  trialFaraSms?: boolean;
+  /** Toate SMS-urile trimise luna aceasta (din mesaje): incluse în plan + din credit. */
   smsTrimise: number;
+  /** SMS-uri incluse în plan consumate luna aceasta (sms_quota); null = nu se știe. */
+  smsIncluse: number | null;
   smsLimita: number;
+}
+
+/** SMS-urile trimise peste cele incluse, adică plătite din credit (0 dacă nu se știe). */
+function smsDinCredit(u: UserSms): number {
+  return u.smsIncluse == null ? 0 : Math.max(0, u.smsTrimise - u.smsIncluse);
 }
 
 export function SmsAdminClient({ users }: { users: UserSms[] }) {
@@ -69,6 +79,8 @@ export function SmsAdminClient({ users }: { users: UserSms[] }) {
   }
 
   const totalTrimise = filtered.reduce((s, u) => s + u.smsTrimise, 0);
+  const totalIncluse = filtered.reduce((s, u) => s + (u.smsIncluse ?? 0), 0);
+  const totalDinCredit = filtered.reduce((s, u) => s + smsDinCredit(u), 0);
   const totalCredit = filtered.reduce((s, u) => s + u.sms_credit, 0);
 
   return (
@@ -78,6 +90,9 @@ export function SmsAdminClient({ users }: { users: UserSms[] }) {
         <div className="bg-white border border-[#F3F4F6] rounded-xl p-4">
           <p className="text-xs text-[#6B7280]">SMS trimise (filtru)</p>
           <p className="text-xl font-bold text-[#111318] mt-1">{totalTrimise.toLocaleString("ro-RO")}</p>
+          <p className="text-[10px] text-[#9CA3AF] mt-0.5">
+            incluse {totalIncluse.toLocaleString("ro-RO")} · din credit {totalDinCredit.toLocaleString("ro-RO")}
+          </p>
         </div>
         <div className="bg-white border border-[#F3F4F6] rounded-xl p-4">
           <p className="text-xs text-[#6B7280]">Credite cumpărate (filtru)</p>
@@ -122,7 +137,12 @@ export function SmsAdminClient({ users }: { users: UserSms[] }) {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-[#6B7280]">Utilizator</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-[#6B7280]">Plan</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-[#6B7280]">Trial / Exp.</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-[#6B7280]">SMS trimise/lună</th>
+                <th
+                  className="text-left px-4 py-3 text-xs font-semibold text-[#6B7280]"
+                  title="Toate SMS-urile trimise luna aceasta: incluse în plan + plătite din credit"
+                >
+                  SMS trimise/lună
+                </th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-[#6B7280]">Progres</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-[#6B7280]">Credit cumpărat</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-[#6B7280]">Modifică credit</th>
@@ -135,7 +155,9 @@ export function SmsAdminClient({ users }: { users: UserSms[] }) {
                 </tr>
               )}
               {filtered.map((user) => {
-                const pct = user.smsLimita > 0 ? Math.min((user.smsTrimise / user.smsLimita) * 100, 100) : 0;
+                const dinCredit = smsDinCredit(user);
+                // Progresul arată consumul din SMS-urile incluse, nu și pe cele din credit.
+                const pct = user.smsLimita > 0 ? Math.min(((user.smsIncluse ?? 0) / user.smsLimita) * 100, 100) : 0;
                 const barColor = pct > 90 ? "#DC2626" : pct > 70 ? "#EA580C" : "#1877F2";
                 const trialExp = new Date(user.trial_expires_at);
                 const trialZile = differenceInDays(trialExp, new Date());
@@ -155,6 +177,14 @@ export function SmsAdminClient({ users }: { users: UserSms[] }) {
                       >
                         {user.plan}
                       </span>
+                      {user.trialFaraSms && (
+                        <span
+                          className="ml-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap"
+                          title="Cont creat cu trialul nou: fără SMS incluse, trimite doar din credit"
+                        >
+                          fără SMS
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-xs">
                       {user.plan === "trial" ? (
@@ -174,10 +204,12 @@ export function SmsAdminClient({ users }: { users: UserSms[] }) {
                     </td>
                     <td className="px-4 py-3 text-sm font-medium text-[#374151]">
                       {user.smsTrimise}
-                      {user.smsLimita > 0 && (
-                        <span className="text-[#9CA3AF] font-normal">
-                          {" "}/{user.smsLimita === 9999 ? " ∞" : ` ${user.smsLimita}`}
-                        </span>
+                      {user.smsIncluse != null && (user.smsLimita > 0 || user.smsTrimise > 0 || user.smsIncluse > 0) && (
+                        <p className="text-[10px] text-[#9CA3AF] font-normal whitespace-nowrap">
+                          incluse {user.smsIncluse}
+                          {user.smsLimita > 0 && (user.smsLimita === 9999 ? " / ∞" : ` / ${user.smsLimita}`)}
+                          {dinCredit > 0 && <span className="text-[#1877F2]"> · din credit {dinCredit}</span>}
+                        </p>
                       )}
                     </td>
                     <td className="px-4 py-3 w-32">

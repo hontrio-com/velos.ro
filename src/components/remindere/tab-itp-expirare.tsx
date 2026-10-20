@@ -248,6 +248,7 @@ export function TabItpExpirare({ vehicule, statieId, isLoading, onUpdate }: TabI
         open={bulkDialog}
         onOpenChange={setBulkDialog}
         remindere={bulkPayload}
+        sursa="vehicule"
         onSuccess={() => {
           setSelected(new Set());
           onUpdate();

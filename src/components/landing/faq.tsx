@@ -9,9 +9,9 @@ import {
 
 const FAQ_ITEMS = [
   {
-    question: "Ce include perioada de trial de 15 zile?",
+    question: "Ce include perioada de probă de 6 luni?",
     answer:
-      "In cei 15 zile ai acces complet la toate functiile platformei: SMS-uri automate, programari online, CRM, rapoarte. Primesti 20 de SMS-uri gratuite pentru a testa fluxul complet. Nu este necesar niciun card bancar pentru inregistrare.",
+      "Timp de 6 luni folosești gratuit platforma: programări online, CRM, remindere automate, rapoarte. Nu este necesar niciun card bancar. Perioada de probă nu include SMS-uri: le cumperi din cont, la 0,05 € / SMS, doar când ai nevoie, iar creditul cumpărat nu expiră.",
   },
   {
     question: "Ce se intampla dupa expirarea trial-ului?",
@@ -19,9 +19,9 @@ const FAQ_ITEMS = [
       "La sfarsitul perioadei de trial, contul tau trece in starea inactiva. Nu se sterge nimic. Poti alege oricand un plan platit si iti reia activitatea de unde ai lasat-o, cu toate datele intacte.",
   },
   {
-    question: "Pot sa cumpar mai multe SMS-uri daca se termina cele incluse in plan?",
+    question: "Cum funcționează SMS-urile cumpărate?",
     answer:
-      "Da. Daca ai consumat cota lunara de SMS-uri inclusa in plan, poti achizitiona pachete suplimentare direct din contul tau, prin card bancar. SMS-urile cumparate nu expira si se consuma dupa ce se termina cota lunara.",
+      "Cumperi pachete de SMS-uri direct din cont, cu cardul. În perioada de probă sunt singura sursă de SMS-uri; în planurile plătite se consumă după ce se termină cota lunară inclusă. SMS-urile cumpărate nu expiră.",
   },
   {
     question: "Pot gestiona mai multe statii ITP dintr-un singur cont?",

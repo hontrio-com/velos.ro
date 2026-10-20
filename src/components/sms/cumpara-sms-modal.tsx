@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, MessageSquare, Zap, Check, Minus, Plus } from "lucide-react";
+import { toast } from "sonner";
 
 interface Props {
   open: boolean;
@@ -44,10 +45,16 @@ export function CumparaSmsModal({ open, onClose }: Props) {
         body: JSON.stringify({ cantitate }),
       });
       const data = await res.json();
-      if (data.url) window.location.href = data.url;
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
+      // Fără URL (ex. 401 / 403): altfel butonul rămânea blocat pe „Se redirecționează...".
+      toast.error(data.error ?? "Nu am putut porni plata. Încearcă din nou.");
     } catch {
-      setLoading(false);
+      toast.error("Nu am putut porni plata. Verifică conexiunea și încearcă din nou.");
     }
+    setLoading(false);
   }
 
   if (!mounted) return null;

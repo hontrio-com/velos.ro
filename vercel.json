@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/remindere",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/poze-itp",
+      "schedule": "0 3 * * *"
     }
   ]
 }

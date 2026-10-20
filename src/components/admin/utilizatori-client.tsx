@@ -29,7 +29,10 @@ interface User {
   suspend_reason: string | null;
   created_at: string;
   statiiCount: number;
+  /** Toate SMS-urile trimise luna aceasta (din mesaje): incluse în plan + din credit. */
   smsTrimise: number;
+  /** SMS-uri incluse în plan consumate luna aceasta (sms_quota); null = nu se știe. */
+  smsIncluse: number | null;
   smsLimita: number;
 }
 
@@ -188,7 +191,12 @@ export function UtilizatoriClient({ users: initialUsers }: { users: User[] }) {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-[#6B7280]">Utilizator</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-[#6B7280]">Plan</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-[#6B7280]">SMS Credit</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-[#6B7280]">SMS Luna</th>
+                <th
+                  className="text-left px-4 py-3 text-xs font-semibold text-[#6B7280]"
+                  title="Toate SMS-urile trimise luna aceasta: incluse în plan + plătite din credit"
+                >
+                  SMS Luna
+                </th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-[#6B7280]">Stații</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-[#6B7280]">Înregistrat</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-[#6B7280]">Acțiuni</th>
@@ -205,6 +213,8 @@ export function UtilizatoriClient({ users: initialUsers }: { users: User[] }) {
               {filtered.map((user) => {
                 const isEditing = editState?.userId === user.id;
                 const msg = message?.id === user.id ? message : null;
+                // SMS-urile peste cele incluse, plătite din credit (0 dacă nu se știe).
+                const dinCredit = user.smsIncluse == null ? 0 : Math.max(0, user.smsTrimise - user.smsIncluse);
 
                 return (
                   <tr key={user.id} className="border-b border-[#F9FAFB] hover:bg-[#F9FAFB] transition-colors">
@@ -315,8 +325,11 @@ export function UtilizatoriClient({ users: initialUsers }: { users: User[] }) {
                       <span className="text-sm text-[#374151]">
                         {user.smsTrimise}
                         {user.smsLimita > 0 && (
-                          <span className="text-[#9CA3AF]"> / {user.smsLimita === 9999 ? "∞" : user.smsLimita}</span>
+                          <span className="text-[#9CA3AF]">
+                            {user.smsIncluse !== user.smsTrimise && ` · incluse ${user.smsIncluse ?? 0}`} / {user.smsLimita === 9999 ? "∞" : user.smsLimita}
+                          </span>
                         )}
+                        {dinCredit > 0 && <span className="text-[#1877F2]"> · din credit {dinCredit}</span>}
                       </span>
                     </td>
 

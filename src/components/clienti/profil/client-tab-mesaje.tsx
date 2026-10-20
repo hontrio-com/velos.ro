@@ -10,6 +10,9 @@ import { Button } from "@/components/ui/button";
 import { sendMesajAction } from "@/lib/actions/mesaje";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { afiseazaEroareSms } from "@/components/sms/toast-fara-sms";
+import { SMS_DISPONIBIL_KEY } from "@/hooks/use-sms-disponibil";
 
 interface Mesaj {
   id: string;
@@ -33,6 +36,7 @@ export function ClientTabMesaje({
   mesaje,
 }: ClientTabMesajeProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
 
@@ -46,10 +50,12 @@ export function ClientTabMesaje({
     });
     setSending(false);
     if ("error" in result) {
-      toast.error(result.error);
+      afiseazaEroareSms(result, "Eroare la trimiterea SMS-ului");
     } else {
       toast.success("Mesaj trimis");
       setText("");
+      // Creditul / quota s-au schimbat (widget-ul din meniul lateral).
+      queryClient.invalidateQueries({ queryKey: SMS_DISPONIBIL_KEY });
       router.refresh();
     }
   }

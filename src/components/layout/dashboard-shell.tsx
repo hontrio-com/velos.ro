@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
+import { CumparaSmsHost } from "@/components/sms/cumpara-sms-host";
+import { PozeItpReluare } from "@/components/programari/poze-itp-reluare";
 
 interface Statie {
   id: string;
@@ -80,6 +82,12 @@ export function DashboardShell({
       <main className="lg:ml-[220px] pt-14 min-h-screen">
         <div className="p-4 md:p-6">{children}</div>
       </main>
+
+      {/* Modalul „Cumpără SMS-uri" deschis din banner, toast-uri, Remindere — doar proprietarii cumpără */}
+      {role === "owner" && <CumparaSmsHost />}
+
+      {/* Pozele ITP rămase neîncărcate (aplicația închisă de telefon) se reiau la deschidere — proprietar și angajat */}
+      <PozeItpReluare />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { format, parseISO, differenceInDays, addYears } from "date-fns";
@@ -26,6 +26,8 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { statusConfig } from "./programari-client";
 import { RezultatItpForm } from "./rezultat-itp-form";
+import { PozeItpAvertizareStergere, PozeItpButonRapid, PozeItpNotaIncarcare, PozeItpSection } from "./poze-itp-section";
+import { renuntaLaIncarcarileProgramarii } from "@/lib/poze-itp/client";
 import { trimiteRecenzieAction } from "@/lib/actions/recenzii";
 import { deleteProgramareAction, updateProgramareStatusAction, saveRezultatItpAction } from "@/lib/actions/programari";
 
@@ -64,6 +66,8 @@ export function ProgramareDrawer({
   const [updatingAngajat, setUpdatingAngajat] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  // Secțiunea „Poze inspecție” — butonul din footer derulează la ea după ce se aleg pozele.
+  const pozeRef = useRef<HTMLElement>(null);
 
   const { data: p, isLoading } = useQuery({
     queryKey: ["programare-detail", programareId],
@@ -88,9 +92,12 @@ export function ProgramareDrawer({
     enabled: !!programareId,
   });
 
-  const rezultat: RezultatRow = Array.isArray(p?.rezultate_itp)
-    ? (p.rezultate_itp[0] as RezultatRow) ?? null
-    : null;
+  // rezultate_itp e 1:1 (programare_id UNIQUE): PostgREST întoarce obiect, nu array.
+  // Acceptăm ambele forme, ca în programare-card.tsx.
+  const rezultatRaw = p?.rezultate_itp as unknown;
+  const rezultat: RezultatRow = Array.isArray(rezultatRaw)
+    ? ((rezultatRaw[0] as RezultatRow) ?? null)
+    : ((rezultatRaw as RezultatRow) ?? null);
 
   const angajatAsigned = p?.angajat
     ? (Array.isArray(p.angajat) ? p.angajat[0] : p.angajat) as { id: string; nume: string; functie: string | null } | null
@@ -404,6 +411,15 @@ export function ProgramareDrawer({
                 </div>
               </div>
 
+              {/* Poze inspecție — în orice status; key = programarea (sertarul nu se demontează).
+                  Fără div în jur: secțiunea neafișată nu lasă niciun nod în corpul space-y-5. */}
+              <PozeItpSection
+                key={p.id}
+                ref={pozeRef}
+                programareId={p.id}
+                nrInmatriculare={p.vehicul?.nr_inmatriculare ?? null}
+              />
+
               {/* ITP Result */}
               {(p.status === "finalizat" || rezultat) && (
                 <div className="space-y-2">
@@ -494,9 +510,24 @@ export function ProgramareDrawer({
         {/* Actions footer */}
         {p && !isFinished && (
           <div className="border-t border-border p-4 shrink-0 space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-              Rezultat inspecție
-            </p>
+            {/* Camera rapidă pe rândul etichetei (stânga-sus în footer): nu aglomerează grila
+                Admis/Respins/Neprezentat și stă departe de butonul flotant din dashboard.
+                Fără butonul rapid, rândul are înălțimea de dinainte de poze; cât se încarcă lista,
+                butonul își ține singur locul (PozeItpButonRapid). */}
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Rezultat inspecție
+              </p>
+              <PozeItpButonRapid
+                key={p.id}
+                programareId={p.id}
+                nrInmatriculare={p.vehicul?.nr_inmatriculare ?? null}
+                onIncarcare={() =>
+                  pozeRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+                }
+              />
+            </div>
+            <PozeItpNotaIncarcare programareId={p.id} />
             <div className="grid grid-cols-3 gap-2">
               <Button
                 size="sm"
@@ -545,7 +576,11 @@ export function ProgramareDrawer({
               </button>
             ) : (
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs text-destructive font-medium">Ești sigur? Acțiunea e ireversibilă.</p>
+                <p className="text-xs text-destructive font-medium">
+                  Ești sigur? Acțiunea e ireversibilă.
+                  {/* Pozele inspecției se șterg odată cu programarea (doar dacă există). */}
+                  <PozeItpAvertizareStergere programareId={p.id} />
+                </p>
                 <div className="flex gap-2 shrink-0">
                   <Button
                     size="sm"
@@ -568,6 +603,9 @@ export function ProgramareDrawer({
                         setDeleting(false);
                         setConfirmDelete(false);
                       } else {
+                        // Pozele încă în curs de încărcare s-au șters odată cu programarea (avertizarea de mai
+                        // sus): încărcările ei se opresc fără cereri la server și fără toast-uri.
+                        renuntaLaIncarcarileProgramarii(programareId);
                         toast.success("Programare ștearsă");
                         onUpdate();
                         onClose();

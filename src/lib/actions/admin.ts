@@ -178,15 +178,36 @@ export async function getStatieStats(statieId: string): Promise<{
 
 // ── Admin Settings ───────────────────────────────────────────────
 
-export async function updateAdminSetting(cheie: string, valoare: string) {
+export async function updateAdminSetting(
+  cheie: string,
+  valoare: string
+): Promise<{ error?: string }> {
   const admin = await requireAdmin();
+
+  let deSalvat = valoare;
+  if (cheie === "trial_luni") {
+    // Aceeași regulă ca set_trial_expires_at (migrația 012): ^[0-9]{1,2}$ și 1..24,
+    // altfel triggerul pune 6 luni fără nicio eroare. Fără parseInt/Number pe textul
+    // brut: „3.5", „1e1", „024" ar trece aici, dar triggerul le-ar ignora.
+    const text = String(valoare).trim();
+    if (!/^\d{1,2}$/.test(text) || Number(text) < 1 || Number(text) > 24) {
+      return { error: "Durata trialului: un număr întreg între 1 și 24 de luni." };
+    }
+    deSalvat = String(Number(text)); // „06" → „6"
+  }
+
   const supabase = createServiceClient();
-  await (supabase as any).from("admin_settings").upsert(
-    { cheie, valoare, updated_at: new Date().toISOString() },
+  const { error } = await (supabase as any).from("admin_settings").upsert(
+    { cheie, valoare: deSalvat, updated_at: new Date().toISOString() },
     { onConflict: "cheie" }
   );
-  await logAudit(admin, "update_setting", "setting", cheie, cheie, { valoare });
+  if (error) {
+    console.error(`[admin] Setarea ${cheie} nu a fost salvată:`, error.message);
+    return { error: "Nu am putut salva setarea. Încearcă din nou." };
+  }
+  await logAudit(admin, "update_setting", "setting", cheie, cheie, { valoare: deSalvat });
   revalidatePath("/admin/setari");
+  return {};
 }
 
 // ── Broadcast / Notificări ──────────────────────────────────────

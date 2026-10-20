@@ -13,11 +13,11 @@ export default function RegisterPage() {
       {/* Trial badge */}
       <div className="mb-5 rounded-xl px-4 py-3 flex items-center gap-3 border border-[#E5E7EB] bg-[#F9FAFB]">
         <div className="h-8 w-8 rounded-lg bg-[#1877F2]/10 flex items-center justify-center shrink-0">
-          <span className="text-[#1877F2] text-xs font-bold">15</span>
+          <span className="text-[#1877F2] text-xs font-bold">6</span>
         </div>
         <div>
-          <p className="text-sm font-semibold text-[#111318]">Trial gratuit 15 zile</p>
-          <p className="text-xs text-[#6B7280]">Alegi planul după înregistrare. Fără card bancar.</p>
+          <p className="text-sm font-semibold text-[#111318]">Trial gratuit 6 luni</p>
+          <p className="text-xs text-[#6B7280]">Fără card bancar. SMS-urile se cumpără separat, doar când ai nevoie.</p>
         </div>
       </div>
 

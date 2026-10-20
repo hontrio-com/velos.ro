@@ -13,10 +13,10 @@ const PLANS = [
   {
     name: "Trial",
     price: { monthly: 0, yearly: 0 },
-    description: "Testeaza toate functiile fara risc.",
-    duration: "15 zile gratuit",
+    description: "Testezi toate funcțiile 6 luni, fără risc.",
+    duration: "6 luni gratuit",
     features: [
-      "20 SMS-uri incluse",
+      "SMS-uri la cerere: 0,05 €/SMS",
       "1 statie ITP",
       "Programari online",
       "CRM complet",
@@ -99,8 +99,8 @@ export default function LandingPricing() {
             <span className="text-[#6B7280]">Fara surprize.</span>
           </h2>
           <p className="text-lg text-[#6B7280] leading-relaxed">
-            Incepi cu trial gratuit de 15 zile, fara card bancar. Alegi planul
-            care ti se potriveste dupa ce testezi.
+            Începi cu 6 luni gratuite, fără card bancar. În perioada de probă
+            SMS-urile se cumpără la cerere; planurile plătite includ SMS-uri lunare.
           </p>
         </div>
 
@@ -118,7 +118,7 @@ export default function LandingPricing() {
           </span>
           {yearly && (
             <Badge variant="secondary" className="text-[#059669] bg-[#059669]/10 border-0">
-              2 luni gratuit
+              Economisești ~20%
             </Badge>
           )}
         </div>
@@ -192,7 +192,8 @@ export default function LandingPricing() {
         </div>
 
         <p className="text-center text-sm text-[#9CA3AF] mt-8">
-          Toate preturile sunt in lei. Poti anula oricand.
+          Prețurile abonamentelor sunt în lei. SMS-urile cumpărate separat se
+          plătesc în euro. Poți anula oricând.
         </p>
       </div>
     </section>

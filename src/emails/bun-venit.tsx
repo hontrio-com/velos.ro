@@ -19,6 +19,11 @@ export function BunVenitEmail({ numeComplet, email, appUrl }: Props) {
         de management pentru stații ITP — programări, clienți, vehicule,
         remindere SMS și rapoarte, totul într-un singur loc.
       </P>
+      <P>
+        Ai <strong>6 luni de probă gratuită</strong>, fără card bancar. Perioada de
+        probă nu include SMS-uri: când vrei să trimiți remindere clienților,
+        cumperi credit SMS direct din platformă (0,05 € / SMS). Creditul nu expiră.
+      </P>
 
       <PrimaryButton href={`${appUrl}/dashboard`}>
         Accesează dashboard-ul
@@ -33,7 +38,7 @@ export function BunVenitEmail({ numeComplet, email, appUrl }: Props) {
         ✅ Adaugă prima ta stație ITP<br />
         ✅ Importă clienții și vehiculele existente<br />
         ✅ Configurează programul și tarifele<br />
-        ✅ Activează remindere SMS automate
+        ✅ Cumpără credit SMS și activează reminderele automate
       </P>
 
       <Divider />

@@ -90,7 +90,7 @@ export default function ConfidentialitateePage() {
               Politica de Confidențialitate
             </h1>
             <p className="text-sm text-[#6B7280]">
-              Versiunea 1.0 &mdash; Ultima actualizare: <strong className="text-[#374151]">14 mai 2025</strong>
+              Versiunea 1.1 &mdash; Ultima actualizare: <strong className="text-[#374151]">20 octombrie 2026</strong>
             </p>
             <div className="mt-4 p-4 bg-[#EFF6FF] border border-[#BFDBFE] rounded-xl text-sm text-[#1E40AF] leading-relaxed">
               Această politică se aplică platformei Velos (velos.ro), operată de <strong>SC VOID SFT GAMES SRL</strong>,
@@ -219,9 +219,15 @@ export default function ConfidentialitateePage() {
                     },
                     {
                       categorie: "Programări și rezultate ITP",
-                      exemple: "Data programării, rezultat inspecție, defecțiuni constatate",
+                      exemple: "Data programării, rezultat inspecție, defecțiuni constatate, data fotografierii și a încărcării pozelor din inspecție",
                       temei: "Determinat de stația ITP (Operator)",
                       durata: "Determinat de stația ITP",
+                    },
+                    {
+                      categorie: "Poze din inspecția ITP",
+                      exemple: "Fotografii ale vehiculului făcute de stație în timpul inspecției (pot surprinde numărul de înmatriculare, seria de șasiu sau kilometrajul)",
+                      temei: "Determinat de stația ITP (Operator)",
+                      durata: "Până la descărcarea arhivei de către stație, cel mult 14 zile de la încărcare; ștergerea definitivă din stocare se finalizează în cel mult 3 zile după acest termen",
                     },
                     {
                       categorie: "Comunicări SMS",
@@ -329,6 +335,7 @@ export default function ConfidentialitateePage() {
                         ["Furnizor SMS (Twilio / SMSO / similar)", "Trimitere SMS-uri programări și remindere", "SUA/UE", "SCC sau sediu în UE"],
                         ["Vercel, Inc.", "Hosting aplicație web, CDN", "SUA", "Clauze contractuale standard (SCC)"],
                         ["Stripe, Inc.", "Procesare plăți (dacă aplicabil)", "SUA", "SCC + certificare PCI DSS"],
+                        ["Cloudflare, Inc.", "Stocarea temporară a pozelor din inspecțiile ITP (Cloudflare R2)", "SUA (datele sunt stocate în UE)", "Stocare în jurisdicția UE a R2; DPA Cloudflare cu SCC"],
                         ["Google LLC", "Google Maps embed, Analytics (opțional)", "SUA", "SCC + Privacy Shield successor"],
                       ].map(([furnizor, rol, sediu, garantie], i) => (
                         <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F9FAFB]"}>
@@ -358,7 +365,7 @@ export default function ConfidentialitateePage() {
             {/* 7. Transferuri internaționale */}
             <Section number="7" title="Transferuri de date în afara Spațiului Economic European (SEE)">
               <p>
-                Unii subprocesori (Supabase, Vercel) au servere sau sedii în Statele Unite ale Americii, o țară
+                Unii subprocesori (Supabase, Vercel, Cloudflare) au servere sau sedii în Statele Unite ale Americii, o țară
                 care nu beneficiază de o decizie de adecvare din partea Comisiei Europene în baza Art. 45 GDPR.
               </p>
               <p>
@@ -382,7 +389,9 @@ export default function ConfidentialitateePage() {
                 <li>
                   <strong>Date de cont și de utilizare:</strong> Pe durata relației contractuale. La reziliere,
                   contul este dezactivat, iar datele sunt șterse în termen de <strong>90 de zile</strong>, cu
-                  excepția celor supuse unor obligații legale de arhivare.
+                  excepția celor supuse unor obligații legale de arhivare. Prin excepție, contul care are credit
+                  SMS nefolosit nu se șterge decât la cererea titularului contului (art. 6.6 din Termenii și
+                  Condițiile platformei).
                 </li>
                 <li>
                   <strong>Date de facturare și documente contabile:</strong> <strong>10 ani</strong> de la data
@@ -394,6 +403,21 @@ export default function ConfidentialitateePage() {
                 </li>
                 <li>
                   <strong>Date SMS (conținut, status):</strong> <strong>12 luni</strong> de la trimitere.
+                </li>
+                <li>
+                  <strong>Poze din inspecțiile ITP:</strong> nu mai sunt accesibile după ce stația descarcă arhiva
+                  sau după <strong>14 zile</strong> de la încărcare și sunt șterse definitiv din stocare în cel mult
+                  3 zile după aceea; în istoricul programării rămân doar date tehnice (data fotografierii și a
+                  încărcării, dimensiunile fișierului, data și motivul ștergerii) și utilizatorul care a încărcat,
+                  descărcat sau șters pozele. Pe server, pozele sunt stocate criptat, în Uniunea Europeană
+                  (Cloudflare R2). Până la încărcarea pe server, pozele făcute sau alese în aplicație, împreună cu
+                  numărul de înmatriculare al vehiculului, se păstrează temporar și în browserul dispozitivului
+                  folosit (inclusiv după deconectare), ca încărcarea să poată fi reluată după o întrerupere; copia
+                  se șterge după încărcare, când utilizatorul renunță la poză sau când poza nu mai poate fi
+                  încărcată (de exemplu, dacă programarea a fost ștearsă), iar copiile mai vechi de 7 zile se șterg
+                  la următoarea deschidere a aplicației în același browser, cu orice cont care are acces la ea (nu
+                  și cu un cont suspendat sau dezactivat). Copiile pot fi șterse oricând din setările browserului
+                  (datele site-ului velos.ro).
                 </li>
                 <li>
                   <strong>Cookie-uri:</strong> Conform Politicii de Cookies (durate variabile, maxim 13 luni
@@ -500,8 +524,8 @@ export default function ConfidentialitateePage() {
             {/* 11. Cookies */}
             <Section number="11" title="Cookie-uri și tehnologii similare">
               <p>
-                Platforma Velos utilizează cookie-uri și tehnologii similare (localStorage, sesiuni). Categoriile
-                principale sunt:
+                Platforma Velos utilizează cookie-uri și tehnologii similare (localStorage, IndexedDB, sesiuni).
+                Categoriile principale sunt:
               </p>
               <ul className="list-disc pl-5 space-y-1.5 mt-2">
                 <li>

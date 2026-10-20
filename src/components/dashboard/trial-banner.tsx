@@ -2,21 +2,26 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import { differenceInDays, parseISO } from "date-fns";
-import { AlertTriangle, Clock, XCircle, ArrowRight, X } from "lucide-react";
+import { AlertTriangle, Clock, XCircle, ArrowRight, X, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import type { SubscriptionStatus } from "@/lib/stripe";
+import { useCumparaSmsStore } from "@/stores/cumpara-sms-store";
+import { dataLungaRo, zileText } from "@/lib/sms-disponibil-shared";
 
 interface TrialBannerProps {
   subscriptionStatus: SubscriptionStatus;
   trialEndsAt: string | null;
   plan: string;
+  /** Cont din trialul nou, fără SMS incluse (migrația 012). Conturile vechi: false → banner neschimbat. */
+  trialFaraSms?: boolean;
 }
 
-export function TrialBanner({ subscriptionStatus, trialEndsAt, plan }: TrialBannerProps) {
+export function TrialBanner({ subscriptionStatus, trialEndsAt, plan, trialFaraSms = false }: TrialBannerProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [dismissed, setDismissed] = useState(false);
+  const deschideCumparaSms = useCumparaSmsStore((s) => s.deschide);
 
   if (dismissed) return null;
   if (subscriptionStatus === "active") return null;
@@ -77,6 +82,92 @@ export function TrialBanner({ subscriptionStatus, trialEndsAt, plan }: TrialBann
         >
           Alege un plan <ArrowRight className="h-3 w-3" />
         </button>
+      </div>
+    );
+  }
+
+  // trial activ — cont nou, fără SMS incluse
+  if (subscriptionStatus === "trial" && trialFaraSms) {
+    // Perioade întregi de 24 h, independent de fusul orar: serverul (UTC) și
+    // browserul (ora României) obțin același număr, deci nu apare nepotrivire la hidratare.
+    const zileRamaseNou = trialEndsAt
+      ? Math.max(0, Math.floor((parseISO(trialEndsAt).getTime() - new Date().getTime()) / 86_400_000))
+      : 0;
+    const urgent = zileRamaseNou <= 3;
+    const warning = zileRamaseNou <= 7;
+
+    return (
+      <div
+        className={cn(
+          "relative mb-4 rounded-xl border px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3",
+          urgent
+            ? "bg-[#FEF2F2] border-[#FECACA]"
+            : warning
+            ? "bg-[#FFF7ED] border-[#FED7AA]"
+            : "bg-[#EFF6FF] border-[#BFDBFE]"
+        )}
+      >
+        {/* Pe telefon X-ul stă în colțul din dreapta-sus (nu mai încape pe rândul cu
+            butoanele), iar textul îi lasă loc. */}
+        <div className={cn("flex items-start gap-3 flex-1 min-w-0", !urgent && "pr-7 sm:pr-0")}>
+          <Clock
+            className={cn(
+              "h-4 w-4 shrink-0 mt-0.5",
+              urgent ? "text-[#DC2626]" : warning ? "text-[#EA580C]" : "text-[#1877F2]"
+            )}
+          />
+          <p
+            className={cn(
+              "text-sm",
+              urgent ? "text-[#DC2626]" : warning ? "text-[#EA580C]" : "text-[#1E40AF]"
+            )}
+          >
+            {zileRamaseNou === 0 ? (
+              <><strong>Ultimele ore din perioada de probă.</strong> Alege un plan ca să nu pierzi accesul — planurile includ SMS-uri lunare.</>
+            ) : zileRamaseNou === 1 ? (
+              <><strong>1 zi rămasă din perioada de probă.</strong> Alege un plan ca să nu pierzi accesul — planurile includ SMS-uri lunare.</>
+            ) : (
+              <>
+                <strong>Perioadă de probă gratuită: încă {zileText(zileRamaseNou)}</strong>
+                {trialEndsAt ? ` (până pe ${dataLungaRo(trialEndsAt)})` : ""}.{" "}
+                SMS-urile nu sunt incluse în perioada de probă — cumpără credite SMS când ai nevoie.
+              </>
+            )}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 shrink-0 pl-7 sm:pl-0">
+          <button
+            type="button"
+            onClick={deschideCumparaSms}
+            className={cn(
+              "flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors",
+              warning ? "text-[#1877F2] hover:underline" : "text-white bg-[#1877F2] hover:bg-[#1565D8]"
+            )}
+          >
+            <ShoppingCart className="h-3 w-3" />
+            Cumpără SMS-uri
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push("/setari/abonament")}
+            className={cn(
+              "flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors",
+              warning ? "text-white bg-[#1877F2] hover:bg-[#1565D8]" : "text-[#1877F2] hover:underline"
+            )}
+          >
+            Alege un plan <ArrowRight className="h-3 w-3" />
+          </button>
+          {!urgent && (
+            <button
+              type="button"
+              onClick={() => setDismissed(true)}
+              aria-label="Închide"
+              className="absolute top-3 right-3 sm:static text-[#9CA3AF] hover:text-[#6B7280] transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
     );
   }

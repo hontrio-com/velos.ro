@@ -11,7 +11,7 @@ import LandingFooter from "@/components/landing/footer";
 export const metadata = {
   title: "Velos - Platforma CRM pentru stații ITP din România",
   description:
-    "Trimite automat SMS-uri de reamintire clienților tăi înainte de expirarea ITP-ului. Programări online, CRM complet, rapoarte detaliate. Încearcă 15 zile gratuit.",
+    "Trimite automat SMS-uri de reamintire clienților tăi înainte de expirarea ITP-ului. Programări online, CRM complet, rapoarte detaliate. Încearcă 6 luni gratuit.",
 };
 
 export default function LandingPage() {

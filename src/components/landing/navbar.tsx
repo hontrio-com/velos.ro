@@ -29,7 +29,7 @@ export default function LandingNavbar() {
       {announcementVisible && (
         <div className="relative bg-[#1877F2] text-white text-xs font-medium py-2.5 px-6 text-center">
           <span>
-            Programarile online si SMS-urile automate sunt incluse in toate planurile, inclusiv Trial.{" "}
+            Nou: 6 luni gratuit, fără card. Planurile plătite includ SMS-uri lunare; în perioada de probă SMS-urile se cumpără separat.{" "}
             <a href="#preturi" className="underline underline-offset-2 font-semibold">
               Vezi planurile
             </a>

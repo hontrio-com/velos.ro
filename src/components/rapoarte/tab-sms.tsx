@@ -4,11 +4,14 @@ import { useState } from "react";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { format, parseISO, eachDayOfInterval, differenceInDays, eachWeekOfInterval, endOfWeek, eachMonthOfInterval, endOfMonth } from "date-fns";
 import { ro } from "date-fns/locale";
-import { MessageSquare, ChevronUp, ChevronDown } from "lucide-react";
+import { MessageSquare, ChevronUp, ChevronDown, ShoppingCart } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useRaportSms } from "@/hooks/use-rapoarte";
 import type { ZiSms } from "@/lib/actions/rapoarte";
+import { useCumparaSmsStore } from "@/stores/cumpara-sms-store";
+import { smsText } from "@/lib/sms-disponibil-shared";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ChartTip({ active, payload, label }: any) {
@@ -104,6 +107,8 @@ export function TabSms({ statieId, profileId, from, to }: TabSmsProps) {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 50;
+  const poateCumpara = useCumparaSmsStore((s) => s.disponibil);
+  const deschideCumparaSms = useCumparaSmsStore((s) => s.deschide);
 
   if (isLoading) return <SmsSkeleton />;
 
@@ -215,28 +220,56 @@ export function TabSms({ statieId, profileId, from, to }: TabSmsProps) {
         <div className="bg-white border border-[#E5E7EB] rounded-xl p-4">
           <div className="flex items-center gap-2 mb-3">
             <MessageSquare className="h-4 w-4 text-[#6B7280]" />
-            <h3 className="text-sm font-semibold text-[#111318]">Quota SMS lunară</h3>
+            <h3 className="text-sm font-semibold text-[#111318]">
+              {data.trialFaraSms ? "Credit SMS" : "Quota SMS lunară"}
+            </h3>
           </div>
-          {data.quota && (
+          {data.trialFaraSms ? (
+            /* Cont fără SMS incluse (trialul nou): doar creditul cumpărat */
             <div className="mb-3 p-3 bg-white rounded-lg">
-              <p className="text-xs text-[#6B7280] mb-1">Luna curentă</p>
-              <p className="text-lg font-bold text-[#111318]">
-                {data.quota.trimise}
-                <span className="text-sm font-normal text-[#9CA3AF]"> / {data.quota.limita === 9999 ? "∞" : data.quota.limita}</span>
+              <p className="text-xs text-[#6B7280] mb-1">Disponibil acum</p>
+              <p className={cn("text-lg font-bold", data.credit <= 0 ? "text-red-600" : "text-[#111318]")}>
+                {smsText(Math.max(0, data.credit))}
               </p>
               <p className="text-xs text-[#6B7280]">
-                {data.quota.ramase} rămase
+                Contul nu are SMS-uri incluse — fiecare SMS trimis se scade din creditul cumpărat, care nu expiră.
               </p>
-            </div>
-          )}
-          {data.quotaHistory.length > 0 ? (
-            <div className="grid grid-cols-3 gap-2">
-              {data.quotaHistory.slice(0, 6).map((q) => (
-                <QuotaCard key={q.luna} {...q} />
-              ))}
+              {poateCumpara && (
+                <Button
+                  size="sm"
+                  variant={data.credit <= 0 ? "default" : "outline"}
+                  onClick={deschideCumparaSms}
+                  className="mt-3 gap-1.5"
+                >
+                  <ShoppingCart className="h-3.5 w-3.5" />
+                  Cumpără SMS-uri
+                </Button>
+              )}
             </div>
           ) : (
-            <p className="text-xs text-[#9CA3AF]">Fără istoric disponibil</p>
+            <>
+              {data.quota && (
+                <div className="mb-3 p-3 bg-white rounded-lg">
+                  <p className="text-xs text-[#6B7280] mb-1">Luna curentă</p>
+                  <p className="text-lg font-bold text-[#111318]">
+                    {data.quota.trimise}
+                    <span className="text-sm font-normal text-[#9CA3AF]"> / {data.quota.limita === 9999 ? "∞" : data.quota.limita}</span>
+                  </p>
+                  <p className="text-xs text-[#6B7280]">
+                    {data.quota.ramase} rămase
+                  </p>
+                </div>
+              )}
+              {data.quotaHistory.length > 0 ? (
+                <div className="grid grid-cols-3 gap-2">
+                  {data.quotaHistory.slice(0, 6).map((q) => (
+                    <QuotaCard key={q.luna} {...q} />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-[#9CA3AF]">Fără istoric disponibil</p>
+              )}
+            </>
           )}
           {data.tipDist.length > 0 && (
             <div className="mt-3 space-y-1.5">

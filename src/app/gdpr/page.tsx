@@ -92,8 +92,8 @@ export default function GdprPage() {
               GDPR — Protecția Datelor cu Caracter Personal
             </h1>
             <p className="text-sm text-[#6B7280]">
-              Versiunea 1.0 &mdash; Ultima actualizare:{" "}
-              <strong className="text-[#374151]">14 mai 2025</strong>
+              Versiunea 1.1 &mdash; Ultima actualizare:{" "}
+              <strong className="text-[#374151]">20 octombrie 2026</strong>
             </p>
             <div className="mt-4 p-4 bg-[#EFF6FF] border border-[#BFDBFE] rounded-xl text-sm text-[#1E40AF] leading-relaxed">
               Această pagină explică în termeni clari drepturile dumneavoastră conform{" "}
@@ -169,8 +169,9 @@ export default function GdprPage() {
                         Furnizori tehnici care prelucrează date în numele Împuternicitului
                       </td>
                       <td className="px-4 py-3 align-top">
-                        Supabase, furnizor SMS, Vercel — prelucrează date pentru a furniza
-                        infrastructura platformei Velos
+                        Supabase, furnizor SMS, Vercel, Cloudflare (stocarea temporară a pozelor
+                        din inspecții, în UE) — prelucrează date pentru a furniza infrastructura
+                        platformei Velos
                       </td>
                     </tr>
                   </tbody>
@@ -355,7 +356,7 @@ export default function GdprPage() {
                 a Datelor (APD)</strong> în formă scrisă.
               </p>
               <p>
-                APD-ul este integrat în Termenii și Condițiile platformei Velos (Secțiunea 11 — Acord de
+                APD-ul este integrat în Termenii și Condițiile platformei Velos (Secțiunea 15 — Acord de
                 Prelucrare a Datelor). Prin acceptarea Termenilor și Condițiilor la înregistrarea contului,
                 stația ITP (Operatorul) și SC VOID SFT GAMES SRL (Împuternicitul) încheie automat un APD
                 valabil conform Art. 28 GDPR.
@@ -375,7 +376,7 @@ export default function GdprPage() {
                       ["Măsuri de securitate adecvate [Art. 32]", "TLS 1.3, AES-256, bcrypt, RLS, backup, monitorizare — detaliate în Politica de Confidențialitate"],
                       ["Respectarea condițiilor pentru sub-împuterniciți", "Lista sub-împuterniciților este publicată și actualizată. Notificare cu 30 zile înainte de schimbări"],
                       ["Asistență pentru exercitarea drepturilor persoanelor vizate", "Funcționalități platformă pentru export, ștergere, rectificare date clienți finali"],
-                      ["Ștergerea / returnarea datelor la finalul contractului", "La reziliere, datele sunt exportabile 30 zile, apoi șterse în 90 zile"],
+                      ["Ștergerea / returnarea datelor la finalul contractului", "La reziliere, datele sunt exportabile 30 zile, apoi șterse în 90 zile; dacă stația are credit SMS nefolosit, contul și datele se păstrează până când stația cere ștergerea (art. 6.6 din Termenii și Condițiile platformei)"],
                       ["Punerea la dispoziție a informațiilor pentru audituri", "La cerere scrisă, furnizăm documentație privind conformitatea GDPR"],
                     ].map(([cerinta, implementare], i) => (
                       <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F9FAFB]"}>
@@ -391,7 +392,7 @@ export default function GdprPage() {
                 <Link href="/termeni" className="text-[#1877F2] hover:underline">
                   Termenii și Condițiile platformei
                 </Link>{" "}
-                (Secțiunea 11). La cerere, APD-ul poate fi furnizat și ca document separat semnat.
+                (Secțiunea 15). La cerere, APD-ul poate fi furnizat și ca document separat semnat.
                 Contactați-ne la <strong>contact@velos.ro</strong>.
               </p>
             </Section>

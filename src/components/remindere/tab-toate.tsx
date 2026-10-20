@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ReminderStatusBadge } from "./reminder-status-badge";
 import { TrimiteSmsDialog } from "./trimite-sms-dialog";
 import { retrimiteReminderAction } from "@/lib/actions/remindere";
+import { afiseazaEroareSms } from "@/components/sms/toast-fara-sms";
 import { TIP_CONFIG } from "@/lib/remindere-generator";
 import type { TipReminder } from "@/lib/remindere-generator";
 import { toast } from "sonner";
@@ -60,7 +61,7 @@ export function TabToate({ remindere, isLoading, onUpdate }: TabToateProps) {
       toast.success("SMS retrimis cu succes!");
       onUpdate();
     } else {
-      toast.error(result.error ?? "Eroare la retrimitere");
+      afiseazaEroareSms(result, "Eroare la retrimitere");
     }
   }
 

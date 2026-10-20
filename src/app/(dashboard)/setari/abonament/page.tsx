@@ -5,6 +5,7 @@ import { PageTransition } from "@/components/layout/page-transition";
 import { AbonamentClient } from "@/components/setari/abonament/abonament-client";
 import type { SubscriptionStatus } from "@/lib/stripe";
 import { fulfillSmsSessionAction } from "@/lib/actions/billing";
+import { getInfoTrial } from "@/lib/sms-disponibil";
 
 export const metadata: Metadata = { title: "Abonament" };
 
@@ -19,12 +20,17 @@ export default async function AbonamentPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { success, canceled, sms_success, cantitate, session_id } = await searchParams;
+  const { success, canceled, sms_success, session_id } = await searchParams;
 
-  // Fallback fulfillment: credit SMS if webhook didn't fire (runs BEFORE profile fetch)
-  if (sms_success && session_id) {
-    await fulfillSmsSessionAction(session_id).catch(console.error);
-  }
+  // Fallback fulfillment: credit SMS if webhook didn't fire (runs BEFORE profile fetch).
+  // Bannerul de după plată se bazează pe rezultat (creditat / plată în curs), nu pe URL.
+  const achizitieSms =
+    sms_success && session_id
+      ? await fulfillSmsSessionAction(session_id).catch((err) => {
+          console.error(err);
+          return null;
+        })
+      : null;
 
   // Fetch profile AFTER fulfillment so sms_credit reflects the updated value
   const { data: profile } = await supabase
@@ -46,6 +52,10 @@ export default async function AbonamentPage({
       ? "trial_expired"
       : subscriptionStatus;
 
+  // Trial fără SMS incluse (conturi noi) — doar pentru texte; conturile vechi → false.
+  const { trialFaraSms } =
+    currentPlan === "trial" ? await getInfoTrial(user.id) : { trialFaraSms: false };
+
   return (
     <PageTransition>
       <div className="px-4 lg:px-6 py-4">
@@ -66,7 +76,13 @@ export default async function AbonamentPage({
           smsCredit={(profile as any)?.sms_credit ?? 0}
           successPlan={success ? ((profile as any)?.plan ?? null) : null}
           wasCanceled={!!canceled}
-          smsSuccessCantitate={sms_success ? Number(cantitate ?? 0) : null}
+          smsSuccessCantitate={achizitieSms?.success ? (achizitieSms.cantitate ?? null) : null}
+          smsAchizitieNeconfirmata={
+            sms_success && !achizitieSms?.success
+              ? achizitieSms?.pending ? "in_asteptare" : "neconfirmata"
+              : null
+          }
+          trialFaraSms={trialFaraSms}
         />
       </div>
     </PageTransition>

@@ -48,6 +48,7 @@ export default async function AdminOverviewPage() {
   const [
     { data: allProfiles },
     { data: allStatii },
+    { count: smsTrimiseLuna },
     { data: smsQuota },
     { data: purchases },
     { data: recentUsers },
@@ -57,7 +58,17 @@ export default async function AdminOverviewPage() {
   ] = await Promise.all([
     supabase.from("profiles").select("id, email, full_name, plan, created_at, is_admin"),
     supabase.from("statii").select("id, activa"),
-    (supabase as any).from("sms_quota").select("sms_trimise").eq("luna", thisMonth),
+    // Din mesaje, nu din sms_quota: sms_quota numără doar SMS-urile incluse în plan,
+    // nu și pe cele plătite din credit. Luna în UTC, ca sms_quota.
+    supabase
+      .from("mesaje")
+      .select("id", { count: "exact", head: true })
+      .eq("tip", "sms")
+      .eq("directie", "trimis")
+      .in("status", ["trimis", "livrat"])
+      .gte("created_at", `${thisMonth}T00:00:00Z`),
+    // Incluse în plan consumate luna aceasta: plasă pentru cifra din mesaje (vezi smsSentMonth).
+    supabase.from("sms_quota").select("sms_trimise").eq("luna", thisMonth),
     (supabase as any).from("sms_purchases").select("pret_total, created_at").eq("status", "completed"),
     supabase
       .from("profiles")
@@ -99,7 +110,10 @@ export default async function AdminOverviewPage() {
   const newUsers30d = allProfiles?.filter((p: any) => p.created_at >= thirtyDaysAgo).length ?? 0;
   const totalStatii = allStatii?.length ?? 0;
   const activeStatii = allStatii?.filter((s: any) => s.activa).length ?? 0;
-  const smsSentMonth = (smsQuota as any[])?.reduce((sum: number, q: any) => sum + (q.sms_trimise ?? 0), 0) ?? 0;
+  // Cel puțin suma din sms_quota (cifra de dinainte): rândurile din mesaje dispar odată cu
+  // stația ștearsă (ON DELETE CASCADE) sau lipsesc dacă salvarea lor a eșuat.
+  const smsIncluseLuna = (smsQuota ?? []).reduce((sum, q) => sum + (q.sms_trimise ?? 0), 0);
+  const smsSentMonth = Math.max(smsTrimiseLuna ?? 0, smsIncluseLuna);
   const revenueTotal = (purchases as any[])?.reduce((sum: number, p: any) => sum + (p.pret_total ?? 0), 0) ?? 0;
   const revenueMonth = (purchases as any[])?.filter((p: any) => p.created_at >= thisMonth)
     .reduce((sum: number, p: any) => sum + (p.pret_total ?? 0), 0) ?? 0;

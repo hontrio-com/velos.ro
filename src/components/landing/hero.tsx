@@ -52,7 +52,7 @@ export default function LandingHero() {
               "gap-2 px-8 h-12 text-sm w-full sm:w-auto justify-center"
             )}
           >
-            Încearcă 15 zile gratuit
+            Încearcă 6 luni gratuit
             <ArrowRight className="h-4 w-4" />
           </Link>
           <Link

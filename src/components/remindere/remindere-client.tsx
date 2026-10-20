@@ -16,6 +16,8 @@ import { TabToate, type AllReminder } from "./tab-toate";
 import { TabItpExpirare, type ItpVehicul } from "./tab-itp-expirare";
 import { TabTemplates } from "./tab-templates";
 import type { TipReminder } from "@/lib/remindere-generator";
+import { SmsCreditCallout } from "@/components/sms/sms-credit-callout";
+import { SMS_DISPONIBIL_KEY } from "@/hooks/use-sms-disponibil";
 
 interface RemindereClientProps {
   statieId: string;
@@ -31,6 +33,8 @@ export function RemindereClient({ statieId }: RemindereClientProps) {
     queryClient.invalidateQueries({ queryKey: ["remindere", statieId] });
     queryClient.invalidateQueries({ queryKey: ["remindere-stats", statieId] });
     queryClient.invalidateQueries({ queryKey: ["itp-vehicule", statieId] });
+    // Creditul / quota se schimbă după fiecare trimitere (widget, statistici, dialog).
+    queryClient.invalidateQueries({ queryKey: SMS_DISPONIBIL_KEY });
   }, [queryClient, statieId]);
 
   // All reminders
@@ -146,6 +150,9 @@ export function RemindereClient({ statieId }: RemindereClientProps) {
           Generează remindere
         </Button>
       </div>
+
+      {/* Fără SMS incluse și fără / cu puțin credit: de ce nu pleacă reminderele + cumpărare */}
+      <SmsCreditCallout statieId={statieId} />
 
       {/* Stats */}
       <RemindereStats statieId={statieId} />

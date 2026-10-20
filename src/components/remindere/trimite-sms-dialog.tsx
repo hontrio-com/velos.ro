@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { countSmsChars } from "@/lib/sms-utils";
 import { trimiteReminderAction } from "@/lib/actions/remindere";
 import { cn } from "@/lib/utils";
+import { afiseazaEroareSms } from "@/components/sms/toast-fara-sms";
 
 interface TrimiteSmsDialogProps {
   open: boolean;
@@ -50,7 +51,9 @@ export function TrimiteSmsDialog({
       onOpenChange(false);
       onSuccess?.();
     } else {
-      toast.error(result.error ?? "Eroare la trimitere");
+      // Fără SMS incluse și fără credit: închidem dialogul, ca modalul de cumpărare
+      // deschis din toast să nu fie acoperit de el.
+      if (afiseazaEroareSms(result, "Eroare la trimitere")) onOpenChange(false);
     }
   }
 

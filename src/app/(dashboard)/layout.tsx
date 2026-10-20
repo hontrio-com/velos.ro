@@ -7,6 +7,7 @@ import { TrialBanner } from "@/components/dashboard/trial-banner";
 import { ImpersonationBanner } from "@/components/layout/impersonation-banner";
 import { getImpersonare } from "@/lib/impersonation";
 import { getStatieForUser } from "@/lib/get-user-statie";
+import { getInfoTrial } from "@/lib/sms-disponibil";
 import type { SubscriptionStatus } from "@/lib/stripe";
 
 // Routes that are accessible even when trial expired / subscription canceled
@@ -158,6 +159,12 @@ export default async function DashboardLayout({
     if (!isBillingExempt) redirect("/setari/abonament");
   }
 
+  // Trial fără SMS incluse (conturi noi, migrația 012) — doar pentru textul
+  // bannerului. Citire separată și tolerantă: NU în select-ul de profil de mai sus
+  // (dacă migrația lipsește, acel select ar eșua → bucla /onboarding <-> /dashboard).
+  const { trialFaraSms } =
+    currentPlan === "trial" ? await getInfoTrial(user.id) : { trialFaraSms: false };
+
   return (
     <DashboardShell
       userEmail={user.email}
@@ -173,6 +180,7 @@ export default async function DashboardLayout({
         subscriptionStatus={effectiveStatus}
         trialEndsAt={trialEndsAt}
         plan={profile?.plan ?? "trial"}
+        trialFaraSms={trialFaraSms}
       />
       {children}
     </DashboardShell>

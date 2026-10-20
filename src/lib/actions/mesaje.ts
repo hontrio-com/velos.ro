@@ -44,7 +44,12 @@ export async function sendMesajAction(formData: unknown) {
   });
 
   if (!result.success) {
-    return { error: result.error ?? "Eroare la trimiterea SMS-ului" };
+    // quotaDepasita + trialFaraSms: UI-ul oferă „Cumpără SMS-uri" (conturi fără SMS incluse).
+    return {
+      error: result.error ?? "Eroare la trimiterea SMS-ului",
+      quotaDepasita: result.quotaDepasita,
+      trialFaraSms: result.trialFaraSms,
+    };
   }
 
   revalidatePath(`/clienti/${client_id}`);

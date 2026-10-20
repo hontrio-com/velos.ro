@@ -360,6 +360,27 @@ export type Database = {
           },
         ]
       }
+      poze_incarcari_emise: {
+        Row: {
+          actualizat_la: string
+          octeti: number
+          owner_id: string
+          zi: string
+        }
+        Insert: {
+          actualizat_la?: string
+          octeti?: number
+          owner_id: string
+          zi: string
+        }
+        Update: {
+          actualizat_la?: string
+          octeti?: number
+          owner_id?: string
+          zi?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -370,8 +391,10 @@ export type Database = {
           id: string
           is_admin: boolean
           onboarding_completed: boolean
+          owner_profile_id: string | null
           phone: string | null
           plan: string
+          role: string
           sms_credit: number
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
@@ -380,6 +403,7 @@ export type Database = {
           suspend_reason: string | null
           suspended_at: string | null
           trial_expires_at: string
+          trial_fara_sms: boolean
           updated_at: string
         }
         Insert: {
@@ -391,8 +415,10 @@ export type Database = {
           id: string
           is_admin?: boolean
           onboarding_completed?: boolean
+          owner_profile_id?: string | null
           phone?: string | null
           plan?: string
+          role?: string
           sms_credit?: number
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -401,6 +427,7 @@ export type Database = {
           suspend_reason?: string | null
           suspended_at?: string | null
           trial_expires_at?: string
+          trial_fara_sms?: boolean
           updated_at?: string
         }
         Update: {
@@ -412,8 +439,10 @@ export type Database = {
           id?: string
           is_admin?: boolean
           onboarding_completed?: boolean
+          owner_profile_id?: string | null
           phone?: string | null
           plan?: string
+          role?: string
           sms_credit?: number
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -422,6 +451,7 @@ export type Database = {
           suspend_reason?: string | null
           suspended_at?: string | null
           trial_expires_at?: string
+          trial_fara_sms?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -511,6 +541,113 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      programari_poze: {
+        Row: {
+          expira_la: string
+          facuta_la: string | null
+          id: string
+          inaltime: number | null
+          incarcata_de: string | null
+          incarcata_la: string
+          latime: number | null
+          marime_bytes: number
+          mime: string
+          motiv_stergere: string | null
+          programare_id: string
+          r2_key: string
+          r2_key_thumb: string | null
+          statie_id: string
+          sters_de: string | null
+          sters_la: string | null
+        }
+        Insert: {
+          expira_la?: string
+          facuta_la?: string | null
+          id?: string
+          inaltime?: number | null
+          incarcata_de?: string | null
+          incarcata_la?: string
+          latime?: number | null
+          marime_bytes: number
+          mime?: string
+          motiv_stergere?: string | null
+          programare_id: string
+          r2_key: string
+          r2_key_thumb?: string | null
+          statie_id: string
+          sters_de?: string | null
+          sters_la?: string | null
+        }
+        Update: {
+          expira_la?: string
+          facuta_la?: string | null
+          id?: string
+          inaltime?: number | null
+          incarcata_de?: string | null
+          incarcata_la?: string
+          latime?: number | null
+          marime_bytes?: number
+          mime?: string
+          motiv_stergere?: string | null
+          programare_id?: string
+          r2_key?: string
+          r2_key_thumb?: string | null
+          statie_id?: string
+          sters_de?: string | null
+          sters_la?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "programari_poze_incarcata_de_fkey"
+            columns: ["incarcata_de"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "programari_poze_programare_id_fkey"
+            columns: ["programare_id"]
+            isOneToOne: false
+            referencedRelation: "programari"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "programari_poze_statie_id_fkey"
+            columns: ["statie_id"]
+            isOneToOne: false
+            referencedRelation: "statii"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "programari_poze_sters_de_fkey"
+            columns: ["sters_de"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      r2_chei_de_sters: {
+        Row: {
+          cheie: string
+          creat_la: string
+          incercari: number
+          ultima_eroare: string | null
+        }
+        Insert: {
+          cheie: string
+          creat_la?: string
+          incercari?: number
+          ultima_eroare?: string | null
+        }
+        Update: {
+          cheie?: string
+          creat_la?: string
+          incercari?: number
+          ultima_eroare?: string | null
+        }
+        Relationships: []
       }
       remindere: {
         Row: {
@@ -1200,6 +1337,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      adauga_credit_sms_achizitie: {
+        Args: {
+          p_cantitate: number
+          p_payment_intent?: string
+          p_pret_total: number
+          p_profile_id: string
+          p_session_id: string
+        }
+        Returns: boolean
+      }
+      consuma_credit_sms: {
+        Args: { p_count?: number; p_profile_id: string }
+        Returns: number
+      }
       genereaza_remindere_zilnice: {
         Args: { p_statie_id?: string }
         Returns: Json
@@ -1215,6 +1366,14 @@ export type Database = {
       increment_sms_quota: {
         Args: { p_count?: number; p_profile_id: string }
         Returns: undefined
+      }
+      restituie_credit_sms: {
+        Args: { p_count?: number; p_profile_id: string }
+        Returns: number
+      }
+      rezerva_incarcare_poze: {
+        Args: { p_max_octeti: number; p_octeti: number; p_owner_id: string }
+        Returns: boolean
       }
       unaccent: { Args: { "": string }; Returns: string }
       user_owns_statie: { Args: { p_statie_id: string }; Returns: boolean }

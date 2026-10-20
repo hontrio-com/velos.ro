@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { format, parseISO } from "date-fns";
 import { ro } from "date-fns/locale";
 import {
@@ -12,6 +13,7 @@ import {
   sendAngajatActivitateEmail,
 } from "@/lib/actions/email";
 import { getOwnerContext } from "@/lib/angajat-context";
+import { citesteCheiPozeActive, purjeazaChei } from "@/lib/poze-itp/server";
 
 // ── Helper: log activitate angajat + email proprietar ────────────────────────
 
@@ -79,8 +81,16 @@ export async function deleteProgramareAction(
   const statie = Array.isArray(p.statie) ? p.statie[0] : p.statie as { id: string; nume: string; owner_id: string } | null;
   if (!statie || statie.owner_id !== ctx.ownerId) return { error: "Acces interzis" };
 
+  // Pozele ITP: cheile R2 se citesc ÎNAINTE (cascada șterge rândurile). Trigger-ul
+  // din migrația 013 le pune oricum în coada r2_chei_de_sters; aici doar grăbim
+  // ștergerea din R2, DUPĂ ce programarea chiar a fost ștearsă. Dacă RLS a șters
+  // 0 rânduri, purjeazaChei vede pozele încă active și nu șterge nimic.
+  const cheiPoze = await citesteCheiPozeActive(id);
+
   const { error } = await supabase.from("programari").delete().eq("id", id);
   if (error) return { error: error.message };
+
+  if (cheiPoze.length) after(() => purjeazaChei(cheiPoze));
 
   revalidatePath("/programari");
   revalidatePath("/dashboard");

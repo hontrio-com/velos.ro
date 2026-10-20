@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Loader2,
   MessageSquare,
@@ -9,6 +10,7 @@ import {
   ChevronRight,
   ChevronLeft,
   AlertCircle,
+  ShoppingCart,
 } from "lucide-react";
 import {
   Dialog,
@@ -21,13 +23,14 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
 import { countSmsChars } from "@/lib/sms-utils";
 import { trimiteReminderAction } from "@/lib/actions/remindere";
 import { cn } from "@/lib/utils";
 import type { TipReminder } from "@/lib/remindere-generator";
 import { TIP_CONFIG } from "@/lib/remindere-generator";
-import { createClient } from "@/lib/supabase/client";
+import { useSmsDisponibil, SMS_DISPONIBIL_KEY } from "@/hooks/use-sms-disponibil";
+import { useCumparaSmsStore } from "@/stores/cumpara-sms-store";
+import { numarText, smsText } from "@/lib/sms-disponibil-shared";
 
 export interface BulkReminder {
   id: string;
@@ -43,6 +46,11 @@ interface TrimiteBulkDialogProps {
   onOpenChange: (open: boolean) => void;
   remindere: BulkReminder[];
   onSuccess?: () => void;
+  /**
+   * Ce se trimite: remindere din „În așteptare" (implicit) sau vehicule din tabul
+   * ITP Urgent — pentru vehicule textele nu trimit la tabul „În așteptare".
+   */
+  sursa?: "remindere" | "vehicule";
 }
 
 export function TrimiteBulkDialog({
@@ -50,22 +58,34 @@ export function TrimiteBulkDialog({
   onOpenChange,
   remindere,
   onSuccess,
+  sursa = "remindere",
 }: TrimiteBulkDialogProps) {
+  const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
   const [templateOverride, setTemplateOverride] = useState("");
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<{ ok: number; err: number } | null>(null);
-  const [quota, setQuota] = useState<{ ramase: number; limita: number } | null>(null);
+  const [results, setResults] = useState<{
+    ok: number;
+    err: number;
+    ramasInAsteptare: number;
+    /** Bucla s-a oprit pentru că SMS-urile s-au terminat (quotaDepasita). */
+    opritDinCredit: boolean;
+  } | null>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const supabase = createClient();
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) return;
-      const { data } = await supabase.rpc("get_sms_quota", { p_profile_id: user.id });
-      if (data?.[0]) setQuota({ ramase: data[0].ramase, limita: data[0].limita });
-    });
-  }, [open]);
+  // SMS-urile PROPRIETARULUI stației (și când trimite un angajat) — exact contul
+  // din care se consumă pe server. Incluse + credit; reîncărcate la fiecare deschidere.
+  const { data: sms } = useSmsDisponibil({ enabled: open, staleTime: 0 });
+  const poateCumpara = useCumparaSmsStore((s) => s.disponibil);
+  const deschideCumparaSms = useCumparaSmsStore((s) => s.deschide);
+
+  const n = remindere.length;
+  const trialNou = sms?.trialFaraSms === true;
+  // Doar în stările în care înainte trimiterea era blocată — trialul nou (fără SMS
+  // incluse) și quota lunară consumată, dar cu credit cumpărat — trimitem cât
+  // acoperă SMS-urile disponibile; restul rămân „în așteptare" (nu le marcăm cu
+  // eroare) și pot fi trimise după cumpărare. Altfel: ca până acum, se încearcă toate.
+  const limitat = trialNou || (sms != null && sms.ramase <= 0 && sms.credit > 0);
+  const deTrimis = limitat && sms ? Math.min(n, sms.totalDisponibil) : n;
 
   const mesajBase = templateOverride || remindere[0]?.mesaj || "";
   const { chars, smsCount } = countSmsChars(mesajBase);
@@ -82,22 +102,149 @@ export function TrimiteBulkDialog({
     onOpenChange(open);
   }
 
+  // Închidem întâi dialogul: două ferestre modale suprapuse și-ar disputa focusul.
+  function cumparaSms() {
+    handleClose(false);
+    deschideCumparaSms();
+  }
+
   async function handleSend() {
     setLoading(true);
     let ok = 0;
     let err = 0;
+    let incercate = 0;
+    let opritDinCredit = false;
 
-    for (const r of remindere) {
+    for (const r of remindere.slice(0, deTrimis)) {
+      incercate++;
       const result = await trimiteReminderAction(r.id);
-      if (result.success) ok++;
-      else err++;
+      if (result.success) {
+        ok++;
+      } else {
+        err++;
+        // SMS-urile s-au terminat între timp — ne oprim aici (trimiterea limitată și
+        // trialul nou; celelalte conturi încearcă toate reminderele, ca până acum).
+        if (result.quotaDepasita && (limitat || result.trialFaraSms)) {
+          opritDinCredit = true;
+          break;
+        }
+      }
     }
 
-    setResults({ ok, err });
+    setResults({ ok, err, ramasInAsteptare: n - incercate, opritDinCredit });
     setStep(3);
     setLoading(false);
+    queryClient.invalidateQueries({ queryKey: SMS_DISPONIBIL_KEY });
 
     if (ok > 0) onSuccess?.();
+  }
+
+  // ── Bannerul de disponibilitate SMS din pasul 2 ──────────────────────────
+  function bannerSms() {
+    // Nimic disponibil — singurul caz în care trimiterea e blocată (ca în sendSms).
+    if (sms && sms.totalDisponibil === 0) {
+      return (
+        <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">
+          <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+          <div className="flex-1 space-y-2">
+            {trialNou && poateCumpara ? (
+              <p>
+                <strong>Nu ai SMS-uri disponibile.</strong>{" "}
+                {sms.subscriptionStatus === "trial"
+                  ? "Perioada de probă nu include SMS-uri."
+                  : "Planul tău actual nu include SMS-uri."}{" "}
+                Cumpără credite SMS ca să poți trimite.
+              </p>
+            ) : trialNou ? (
+              // Angajatul nu poate cumpăra: doar starea stației (îndemnul e mai jos).
+              <p>
+                <strong>Stația nu are SMS-uri disponibile.</strong>{" "}
+                {sms.subscriptionStatus === "trial"
+                  ? "Perioada de probă nu include SMS-uri."
+                  : "Planul actual nu include SMS-uri."}
+              </p>
+            ) : (
+              <p>
+                Quota SMS epuizată pentru luna aceasta. Nu se pot trimite SMS-uri.{" "}
+                {poateCumpara && (
+                  <a href="/setari/abonament" className="underline font-medium">Upgrade plan →</a>
+                )}
+              </p>
+            )}
+            {poateCumpara ? (
+              <Button size="sm" onClick={cumparaSms} className="gap-1.5">
+                <ShoppingCart className="h-3.5 w-3.5" />
+                Cumpără SMS-uri
+              </Button>
+            ) : (
+              <p className="font-medium">Cere proprietarului stației să cumpere SMS-uri.</p>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Mai puține SMS-uri decât destinatari.
+    if (sms && n > sms.totalDisponibil) {
+      return (
+        <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-700">
+          <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+          {trialNou ? (
+            <span>
+              Ai selectat {numarText(n, "destinatar", "destinatari")},{" "}
+              {poateCumpara ? "dar ai doar" : "dar stația are doar"}{" "}
+              <strong>{smsText(sms.totalDisponibil)}</strong> în credit.{" "}
+              {sursa === "vehicule"
+                ? `Se trimit primele ${sms.totalDisponibil}, iar celelalte nu vor fi trimise.`
+                : `Se trimit primele ${sms.totalDisponibil}, iar celelalte rămân în așteptare.`}{" "}
+              {poateCumpara && (
+                <button type="button" onClick={cumparaSms} className="underline font-medium">
+                  Cumpără SMS-uri →
+                </button>
+              )}
+            </span>
+          ) : (
+            <span>
+              Ai selectat {n} destinatari dar mai ai doar{" "}
+              <strong>{sms.totalDisponibil}</strong> SMS-uri disponibile{sms.credit > 0 ? "" : " luna aceasta"}.
+              Vor fi trimise doar primele {sms.totalDisponibil}.
+            </span>
+          )}
+        </div>
+      );
+    }
+
+    // Fără SMS incluse, dar creditul ajunge: cât se consumă.
+    if (sms && trialNou) {
+      const rest = sms.totalDisponibil - n;
+      return (
+        <div className="flex items-start gap-2 p-3 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-xs text-[#1E40AF]">
+          <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+          <span>
+            {n === 1 ? "Se folosește 1 SMS din credit." : `Se folosesc ${smsText(n)} din credit.`}{" "}
+            {rest === 1 ? "Îți rămâne 1 SMS." : `Îți rămân ${smsText(rest)}.`}
+          </span>
+        </div>
+      );
+    }
+
+    // Conturile existente: același mesaj ca până acum; dacă se trece în creditul
+    // cumpărat, spunem asta (înainte, creditul era ignorat aici).
+    if (n > 10) {
+      const ramase = Math.max(0, sms?.ramase ?? 0);
+      return (
+        <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-700">
+          <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+          <span>
+            {!sms || n <= ramase
+              ? `Vei trimite ${n} SMS-uri din quota lunară.`
+              : `Vei trimite ${smsText(n)}: ${ramase} din quota lunară și ${n - ramase} din creditul SMS.`}
+          </span>
+        </div>
+      );
+    }
+
+    return null;
   }
 
   return (
@@ -116,14 +263,14 @@ export function TrimiteBulkDialog({
             { n: 1, label: "Destinatari" },
             { n: 2, label: "Mesaj" },
             { n: 3, label: "Rezultat" },
-          ].map(({ n, label }, i) => (
-            <div key={n} className="flex items-center gap-2 flex-1">
+          ].map(({ n: nr, label }, i) => (
+            <div key={nr} className="flex items-center gap-2 flex-1">
               <div
                 className={cn(
                   "flex items-center gap-1.5 text-xs font-medium",
-                  step === n
+                  step === nr
                     ? "text-[#1877F2]"
-                    : step > n
+                    : step > nr
                     ? "text-[#15803D]"
                     : "text-[#9CA3AF]"
                 )}
@@ -131,14 +278,14 @@ export function TrimiteBulkDialog({
                 <span
                   className={cn(
                     "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold",
-                    step === n
+                    step === nr
                       ? "bg-[#1877F2] text-white"
-                      : step > n
+                      : step > nr
                       ? "bg-[#15803D] text-white"
                       : "bg-[#F7F8FA] text-[#9CA3AF]"
                   )}
                 >
-                  {step > n ? "✓" : n}
+                  {step > nr ? "✓" : nr}
                 </span>
                 {label}
               </div>
@@ -218,33 +365,7 @@ export function TrimiteBulkDialog({
               </div>
             </div>
 
-            {quota && quota.ramase === 0 && (
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">
-                <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                <span>
-                  Quota SMS epuizată pentru luna aceasta. Nu se pot trimite SMS-uri.{" "}
-                  <a href="/setari/abonament" className="underline font-medium">Upgrade plan →</a>
-                </span>
-              </div>
-            )}
-            {quota && quota.ramase > 0 && remindere.length > quota.ramase && (
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-700">
-                <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                <span>
-                  Ai selectat {remindere.length} destinatari dar mai ai doar{" "}
-                  <strong>{quota.ramase}</strong> SMS-uri disponibile luna aceasta.
-                  Vor fi trimise doar primele {quota.ramase}.
-                </span>
-              </div>
-            )}
-            {remindere.length > 10 && (!quota || (quota.ramase >= remindere.length)) && (
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-700">
-                <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                <span>
-                  Vei trimite {remindere.length} SMS-uri din quota lunară.
-                </span>
-              </div>
-            )}
+            {bannerSms()}
           </div>
         )}
 
@@ -266,6 +387,42 @@ export function TrimiteBulkDialog({
                 )}
               </p>
             </div>
+            {/* Doar când chiar s-au terminat SMS-urile: oprire pe quotaDepasita sau
+                tot ce s-a încercat a plecat (altfel restul nu e din lipsă de credit). */}
+            {results.ramasInAsteptare > 0 && (results.opritDinCredit || results.err === 0) && (
+              <div className="w-full text-left flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-700">
+                <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <p>
+                    {sursa === "vehicule"
+                      ? results.ramasInAsteptare === 1
+                        ? "1 SMS nu a fost trimis"
+                        : `${smsText(results.ramasInAsteptare)} nu au fost trimise`
+                      : results.ramasInAsteptare === 1
+                      ? "1 reminder a rămas în așteptare"
+                      : `${numarText(results.ramasInAsteptare, "reminder", "remindere")} au rămas în așteptare`}{" "}
+                    {trialNou
+                      ? poateCumpara
+                        ? "pentru că nu mai ai credit SMS."
+                        : "pentru că stația nu mai are credit SMS."
+                      : poateCumpara
+                      ? "pentru că nu mai ai SMS-uri disponibile."
+                      : "pentru că stația nu mai are SMS-uri disponibile."}{" "}
+                    {!poateCumpara
+                      ? "Roagă proprietarul stației să cumpere SMS-uri."
+                      : sursa === "vehicule"
+                      ? "Cumpără SMS-uri ca să le poți trimite."
+                      : "Cumpără SMS-uri și trimite-le din nou din tabul „În așteptare”."}
+                  </p>
+                  {poateCumpara && (
+                    <Button size="sm" onClick={cumparaSms} className="gap-1.5">
+                      <ShoppingCart className="h-3.5 w-3.5" />
+                      Cumpără SMS-uri
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -305,7 +462,7 @@ export function TrimiteBulkDialog({
               <Button
                 size="sm"
                 onClick={handleSend}
-                disabled={loading || !mesajBase.trim() || quota?.ramase === 0}
+                disabled={loading || !mesajBase.trim() || sms?.totalDisponibil === 0}
                 className="gap-1.5"
               >
                 {loading ? (
@@ -313,7 +470,7 @@ export function TrimiteBulkDialog({
                 ) : (
                   <MessageSquare className="h-3.5 w-3.5" />
                 )}
-                Trimite {remindere.length} SMS-uri
+                {limitat ? `Trimite ${smsText(deTrimis)}` : `Trimite ${remindere.length} SMS-uri`}
               </Button>
             </>
           )}

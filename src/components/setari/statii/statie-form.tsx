@@ -493,9 +493,9 @@ export function StatieForm({ statie: initialStatie, setari: initialSetari }: Sta
           <>
             {/* Info platformă */}
             <div className="p-3 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-sm text-[#1877F2]">
-              SMS-urile sunt trimise prin platforma ITP CRM. Quota disponibilă
-              depinde de planul tău de abonament și se poate urmări în bara din
-              meniul lateral.
+              SMS-urile sunt trimise prin platforma Velos. Se consumă întâi
+              SMS-urile incluse în plan (dacă planul tău include), apoi creditul
+              SMS cumpărat. Soldul se vede în bara din meniul lateral.
             </div>
 
             {/* Toggleuri remindere ITP */}

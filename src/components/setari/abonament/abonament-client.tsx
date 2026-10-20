@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ExternalLink, AlertTriangle, CheckCircle2, XCircle, Clock, CreditCard, RefreshCw } from "lucide-react";
+import { Check, ExternalLink, AlertTriangle, CheckCircle2, XCircle, Clock, CreditCard, RefreshCw, ShoppingCart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -12,6 +12,7 @@ import { format, parseISO } from "date-fns";
 import { ro } from "date-fns/locale";
 import type { SubscriptionStatus } from "@/lib/stripe";
 import { CumparaSmsModal } from "@/components/sms/cumpara-sms-modal";
+import { PRET_SMS_AFISAT, dataLungaRo, smsText } from "@/lib/sms-disponibil-shared";
 
 // ─── Plan definitions ────────────────────────────────────────────────────────
 
@@ -93,6 +94,13 @@ interface AbonamentClientProps {
   successPlan: string | null;
   wasCanceled: boolean;
   smsSuccessCantitate: number | null;
+  /**
+   * Revenire de la plata SMS fără credit adăugat: „in_asteptare" = plată asincronă
+   * (ex. debit direct) încă neconfirmată; „neconfirmata" = plata nu a putut fi verificată.
+   */
+  smsAchizitieNeconfirmata?: "in_asteptare" | "neconfirmata" | null;
+  /** Cont din trialul nou, fără SMS incluse (migrația 012). Conturile vechi: false → pagina neschimbată. */
+  trialFaraSms?: boolean;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -109,6 +117,8 @@ export function AbonamentClient({
   successPlan,
   wasCanceled,
   smsSuccessCantitate,
+  smsAchizitieNeconfirmata = null,
+  trialFaraSms = false,
 }: AbonamentClientProps) {
   const router = useRouter();
   const [yearly, setYearly] = useState(billingCycle === "yearly");
@@ -117,6 +127,11 @@ export function AbonamentClient({
 
   const statusInfo = STATUS_CONFIG[subscriptionStatus];
   const StatusIcon = statusInfo.icon;
+
+  // Trialul nou (fără SMS incluse): texte proprii; restul paginii e neschimbat.
+  const trialNou = trialFaraSms && (subscriptionStatus === "trial" || subscriptionStatus === "trial_expired");
+  // Trialul nou expirat: reminderele automate sunt oprite (cron); celelalte trimiteri (ex. ale angajaților) folosesc în continuare creditul.
+  const trialNouExpirat = trialNou && subscriptionStatus === "trial_expired";
 
   async function handleSelectPlan(planId: string) {
     if (planId === currentPlan && subscriptionStatus === "active") return;
@@ -171,6 +186,22 @@ export function AbonamentClient({
           </div>
         </div>
       )}
+      {smsAchizitieNeconfirmata === "in_asteptare" && (
+        <div className="rounded-xl bg-[#FFFBEB] border border-[#FDE68A] px-4 py-3 flex items-center gap-3">
+          <Clock className="h-5 w-5 text-[#D97706] shrink-0" />
+          <p className="text-sm text-[#92400E]">
+            Plata este în curs de procesare. Creditul SMS apare automat în cont după confirmarea plății (la plata prin debit direct poate dura câteva zile lucrătoare).
+          </p>
+        </div>
+      )}
+      {smsAchizitieNeconfirmata === "neconfirmata" && (
+        <div className="rounded-xl bg-[#FFFBEB] border border-[#FDE68A] px-4 py-3 flex items-center gap-3">
+          <AlertTriangle className="h-5 w-5 text-[#D97706] shrink-0" />
+          <p className="text-sm text-[#92400E]">
+            Nu am putut confirma încă plata. Dacă ai plătit, creditul SMS apare automat în cont în câteva minute.
+          </p>
+        </div>
+      )}
       {wasCanceled && (
         <div className="rounded-xl bg-[#FFF7ED] border border-[#FED7AA] px-4 py-3 flex items-center gap-3">
           <AlertTriangle className="h-5 w-5 text-[#EA580C] shrink-0" />
@@ -191,7 +222,9 @@ export function AbonamentClient({
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-sm font-bold text-[#111318]">Plan {currentPlanName}</p>
+            <p className="text-sm font-bold text-[#111318]">
+              {trialNou ? "Perioadă de probă gratuită" : `Plan ${currentPlanName}`}
+            </p>
             <Badge
               className="text-xs font-semibold h-5 px-2 border-0"
               style={{ backgroundColor: `${statusInfo.color}20`, color: statusInfo.color }}
@@ -199,14 +232,20 @@ export function AbonamentClient({
               {statusInfo.label}
             </Badge>
           </div>
-          {subscriptionStatus === "trial" && trialEndsAt && (
+          {subscriptionStatus === "trial" && trialEndsAt && (trialNou ? (
+            <p className="text-xs text-[#6B7280] mt-0.5">
+              Gratuită până pe{" "}
+              <strong className="text-[#374151]">{dataLungaRo(trialEndsAt)}</strong>
+              {" "}· Ai acces la toate funcțiile. SMS-urile nu sunt incluse și se cumpără separat.
+            </p>
+          ) : (
             <p className="text-xs text-[#6B7280] mt-0.5">
               Trial activ pana pe{" "}
               <strong className="text-[#374151]">
                 {format(parseISO(trialEndsAt), "d MMMM yyyy", { locale: ro })}
               </strong>
             </p>
-          )}
+          ))}
           {subscriptionStatus === "active" && subscriptionEndsAt && (
             <p className="text-xs text-[#6B7280] mt-0.5">
               Reinnoire automata pe{" "}
@@ -231,11 +270,19 @@ export function AbonamentClient({
           )}
           {subscriptionStatus === "trial_expired" && (
             <p className="text-xs text-[#DC2626] mt-0.5">
-              Perioada de trial a expirat. Alege un plan pentru a continua.
+              {trialNou
+                ? "Perioada de probă gratuită s-a încheiat. Alege un plan pentru a continua — planurile includ SMS-uri lunare. Reminderele automate sunt oprite până alegi un plan."
+                : "Perioada de trial a expirat. Alege un plan pentru a continua."}
             </p>
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {trialNou && subscriptionStatus === "trial" && (
+            <Button size="sm" variant="outline" onClick={() => setSmsModalOpen(true)} className="gap-1.5">
+              <ShoppingCart className="h-3.5 w-3.5" />
+              Cumpără SMS-uri
+            </Button>
+          )}
           {subscriptionStatus === "past_due" && (
             <Button size="sm" variant="destructive" onClick={handleBillingPortal} className="gap-1.5">
               <CreditCard className="h-3.5 w-3.5" />
@@ -264,10 +311,17 @@ export function AbonamentClient({
         <span className={cn("text-sm font-medium", yearly ? "text-[#111318]" : "text-[#9CA3AF]")}>Anual</span>
         {yearly && (
           <Badge variant="secondary" className="text-[#059669] bg-[#059669]/10 border-0 text-xs">
-            2 luni gratuit
+            {trialNou ? "Economisești ~20%" : "2 luni gratuit"}
           </Badge>
         )}
       </div>
+
+      {trialNou && subscriptionStatus === "trial" && (
+        <p className="text-xs text-[#6B7280] -mt-3">
+          Planurile plătite includ SMS-uri lunare. Dacă alegi un plan acum, abonamentul pornește
+          imediat și perioada de probă gratuită se încheie.
+        </p>
+      )}
 
       {/* Plans grid — same style as landing page */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 pt-2">
@@ -337,26 +391,36 @@ export function AbonamentClient({
       </div>
 
       <p className="text-sm text-[#9CA3AF]">
-        Toate preturile sunt in lei, TVA inclus. Poti anula oricand.
+        {trialNou
+          ? "Prețurile abonamentelor sunt în lei, TVA inclus. Creditul SMS se plătește în euro. Poți anula oricând."
+          : "Toate preturile sunt in lei, TVA inclus. Poti anula oricand."}
       </p>
 
       {/* SMS Credit */}
       <div className="bg-white border border-[#E5E7EB] rounded-xl p-5 flex items-center justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold text-[#111318]">Credit SMS suplimentar</p>
+          <p className="text-sm font-semibold text-[#111318]">{trialNou ? "Credit SMS" : "Credit SMS suplimentar"}</p>
           <p className="text-xs text-[#6B7280] mt-0.5">
-            {smsCredit > 0
-              ? `Ai ${smsCredit} SMS-uri cumparate suplimentar care nu expira.`
-              : "Nu ai SMS-uri suplimentare. Le poti cumpara in orice moment."}
+            {trialNou
+              ? trialNouExpirat
+                ? smsCredit > 0
+                  ? `Ai ${smsText(smsCredit)} în credit. Creditul nu expiră.`
+                  : "Creditul SMS cumpărat nu expiră."
+                : smsCredit > 0
+                  ? `Ai ${smsText(smsCredit)} în credit. Creditul nu expiră și rămâne în cont și după ce alegi un plan.`
+                  : `Perioada de probă nu include SMS-uri. Cumpără credit ca să trimiți remindere și mesaje clienților — ${PRET_SMS_AFISAT}/SMS, creditul nu expiră.`
+              : smsCredit > 0
+                ? `Ai ${smsCredit} SMS-uri cumparate suplimentar care nu expira.`
+                : "Nu ai SMS-uri suplimentare. Le poti cumpara in orice moment."}
           </p>
         </div>
         <Button
           size="sm"
-          variant="outline"
+          variant={trialNou && !trialNouExpirat && smsCredit <= 0 ? "default" : "outline"}
           onClick={() => setSmsModalOpen(true)}
           className="shrink-0"
         >
-          Cumpara SMS-uri
+          {trialNou ? "Cumpără SMS-uri" : "Cumpara SMS-uri"}
         </Button>
       </div>
 
@@ -364,12 +428,20 @@ export function AbonamentClient({
       <div className="bg-white border border-[#E5E7EB] rounded-xl p-5">
         <h3 className="text-sm font-semibold text-[#111318] mb-4">Intrebari frecvente</h3>
         <div className="grid gap-4 sm:grid-cols-2 text-xs text-[#6B7280]">
-          {[
-            ["Pot anula oricand?", "Da. Poti anula din portalul de facturare Stripe. Accesul ramane activ pana la sfarsitul perioadei platite."],
-            ["Cum se reseteaza SMS-urile?", "Quota de SMS-uri din plan se reseteaza in prima zi a fiecarei luni. Credit-ul suplimentar cumparat nu expira niciodata."],
-            ["Pot schimba planul?", "Da, oricand. La upgrade platesti diferenta proportional. La downgrade, noul plan intra in vigoare de la reinnoire."],
-            ["Ce se intampla la expirare trial?", "Datele nu se sterg. Poti alege un plan oricand pentru a recapata accesul complet."],
-          ].map(([q, a]) => (
+          {(trialNou
+            ? [
+                ["Perioada de probă include SMS-uri?", `Nu. În perioada de probă ai acces la toate funcțiile, dar SMS-urile către clienți se trimit din creditul SMS cumpărat (${PRET_SMS_AFISAT}/SMS). Creditul nu expiră.`],
+                ["Ce se întâmplă cu creditul SMS dacă aleg un plan?", "Rămâne în cont. Planurile plătite includ SMS-uri lunare, iar creditul cumpărat se folosește după ce se termină SMS-urile incluse în luna respectivă."],
+                ["Pot anula oricând?", "Da. Poți anula din portalul de facturare Stripe. Accesul rămâne activ până la sfârșitul perioadei plătite."],
+                ["Ce se întâmplă la finalul perioadei de probă?", "Datele nu se șterg. Alegi un plan oricând pentru a continua să folosești platforma."],
+              ]
+            : [
+                ["Pot anula oricand?", "Da. Poti anula din portalul de facturare Stripe. Accesul ramane activ pana la sfarsitul perioadei platite."],
+                ["Cum se reseteaza SMS-urile?", "Quota de SMS-uri din plan se reseteaza in prima zi a fiecarei luni. Credit-ul suplimentar cumparat nu expira niciodata."],
+                ["Pot schimba planul?", "Da, oricand. La upgrade platesti diferenta proportional. La downgrade, noul plan intra in vigoare de la reinnoire."],
+                ["Ce se intampla la expirare trial?", "Datele nu se sterg. Poti alege un plan oricand pentru a recapata accesul complet."],
+              ]
+          ).map(([q, a]) => (
             <div key={q}>
               <p className="font-medium text-[#374151] mb-1">{q}</p>
               <p>{a}</p>

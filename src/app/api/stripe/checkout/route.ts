@@ -22,6 +22,21 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Neautentificat" }, { status: 401 });
 
+  // SMS-urile se consumă mereu din contul proprietarului stației: creditul
+  // cumpărat de un angajat (pe propriul profil) nu s-ar folosi niciodată.
+  const serviceSupabase = createServiceClient();
+  const { data: cumparator } = await serviceSupabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (cumparator?.role === "angajat") {
+    return NextResponse.json(
+      { error: "Doar proprietarul stației poate cumpăra SMS-uri." },
+      { status: 403 }
+    );
+  }
+
   const body = await request.json();
   const cantitate = Math.max(50, Math.round(Number(body.cantitate)));
   if (!cantitate || cantitate < 50) {
@@ -29,7 +44,6 @@ export async function POST(request: NextRequest) {
   }
 
   // Citim prețul din admin_settings (fallback 0.05€)
-  const serviceSupabase = createServiceClient();
   const { data: priceSetting } = await (serviceSupabase as any)
     .from("admin_settings").select("valoare").eq("cheie", "sms_pret_eur").single();
   const pretPerSms = parseFloat(priceSetting?.valoare ?? "0.05");

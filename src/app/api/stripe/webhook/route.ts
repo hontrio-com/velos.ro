@@ -7,6 +7,7 @@ import { sendMetaEvent } from "@/lib/meta-conversions";
 export const dynamic = "force-dynamic";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getPeriodStart, getPeriodEnd, getInvoiceSubscriptionId, getInvoicePriceId } from "@/lib/stripe-compat";
+import { crediteazaAchizitieSms } from "@/lib/sms-achizitii";
 
 /** Cauta profilul dupa metadata sau, in lipsa, dupa stripe_customer_id. */
 async function resolveProfileId(
@@ -101,7 +102,7 @@ async function emiteFacturaIdempotent(
       currency: params.currency,
     });
 
-    await (supabase as any).from("facturi").insert({
+    const { error: insertError } = await (supabase as any).from("facturi").insert({
       profile_id: params.profileId,
       tip: params.tip,
       referinta: params.referinta,
@@ -111,9 +112,95 @@ async function emiteFacturaIdempotent(
       moneda: params.currency.toUpperCase(),
       eroare: result.success ? null : (result.error ?? "Eroare necunoscuta"),
     });
+    if (insertError) {
+      // Factura poate fi deja emisă în SmartBill: seria/numărul din log permit reconcilierea manuală.
+      console.error(
+        "[stripe/webhook] Factura nu a putut fi înregistrată în facturi:",
+        params.referinta,
+        result.serie ?? null,
+        result.numar ?? null,
+        insertError
+      );
+    }
   } catch (err) {
     console.error("[stripe/webhook] Emitere factura esuata:", params.referinta, err);
   }
+}
+
+// ── Achiziție SMS (checkout în mod "payment") ─────────────────────────────
+
+/**
+ * Creditarea trece prin adauga_credit_sms_achizitie: exact o dată per sesiune,
+ * oricâte livrări ale aceluiași eveniment și oricât de repede ajunge utilizatorul
+ * pe pagina de succes (fulfillSmsSessionAction face același apel, dar nu facturează).
+ * Factura o emite doar webhook-ul.
+ */
+async function proceseazaAchizitieSms(
+  supabase: ReturnType<typeof createServiceClient>,
+  session: Stripe.Checkout.Session
+) {
+  const profileId = session.metadata?.profile_id;
+  const cantitate = parseInt(session.metadata?.cantitate ?? "0", 10);
+  if (!profileId || !cantitate || cantitate <= 0) return;
+
+  // Metodele de plată asincrone (ex. debit SEPA) marchează sesiunea „completed"
+  // înainte să ajungă banii. Creditul se dă abia la async_payment_succeeded,
+  // care ajunge tot aici.
+  if (session.payment_status !== "paid") {
+    console.warn("[stripe/webhook] Achiziție SMS încă neplătită:", session.id, session.payment_status);
+    return;
+  }
+
+  const amount = (session.amount_total ?? 0) / 100;
+  const paymentIntent =
+    typeof session.payment_intent === "string"
+      ? session.payment_intent
+      : session.payment_intent?.id ?? null;
+
+  // Eroare de bază de date => aruncă => 500 => Stripe reîncearcă (sigur: idempotent).
+  await crediteazaAchizitieSms(supabase, {
+    sessionId: session.id,
+    profileId,
+    cantitate,
+    pretTotal: amount,
+    paymentIntent,
+  });
+
+  // Factura se emite la fiecare livrare a unei sesiuni plătite, indiferent dacă
+  // această livrare sau fallback-ul de pe pagina de succes a creditat contul:
+  // emiteFacturaIdempotent sare peste dacă factura există deja. O livrare oprită
+  // înainte de factură nu răspunde 2xx, iar reîncercarea Stripe o emite.
+  await emiteFacturaIdempotent(supabase, {
+    profileId,
+    tip: "sms_purchase",
+    referinta: session.id,
+    client: await getStatieClientInfo(supabase, profileId),
+    productName: `${cantitate} SMS-uri Velos CRM`,
+    amount,
+    currency: session.currency ?? "eur",
+  });
+
+  const { data: prof } = await supabase
+    .from("profiles")
+    .select("email")
+    .eq("id", profileId)
+    .maybeSingle();
+
+  // Meta Pixel — Purchase SMS, după factură (Meta deduplică după eventId; fallback-ul nu trimite evenimentul)
+  await sendMetaEvent({
+    eventName: "Purchase",
+    eventId: `sms_${session.id}`,
+    sourceUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://velos.ro"}/remindere`,
+    user: {
+      email: prof?.email ?? undefined,
+      externalId: profileId,
+    },
+    customData: {
+      value: amount,
+      currency: (session.currency ?? "eur").toUpperCase(),
+      content_name: `${cantitate} SMS-uri Velos`,
+    },
+  }).catch(console.error);
 }
 
 async function handleWebhook(request: NextRequest) {
@@ -138,61 +225,7 @@ async function handleWebhook(request: NextRequest) {
 
     // SMS purchase (one-time payment, no subscription)
     if (session.mode === "payment") {
-      const profileId = session.metadata?.profile_id;
-      const cantitate = parseInt(session.metadata?.cantitate ?? "0", 10);
-      if (profileId && cantitate) {
-        const { data: prof } = await supabase
-          .from("profiles")
-          .select("sms_credit, email, full_name")
-          .eq("id", profileId)
-          .single();
-
-        const currentCredit = (prof as any)?.sms_credit ?? 0;
-        await supabase
-          .from("profiles")
-          .update({ sms_credit: currentCredit + cantitate } as never)
-          .eq("id", profileId);
-
-        await (supabase as any).from("sms_purchases").upsert(
-          {
-            profile_id: profileId,
-            stripe_session_id: session.id,
-            stripe_payment_intent: session.payment_intent as string,
-            cantitate,
-            pret_total: (session.amount_total ?? 0) / 100,
-            status: "completed",
-            completed_at: new Date().toISOString(),
-          },
-          { onConflict: "stripe_session_id" }
-        );
-
-        // Meta Pixel — Purchase SMS
-        await sendMetaEvent({
-          eventName: "Purchase",
-          eventId: `sms_${session.id}`,
-          sourceUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://velos.ro"}/remindere`,
-          user: {
-            email: (prof as any)?.email ?? undefined,
-            externalId: profileId,
-          },
-          customData: {
-            value: (session.amount_total ?? 0) / 100,
-            currency: (session.currency ?? "eur").toUpperCase(),
-            content_name: `${cantitate} SMS-uri Velos`,
-          },
-        }).catch(console.error);
-
-        // Factură SmartBill pentru achiziție SMS
-        await emiteFacturaIdempotent(supabase, {
-          profileId,
-          tip: "sms_purchase",
-          referinta: session.id,
-          client: await getStatieClientInfo(supabase, profileId),
-          productName: `${cantitate} SMS-uri Velos CRM`,
-          amount: (session.amount_total ?? 0) / 100,
-          currency: session.currency ?? "eur",
-        });
-      }
+      await proceseazaAchizitieSms(supabase, session);
     }
 
     // Subscription checkout completed — subscription will be activated via
@@ -283,6 +316,14 @@ async function handleWebhook(request: NextRequest) {
           currency: session.currency ?? "ron",
         });
       }
+    }
+  }
+
+  // ── SMS plătit asincron (ex. debit SEPA): creditul se dă abia acum ──────
+  if (event.type === "checkout.session.async_payment_succeeded") {
+    const session = event.data.object as Stripe.Checkout.Session;
+    if (session.mode === "payment") {
+      await proceseazaAchizitieSms(supabase, session);
     }
   }
 

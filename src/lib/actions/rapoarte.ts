@@ -1,8 +1,11 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { fetchAll } from "@/lib/fetch-all";
 import { format, parseISO, differenceInDays, subDays } from "date-fns";
+import { getStatieForUser } from "@/lib/get-user-statie";
+import { getSmsDisponibil } from "@/lib/sms-disponibil";
 
 // ─── Helpers ──────────────────────────────────────────────────
 
@@ -164,6 +167,10 @@ export interface RaportSms {
   lista: SmsListItem[];
   kpi: KpiSms;
   quota: { trimise: number; limita: number; ramase: number } | null;
+  /** Credit SMS cumpărat al proprietarului stației. */
+  credit: number;
+  /** Cont fără SMS incluse (trialul nou) — tabul SMS arată creditul, nu quota. */
+  trialFaraSms: boolean;
 }
 
 export interface AngajatRow {
@@ -536,9 +543,23 @@ const TIP_REMINDER_LABELS: Record<string, string> = {
   "ziua_programarii": "Ziua programării",
 };
 
+/** Proprietarul stației (contul din care se consumă SMS-urile), derivat pe server. */
+async function proprietarSmsPentruStatie(statieId: string): Promise<string | null> {
+  const statie = await getStatieForUser();
+  if (!statie) return null;
+  if (statie.id === statieId) return statie.owner_profile_id;
+  // Owner cu mai multe stații: toate au același cont de SMS.
+  const { data } = await createServiceClient()
+    .from("statii")
+    .select("owner_id")
+    .eq("id", statieId)
+    .maybeSingle();
+  return data?.owner_id === statie.owner_profile_id ? statie.owner_profile_id : null;
+}
+
 export async function getRaportSmsAction(
   statieId: string,
-  profileId: string,
+  _profileId: string, // ignorat: proprietarul se derivă pe server, nu din parametrul trimis de browser
   from: string,
   to: string
 ): Promise<RaportSms | null> {
@@ -546,7 +567,7 @@ export async function getRaportSmsAction(
   const fromTs = from + "T00:00:00";
   const toTs = to + "T23:59:59";
 
-  const [mesaje, remindereData, quotaResult] = await Promise.all([
+  const [mesaje, remindereData, ownerId] = await Promise.all([
 
     fetchAll((pFrom, pTo) =>
       supabase
@@ -570,7 +591,7 @@ export async function getRaportSmsAction(
         .order("id", { ascending: true })
         .range(pFrom, pTo)
     ),
-    supabase.rpc("get_sms_quota", { p_profile_id: profileId }),
+    proprietarSmsPentruStatie(statieId),
   ]);
 
   const msgs = mesaje ?? [];
@@ -618,23 +639,46 @@ export async function getRaportSmsAction(
   const erori = msgs.filter((m) => m.status === "eroare").length;
   const rata_livrare = total > 0 ? Math.round((livrate / total) * 100) : 0;
 
-  // Quota
-  const quota = quotaResult.data?.[0] ?? null;
+  // SMS-urile proprietarului (și când raportul e deschis de un angajat) — aceeași
+  // sursă ca sendSms. Istoricul cu service client: proprietarul a fost verificat
+  // mai sus, iar RLS-ul pe sms_quota i-ar ascunde angajatului rândurile owner-ului.
+  // Coloanele reale sunt sms_trimise / sms_limita (selectul vechi cerea
+  // trimise / limita și întorcea mereu gol).
+  const [disp, hist] = ownerId
+    ? await Promise.all([
+        getSmsDisponibil(ownerId),
+        createServiceClient()
+          .from("sms_quota")
+          .select("luna, sms_trimise, sms_limita")
+          .eq("profile_id", ownerId)
+          .order("luna", { ascending: false })
+          .limit(6),
+      ])
+    : [null, null];
 
-  // Quota history — query sms_quota table
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: histData } = await (supabase as any)
-    .from("sms_quota")
-    .select("luna, trimise, limita")
-    .eq("profile_id", profileId)
-    .order("luna", { ascending: false })
-    .limit(6);
+  // Luna curentă — pentru conturile existente, exact get_sms_quota (null dacă nu a răspuns).
+  const quota =
+    disp && disp.quotaCitita ? { trimise: disp.trimise, limita: disp.limita, ramase: disp.ramase } : null;
 
-  const quotaHistory: QuotaLuna[] = (histData ?? []).map(
-    (h: { luna: string; trimise: number; limita: number }) => h
-  );
+  // Trialul nou nu are SMS incluse, deci nici istoric de quota.
+  const quotaHistory: QuotaLuna[] = disp?.trialFaraSms
+    ? []
+    : (hist?.data ?? []).map((h) => ({
+        luna: h.luna.slice(0, 7), // „2026-10-01" → „2026-10" (QuotaCard adaugă „-01")
+        trimise: h.sms_trimise,
+        limita: h.sms_limita,
+      }));
 
-  return { zilnic, tipDist, quotaHistory, lista, kpi: { total, livrate, erori, rata_livrare }, quota };
+  return {
+    zilnic,
+    tipDist,
+    quotaHistory,
+    lista,
+    kpi: { total, livrate, erori, rata_livrare },
+    quota,
+    credit: disp?.credit ?? 0,
+    trialFaraSms: disp?.trialFaraSms ?? false,
+  };
 }
 
 // ─── VEHICULE ─────────────────────────────────────────────────

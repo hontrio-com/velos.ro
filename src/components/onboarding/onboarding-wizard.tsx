@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { PLAN_CONFIG, type PlanId, type BillingCycle } from "@/lib/stripe-config";
 import { completeTrialOnboardingAction, startPaidOnboardingAction } from "@/lib/actions/onboarding";
 import type { StatieOnboardingData } from "@/lib/actions/onboarding";
+import { PRET_SMS_AFISAT, numarText } from "@/lib/sms-disponibil-shared";
 
 const STEPS = ["Bun venit", "Stația ta", "Alege planul"] as const;
 
@@ -25,7 +26,19 @@ const PLAN_ICONS: Record<PlanId, React.ReactNode> = {
   enterprise: <Star className="h-4 w-4" />,
 };
 
-export function OnboardingWizard({ userEmail, hasStation }: { userEmail: string; hasStation: boolean }) {
+export function OnboardingWizard({
+  userEmail,
+  hasStation,
+  trialFaraSms = false,
+  trialLuni = null,
+}: {
+  userEmail: string;
+  hasStation: boolean;
+  /** Cont din trialul nou, fără SMS incluse — conturile vechi neonboardate văd textele de până acum. */
+  trialFaraSms?: boolean;
+  /** Durata trialului în luni (din trial_expires_at); null => 6. */
+  trialLuni?: number | null;
+}) {
   const [step, setStep] = useState(hasStation ? 2 : 0);
   const [statie, setStatie] = useState<StatieOnboardingData>({ nume: "", oras: "", telefon: "" });
   const [statieError, setStatieError] = useState<Partial<StatieOnboardingData>>({});
@@ -361,8 +374,12 @@ export function OnboardingWizard({ userEmail, hasStation }: { userEmail: string;
                         <Gift className="h-4 w-4 text-[#6B7280]" />
                       </div>
                       <div className="text-left">
-                        <div className="font-semibold text-[#111318]">Testeaza gratuit - 15 zile</div>
-                        <div className="text-xs text-[#9CA3AF]">Toate functiile Pro, fara card</div>
+                        <div className="font-semibold text-[#111318]">
+                          {trialFaraSms ? `Testează gratuit ${numarText(trialLuni ?? 6, "lună", "luni")}` : "Testeaza gratuit - 15 zile"}
+                        </div>
+                        <div className="text-xs text-[#9CA3AF]">
+                          {trialFaraSms ? "Toate funcțiile, fără card · SMS-urile se cumpără separat" : "Toate functiile Pro, fara card"}
+                        </div>
                       </div>
                     </div>
                     {selectedPlan === "trial" && (
@@ -371,6 +388,23 @@ export function OnboardingWizard({ userEmail, hasStation }: { userEmail: string;
                       </div>
                     )}
                   </button>
+
+                  {trialFaraSms && selectedPlan === "trial" && (
+                    <div className="mt-3 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] px-4 py-3 text-xs text-[#1E40AF] leading-relaxed">
+                      Programările, clienții, vehiculele și rapoartele funcționează complet din prima zi.
+                      Reminderele SMS pleacă după ce cumperi primul pachet de SMS-uri, direct din platformă
+                      ({PRET_SMS_AFISAT}/SMS, creditul nu expiră).
+                    </div>
+                  )}
+
+                  {/* Checkout-ul plătit pornește fără perioadă de probă: spunem asta înainte de „Continuă la plată". */}
+                  {trialFaraSms && selectedPlan && selectedPlan !== "trial" && (
+                    <div className="mt-3 rounded-xl bg-[#FFF7ED] border border-[#FED7AA] px-4 py-3 text-xs text-[#92400E] leading-relaxed">
+                      Dacă alegi acum un plan plătit, plata începe azi și renunți la perioada de probă
+                      gratuită de {numarText(trialLuni ?? 6, "lună", "luni")}. Poți alege un plan oricând
+                      mai târziu, din Setări → Abonament.
+                    </div>
+                  )}
 
                   {error && (
                     <p className="mt-3 text-sm text-red-500 text-center">{error}</p>

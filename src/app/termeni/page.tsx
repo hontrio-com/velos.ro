@@ -21,7 +21,7 @@ export default function TermeniPage() {
             Termeni și Condiții
           </h1>
           <p className="text-[#6B7280]">
-            Ultima actualizare: <strong>14 mai 2025</strong>
+            Ultima actualizare: <strong>20 octombrie 2026</strong>
           </p>
           <div className="mt-6 p-4 bg-[#FFF7ED] border border-[#FED7AA] rounded-xl">
             <p className="text-sm text-[#92400E]">
@@ -249,9 +249,9 @@ export default function TermeniPage() {
                 <tbody>
                   <tr className="border-b border-[#F3F4F6]">
                     <td className="px-4 py-3 font-medium text-[#111318]">Trial</td>
-                    <td className="px-4 py-3 text-[#059669] font-semibold">Gratuit</td>
+                    <td className="px-4 py-3 text-[#059669] font-semibold">Gratuit, 6 luni*</td>
                     <td className="px-4 py-3 text-[#9CA3AF]">—</td>
-                    <td className="px-4 py-3">20 SMS</td>
+                    <td className="px-4 py-3">Fără SMS incluse*</td>
                     <td className="px-4 py-3">1 stație</td>
                   </tr>
                   <tr className="border-b border-[#F3F4F6]">
@@ -278,6 +278,12 @@ export default function TermeniPage() {
                 </tbody>
               </table>
             </div>
+            <p className="mt-2 text-xs text-[#6B7280]">
+              * Pentru conturile create după activarea noului regim de probă
+              (20 octombrie 2026). Conturile create înainte de această activare
+              păstrează regimul de probă în vigoare la crearea contului (15 zile,
+              20 SMS-uri incluse), conform art. 8.5.
+            </p>
             <p className="mt-4">
               6.2. <strong>Prețurile afișate nu includ TVA.</strong> TVA-ul se
               aplică conform legislației fiscale române în vigoare (19% pentru
@@ -285,8 +291,9 @@ export default function TermeniPage() {
               fiscală va reflecta valoarea totală inclusiv TVA.
             </p>
             <p className="mt-3">
-              6.3. SMS-urile nefolosite dintr-o perioadă de facturare nu se
-              reportează în luna următoare.
+              6.3. SMS-urile incluse în plan și nefolosite dintr-o perioadă de
+              facturare nu se reportează în luna următoare. Creditul SMS cumpărat
+              separat nu expiră (art. 6.6).
             </p>
             <p className="mt-3">
               6.4. Furnizorul poate oferi, periodic, promoții sau reduceri cu
@@ -298,6 +305,18 @@ export default function TermeniPage() {
               <strong>30 de zile</strong> comunicat prin e-mail. Utilizatorul
               are dreptul de a rezilia contractul înainte de intrarea în vigoare
               a noilor prețuri, fără penalități.
+            </p>
+            <p className="mt-3">
+              6.6. <strong>Credit SMS.</strong> Utilizatorul poate cumpăra oricând,
+              din platformă, credit SMS, la prețul afișat în momentul cumpărării.
+              Fiecare SMS trimis consumă o unitate de credit. Creditul cumpărat nu
+              expiră și se folosește după epuizarea SMS-urilor incluse în plan, dacă
+              planul include SMS-uri. În perioada de probă prevăzută la art. 8.1,
+              creditul cumpărat este singura modalitate de a trimite SMS-uri.
+              Creditul nefolosit rămâne în cont și după încheierea perioadei de
+              probă sau a abonamentului. Prin excepție de la art. 8.3 și 10.5,
+              contul care are credit SMS nefolosit nu se șterge decât la cererea
+              Utilizatorului.
             </p>
           </Section>
 
@@ -353,28 +372,41 @@ export default function TermeniPage() {
           {/* 8. Perioada Trial */}
           <Section id="trial" title="8. Perioada de probă (Trial)">
             <p>
-              8.1. Utilizatorii noi beneficiază de o perioadă de probă gratuită
-              de <strong>15 (cincisprezece) zile calendaristice</strong> de la
-              data creării contului, fără a fi necesară furnizarea datelor unui
-              card bancar.
+              8.1. Utilizatorii care își creează contul după activarea noului regim
+              de probă (<strong>20 octombrie 2026</strong>) beneficiază de o perioadă
+              de probă gratuită de <strong>6 (șase) luni</strong> de la data creării
+              contului, fără a fi necesară furnizarea datelor unui card bancar.
             </p>
             <p className="mt-3">
               8.2. Pe durata perioadei Trial, Utilizatorul are acces la toate
-              funcționalitățile platformei, cu limita de{" "}
-              <strong>20 SMS-uri</strong> și <strong>1 stație ITP</strong>.
+              funcționalitățile platformei, cu limita de <strong>1 stație ITP</strong>.
+              Perioada Trial <strong>nu include SMS-uri</strong>: SMS-urile (remindere,
+              mesaje, solicitări de recenzie) se trimit numai din creditul SMS
+              cumpărat conform art. 6.6. Fără credit, SMS-urile programate nu se trimit.
             </p>
             <p className="mt-3">
               8.3. La expirarea perioadei Trial, contul va fi trecut în regim
               limitat (read-only). Datele introduse se păstrează 30 de zile,
               timp în care Utilizatorul poate alege un plan plătit pentru a
               relua activitatea. Dacă nu este ales niciun plan, contul și datele
-              asociate vor fi șterse definitiv, conform Politicii de
-              Confidențialitate.
+              asociate vor fi șterse definitiv (sub rezerva art. 6.6), conform
+              Politicii de Confidențialitate.
             </p>
             <p className="mt-3">
               8.4. Furnizorul nu garantează prelungirea sau repetarea perioadei
               de Trial și poate limita sau anula accesul Trial pentru conturi
               suspectate de abuz.
+            </p>
+            <p className="mt-3">
+              8.5. Pentru conturile create înainte de activarea noului regim de
+              probă (art. 8.1) se aplică în continuare regimul de probă în vigoare
+              la data creării contului, afișat în cont: o perioadă de probă de 15
+              (cincisprezece) zile calendaristice, cu limita
+              de <strong>20 SMS-uri</strong> incluse și <strong>1 stație ITP</strong>.
+            </p>
+            <p className="mt-3">
+              8.6. Activarea unui plan plătit în timpul perioadei de probă încheie
+              perioada de probă la data primei plăți.
             </p>
           </Section>
 
@@ -449,8 +481,9 @@ export default function TermeniPage() {
               contractului, datele Utilizatorului vor fi păstrate în platformă
               timp de <strong>30 de zile calendaristice</strong>, interval în
               care Utilizatorul poate solicita exportul datelor. După expirarea
-              acestei perioade, datele vor fi șterse definitiv, cu excepția
-              celor pentru care există obligație legală de arhivare.
+              acestei perioade, datele vor fi șterse definitiv (sub rezerva
+              art. 6.6), cu excepția celor pentru care există obligație legală
+              de arhivare.
             </p>
             <p className="mt-3">
               10.6. Utilizatorul poate solicita ștergerea imediată a datelor și
@@ -663,8 +696,28 @@ export default function TermeniPage() {
               <li>Date de identificare: nume, prenume;</li>
               <li>Date de contact: număr de telefon, adresă e-mail;</li>
               <li>Date vehicul: număr de înmatriculare, marcă, model, an fabricație;</li>
-              <li>Date programări: data, ora, tipul serviciului ITP;</li>
-              <li>Istoricul rezultatelor ITP și al intervențiilor.</li>
+              <li>
+                Date programări: data, ora, tipul serviciului ITP, data și ora
+                fotografierii și a încărcării pozelor din inspecție;
+              </li>
+              <li>Istoricul rezultatelor ITP și al intervențiilor;</li>
+              <li>
+                Fotografii ale vehiculului realizate de Utilizator în timpul
+                inspecției ITP (pot surprinde numărul de înmatriculare, seria de
+                șasiu sau kilometrajul); se păstrează până la descărcarea
+                arhivei de către Utilizator sau, în lipsa descărcării, 14 zile
+                de la încărcare, după care se șterg automat.
+                Până la încărcarea pe server, pozele făcute sau alese în
+                platformă, împreună cu numărul de înmatriculare al vehiculului,
+                se păstrează temporar și în browserul dispozitivului folosit de
+                Utilizator (inclusiv după deconectare), ca încărcarea să poată
+                fi reluată după o întrerupere; copia se șterge după încărcare,
+                când Utilizatorul renunță la poză sau când poza nu mai poate fi
+                încărcată (de exemplu, dacă programarea a fost ștearsă), iar
+                copiile mai vechi de 7 zile se șterg la următoarea deschidere a
+                aplicației în același browser, cu orice cont care are acces la
+                ea (nu și cu un cont suspendat sau dezactivat).
+              </li>
             </ul>
 
             <h3 className="font-semibold text-[#111318] mt-5 mb-2">15.3. Scopurile și temeiul prelucrării</h3>
@@ -1037,8 +1090,9 @@ export default function TermeniPage() {
               comunicări anterioare.
             </p>
             <p className="mt-3">
-              23.6. Prezentele T&C intră în vigoare la data publicării pe
-              platformă: <strong>14 mai 2025</strong>.
+              23.6. Prezenta versiune a T&C intră în vigoare la data publicării pe
+              platformă: <strong>20 octombrie 2026</strong>. Versiunea anterioară
+              este arhivată și poate fi pusă la dispoziție la cerere.
             </p>
           </Section>
 
